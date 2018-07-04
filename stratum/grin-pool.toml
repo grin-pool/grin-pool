@@ -1,0 +1,30 @@
+# Sample Configuration File for Grin-Pool
+#
+# When running the grin-pool executable without specifying any command line
+# arguments, it will look for this file in The working directory
+
+#########################################
+### POOL CONFIGURATION                ###
+#########################################
+
+#
+# Configuration for the Stratum Pool
+[grin_pool]
+log_dir = "/stratum"
+
+[workers]
+listen_address = "0.0.0.0"
+port_difficulty = [
+ [3333, 1],
+ [4444, 5],
+ [5555, 10],
+]
+
+#
+# Configuration for access to upstream grin node
+[grin_node]
+address = "grin"
+api_port = 13413
+stratum_port = 13416
+login = "GrinPool"
+password = ""

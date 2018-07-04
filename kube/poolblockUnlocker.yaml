@@ -1,0 +1,33 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: poolblockunlocker
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: blockunlocker
+            image: grinpool/services:latest
+            command: ["/usr/local/bin/poolblockUnlocker.py"]
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+            volumeMounts: # directory inside container
+            - mountPath: /services
+              name: poolservicesdir
+          volumes: # directory location on host
+          - name: poolservicesdir
+            hostPath:
+              path: /data/services
+#          imagePullSecrets:
+#          - name: regsecret
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1

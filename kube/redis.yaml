@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  labels:
+    app: redis
+    role: master
+    tier: backend
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 6379
+    nodePort: 30379
+  selector:
+    app: redis
+    role: master
+    tier: backend
+  externalIPs:
+  - 192.168.2.251
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+spec:
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+      tier: backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+        tier: backend
+    spec:
+      containers:
+      - name: master
+        image: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 6379

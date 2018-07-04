@@ -1,0 +1,30 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: blockwatcher
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: blockWatcher
+    spec:
+      containers:
+      - name: grin-pool
+        image: grinpool/services:latest
+        command: ["/usr/local/bin/blockWatcher.py"]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        volumeMounts: # directory inside container
+        - mountPath: /services
+          name: poolservicesdir
+      volumes: # directory location on host
+      - name: poolservicesdir
+        hostPath:
+          path: /data/services
+#      imagePullSecrets:
+#      - name: regsecret
