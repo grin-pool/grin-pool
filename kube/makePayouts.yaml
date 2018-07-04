@@ -1,0 +1,39 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: makepayouts
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: makepayouts
+            image: grinpool/services:latest
+#            command: ["sleep", "999"]
+            command: ["/usr/local/bin/makePayouts.py"]
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+            volumeMounts: # directory inside container
+            - mountPath: /wallet
+              name: grinwallet
+            - mountPath: /services
+              name: poolservicesdir
+          volumes: # directory location on host
+          - name: grinwallet
+            hostPath:
+              path: /data/wallet
+          - name: poolservicesdir
+            hostPath:
+              path: /data/services
+#          imagePullSecrets:
+#          - name: regsecret
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1

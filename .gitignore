@@ -1,0 +1,7 @@
+/stratum/target
+/stratum/Cargo.lock
+**/node_modules
+**/bak
+**/*.rs.bk
+**/*.log
+**/*.XXX

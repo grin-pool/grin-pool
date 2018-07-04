@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stratum
+  labels:
+    run: stratum
+spec:
+  type: NodePort
+  ports:
+  - port: 3333
+    nodePort: 32333
+    protocol: TCP
+    name: miner1
+  - port: 4444
+    nodePort: 32444
+    protocol: TCP
+    name: miner2
+  - port: 5555
+    nodePort: 32555
+    protocol: TCP
+    name: miner3
+  selector:
+    run: stratum
+  externalIPs:
+  - 192.168.2.225
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: stratum
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: stratum
+    spec:
+      containers:
+      - name: stratum
+        image: grinpool/stratum:latest
+        command: ["/usr/local/bin/grin-pool"]
+        ports:
+        - containerPort: 3333
+        - containerPort: 4444
+        - containerPort: 5555
+        volumeMounts: # directory inside container
+        - mountPath: /stratum
+          name: stratumdir
+#      imagePullSecrets:
+#      - name: regsecret
+      volumes: # directory location on host
+      - name: stratumdir
+        hostPath:
+          path: /data/stratum
