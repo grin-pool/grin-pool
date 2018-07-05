@@ -25,7 +25,6 @@ use std::net::TcpStream;
 
 use pool::logger::LOGGER;
 
-
 // ----------------------------------------
 // RPC Messages
 //
@@ -133,7 +132,7 @@ impl StratumProtocol {
         let mut line = String::new();
         match stream.read_line(&mut line) {
             Ok(_) => {
-	        // warn!(LOGGER, "XXX DEBUG - line read: {:?}", line);
+                // warn!(LOGGER, "XXX DEBUG - line read: {:?}", line);
                 // stream is not returning a proper error on disconnect
                 if line == "" {
                     return Err(format!("{} - Connection Error: Disconnected", self.id));
@@ -182,7 +181,7 @@ impl StratumProtocol {
         &mut self,
         stream: &mut BufStream<TcpStream>,
     ) -> Result<Option<String>, String> {
-	// XXX TODO: Verify this is a valid message before returning it
+        // XXX TODO: Verify this is a valid message before returning it
         return self.read_message(stream);
     }
 
@@ -195,10 +194,10 @@ impl StratumProtocol {
         params: Option<Value>,
         worker_id: Option<String>,
     ) -> Result<(), String> {
-	let request_id = match worker_id {
-	    None => "".to_string(),
-	    Some(id) => id,
- 	};
+        let request_id = match worker_id {
+            None => "".to_string(),
+            Some(id) => id,
+        };
         let req = RpcRequest {
             id: request_id.clone(),
             jsonrpc: "2.0".to_string(),
@@ -206,7 +205,13 @@ impl StratumProtocol {
             params: Some(serde_json::to_value(params).unwrap()),
         };
         let req_str = serde_json::to_string(&req).unwrap();
-        trace!(LOGGER, "{} for {} - Requesting: {}", self.id, request_id, req_str);
+        trace!(
+            LOGGER,
+            "{} for {} - Requesting: {}",
+            self.id,
+            request_id,
+            req_str
+        );
         return self.write_message(req_str, stream);
     }
 
@@ -216,7 +221,7 @@ impl StratumProtocol {
         stream: &mut BufStream<TcpStream>,
         method: String,
         result: Value,
-	id: usize,
+        id: usize,
     ) -> Result<(), String> {
         let res = RpcResponse {
             id: id.to_string(),
@@ -226,7 +231,13 @@ impl StratumProtocol {
             error: None,
         };
         let res_str = serde_json::to_string(&res).unwrap();
-        trace!(LOGGER, "{} for {} - Responding: {}", self.id, id.to_string(), res_str);
+        trace!(
+            LOGGER,
+            "{} for {} - Responding: {}",
+            self.id,
+            id.to_string(),
+            res_str
+        );
         return self.write_message(res_str, stream);
     }
 

@@ -109,8 +109,12 @@ impl Worker {
     pub fn send_status(&mut self, status: WorkerStatus) -> Result<(), String> {
         trace!(LOGGER, "Worker {} - Sending worker status", self.id);
         let status_value = serde_json::to_value(status).unwrap();
-        return self.protocol
-            .send_response(&mut self.stream, "status".to_string(), status_value, self.id);
+        return self.protocol.send_response(
+            &mut self.stream,
+            "status".to_string(),
+            status_value,
+            self.id,
+        );
     }
 
     /// Send OK Response
@@ -120,7 +124,7 @@ impl Worker {
             &mut self.stream,
             method,
             serde_json::to_value("ok".to_string()).unwrap(),
-	    self.id,
+            self.id,
         );
     }
 
@@ -169,25 +173,26 @@ impl Worker {
                         match req.method.as_str() {
                             "login" => {
                                 debug!(LOGGER, "Worker {} - Accepting Login request", self.id);
-				let params: Value = match req.params {
-				    Some(p) => p,
-				    None => {
-                                	self.error = true;
-                                	// XXX TODO: Invalid request
-                                	return Err("invalid request".to_string());
-				    },
-				};
-                                let login_params: LoginParams = match serde_json::from_value(params) {
-				    Ok(p) => p,
-				    Err(e) => {
-                                	self.error = true;
-                                	// XXX TODO: Invalid request
-                                	return Err(e.to_string());
-				    }
-				};
-				// XXX TODO: Validate the login - is it a valid grin wallet address?
+                                let params: Value = match req.params {
+                                    Some(p) => p,
+                                    None => {
+                                        self.error = true;
+                                        // XXX TODO: Invalid request
+                                        return Err("invalid request".to_string());
+                                    }
+                                };
+                                let login_params: LoginParams = match serde_json::from_value(params)
+                                {
+                                    Ok(p) => p,
+                                    Err(e) => {
+                                        self.error = true;
+                                        // XXX TODO: Invalid request
+                                        return Err(e.to_string());
+                                    }
+                                };
+                                // XXX TODO: Validate the login - is it a valid grin wallet address?
                                 self.login = Some(login_params);
-				// We accepted the login, send ok result
+                                // We accepted the login, send ok result
                                 self.send_ok(req.method);
                             }
                             "getjobtemplate" => {
