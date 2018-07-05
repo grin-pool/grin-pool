@@ -11,12 +11,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+#[macro_use]
+#[macro_use]
+#[macro_use]
+#[macro_use]
+#[macro_use]
+#[macro_use]
+#[macro_use]
 #[macro_use]
 use serde_derive;
-use toml;
 use std::fs::File;
 use std::io::prelude::*;
+use toml;
 
 const CONFIG_FILE_NAME: &'static str = "grin-pool.toml";
 
@@ -41,7 +47,7 @@ pub struct PoolConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct WorkerConfig {
     pub listen_address: String,
-    pub port_difficulty: Vec<PortDifficulty>
+    pub port_difficulty: Vec<PortDifficulty>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -56,7 +62,8 @@ pub struct NodeConfig {
 pub fn read_config() -> Config {
     let mut config_file = File::open(CONFIG_FILE_NAME).expect("Config file not found");
     let mut toml_str = String::new();
-    config_file.read_to_string(&mut toml_str)
+    config_file
+        .read_to_string(&mut toml_str)
         .expect("Failure while reading config file");
     let config: Config = toml::from_str(&toml_str).unwrap();
     return config;

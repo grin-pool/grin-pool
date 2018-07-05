@@ -21,30 +21,28 @@ extern crate serde_json;
 extern crate bufstream;
 #[macro_use]
 extern crate slog;
-extern crate slog_term;
 extern crate slog_async;
+extern crate slog_term;
 extern crate time;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate toml;
 
-
-use std::thread;
-use std::time::Duration;
-use std::net::{TcpListener, TcpStream};
-use std::io::{ErrorKind, Write};
+use bufstream::BufStream;
 use std::error::Error;
 use std::io::BufRead;
-use bufstream::BufStream;
+use std::io::{ErrorKind, Write};
+use std::net::{TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
+use std::thread;
+use std::time::Duration;
 use std::time::SystemTime;
 
 mod pool;
-use pool::pool::{Pool};
-use pool::logger::LOGGER;
 use pool::config;
-
+use pool::logger::LOGGER;
+use pool::pool::Pool;
 
 fn main() {
     warn!(LOGGER, "Startng Grin-Pool");

@@ -19,18 +19,15 @@
 use bufstream::BufStream;
 use serde_json;
 use serde_json::Value;
-use std::net::{TcpStream, Shutdown};
-use std::{thread, time};
+use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
+use std::{thread, time};
 
-
-
+use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
-use pool::proto::{StratumProtocol, LoginParams, JobTemplate, SubmitParams, WorkerStatus, RpcError};
+use pool::proto::{JobTemplate, LoginParams, RpcError, StratumProtocol, SubmitParams, WorkerStatus};
 use pool::proto::{RpcRequest, RpcResponse};
 use pool::worker::Worker;
-use pool::config::{Config, PoolConfig, NodeConfig, WorkerConfig};
-
 
 // ----------------------------------------
 // Server Object - our connection to a stratum server - a grin node
@@ -66,24 +63,29 @@ impl Server {
         if !self.error && self.stream.is_some() {
             return Ok(());
         }
-        let grin_stratum_url = self.config.grin_node.address.clone() +
-                               ":" +
-                               &self.config.grin_node.stratum_port.to_string();
-        warn!(LOGGER, "{} - Connecting to upstream stratum server at {}", self.id, grin_stratum_url.to_string());
+        let grin_stratum_url = self.config.grin_node.address.clone() + ":"
+            + &self.config.grin_node.stratum_port.to_string();
+        warn!(
+            LOGGER,
+            "{} - Connecting to upstream stratum server at {}",
+            self.id,
+            grin_stratum_url.to_string()
+        );
         match TcpStream::connect(grin_stratum_url.to_string()) {
             Ok(conn) => {
-                let _ = conn.set_nonblocking(true).expect("set_nonblocking call failed");
+                let _ = conn.set_nonblocking(true)
+                    .expect("set_nonblocking call failed");
                 self.stream = Some(BufStream::new(conn));
                 self.error = false;
             }
-            Err(e) => { 
+            Err(e) => {
                 self.error = true;
                 return Err(e.to_string());
             }
         };
         // Send login
         match self.log_in() {
-            Ok(_) => { }
+            Ok(_) => {}
             Err(e) => {
                 self.error = true;
                 return Err(e.to_string());
@@ -91,7 +93,7 @@ impl Server {
         };
         // Send job request
         match self.request_job() {
-            Ok(_) => { }
+            Ok(_) => {}
             Err(e) => {
                 self.error = true;
                 return Err(e.to_string());
@@ -106,9 +108,14 @@ impl Server {
         match self.stream {
             Some(ref mut stream) => {
                 trace!(LOGGER, "{} - Requesting status", self.id);
-                return self.protocol.send_request(stream, "status".to_string(), None, Some(self.id.clone()));
+                return self.protocol.send_request(
+                    stream,
+                    "status".to_string(),
+                    None,
+                    Some(self.id.clone()),
+                );
             }
-            None => Err("No upstream connection".to_string())
+            None => Err("No upstream connection".to_string()),
         }
     }
 
@@ -123,9 +130,14 @@ impl Server {
                 };
                 let params_value = serde_json::to_value(login_params).unwrap();
                 debug!(LOGGER, "{} - Requesting Login", self.id);
-                return self.protocol.send_request(stream, "login".to_string(), Some(params_value), Some(self.id.clone()));
+                return self.protocol.send_request(
+                    stream,
+                    "login".to_string(),
+                    Some(params_value),
+                    Some(self.id.clone()),
+                );
             }
-            None => Err("No upstream connection".to_string())
+            None => Err("No upstream connection".to_string()),
         }
     }
 
@@ -134,9 +146,14 @@ impl Server {
         match self.stream {
             Some(ref mut stream) => {
                 debug!(LOGGER, "{} - Requesting Job Template", self.id);
-                return self.protocol.send_request(stream, "getjobtemplate".to_string(), None, Some(self.id.clone()));
+                return self.protocol.send_request(
+                    stream,
+                    "getjobtemplate".to_string(),
+                    None,
+                    Some(self.id.clone()),
+                );
             }
-            None => Err("No upstream connection".to_string())
+            None => Err("No upstream connection".to_string()),
         }
     }
 
@@ -150,9 +167,14 @@ impl Server {
             Some(ref mut stream) => {
                 let params_value = serde_json::to_value(solution).unwrap();
                 debug!(LOGGER, "{} - Submitting a share", self.id);
-                return self.protocol.send_request(stream, "submit".to_string(), Some(params_value), Some(worker_id.to_string()));
+                return self.protocol.send_request(
+                    stream,
+                    "submit".to_string(),
+                    Some(params_value),
+                    Some(worker_id.to_string()),
+                );
             }
-            None => Err("No upstream connection".to_string())
+            None => Err("No upstream connection".to_string()),
         }
     }
 
@@ -161,22 +183,32 @@ impl Server {
         match self.stream {
             Some(ref mut stream) => {
                 debug!(LOGGER, "{} - Sending Keepalive", self.id);
-                return self.protocol.send_request(stream, "keepalive".to_string(), None, Some(self.id.clone()));
+                return self.protocol.send_request(
+                    stream,
+                    "keepalive".to_string(),
+                    None,
+                    Some(self.id.clone()),
+                );
             }
-            None => Err("No upstream connection".to_string())
+            None => Err("No upstream connection".to_string()),
         }
     }
 
-
-    // 
+    //
     // Method to handle responses from the upstream stratum server
 
     /// Process Messages from the upstream stratum server
-    pub fn process_messages(&mut self, workers: &mut Arc<Mutex<Vec<Worker>>>) -> Result<String, RpcError> {
+    pub fn process_messages(
+        &mut self,
+        workers: &mut Arc<Mutex<Vec<Worker>>>,
+    ) -> Result<String, RpcError> {
         // XXX TODO: With some reasonable rate limiting (like N message per pass)
         return self.process_message(workers);
     }
-    pub fn process_message(&mut self, workers: &mut Arc<Mutex<Vec<Worker>>>) -> Result<String, RpcError> {
+    pub fn process_message(
+        &mut self,
+        workers: &mut Arc<Mutex<Vec<Worker>>>,
+    ) -> Result<String, RpcError> {
         // Read a message from the upstream
         // Handle the message
         // XXX TODO: Complete adding RPC error results (especially still syncing error)
@@ -186,74 +218,104 @@ impl Server {
                     Ok(rpc_msg) => {
                         match rpc_msg {
                             Some(message) => {
-                                trace!(LOGGER, "{} - Got Message from upstream Server: {:?}", self.id, message);
+                                trace!(
+                                    LOGGER,
+                                    "{} - Got Message from upstream Server: {:?}",
+                                    self.id,
+                                    message
+                                );
                                 let v: serde_json::Value = serde_json::from_str(&message).unwrap();
                                 // Is this a response or request?
                                 // XXX TODO: Is there a better way? Introspection? Check Value for field?
                                 if v["id"] == String::from("Stratum") {
                                     // this is a request
                                     let req: RpcRequest = serde_json::from_str(&message).unwrap();
-                                    trace!(LOGGER, "{} - Received request type: {}", self.id, req.method);
+                                    trace!(
+                                        LOGGER,
+                                        "{} - Received request type: {}",
+                                        self.id,
+                                        req.method
+                                    );
                                     match req.method.as_str() {
-					// The upstream stratum server has sent us a new job
+                                        // The upstream stratum server has sent us a new job
                                         "job" => {
                                             let job: JobTemplate = serde_json::from_value(req.params.unwrap()).unwrap();
-                                            debug!(LOGGER, "{} - Setting new job for height {}", self.id, job.height);
+                                            debug!(
+                                                LOGGER,
+                                                "{} - Setting new job for height {}",
+                                                self.id,
+                                                job.height
+                                            );
                                             self.job = job;
                                             return Ok(req.method.clone());
                                         }
                                         _ => {
                                             // XXX TODO: Unknown request type from the upstream stratum server - log it and continue
-                                            debug!(LOGGER, "{} - Pool server got unknown request type: {}", self.id, req.method.as_str());
-					    let e = RpcError {
-						code: -32601,
-						message: ["Method not found: ", &req.method].join("").to_string(),
-					    };
+                                            debug!(
+                                                LOGGER,
+                                                "{} - Pool server got unknown request type: {}",
+                                                self.id,
+                                                req.method.as_str()
+                                            );
+                                            let e = RpcError {
+                                                code: -32601,
+                                                message: ["Method not found: ", &req.method]
+                                                    .join("")
+                                                    .to_string(),
+                                            };
                                             return Err(e);
                                         }
                                     };
                                 } else {
                                     // This is a response from the upstream Grin Stratum Server
-				    // Here, we are accepting responses to requests we sent on behalf of a worker
-				    // The messages 'id' field contains the worker id this response is for
-				    // We need to process the responses the pool cares about,
-				    // The pool made this request and it will handle responses (so return the results back up)
+                                    // Here, we are accepting responses to requests we sent on behalf of a worker
+                                    // The messages 'id' field contains the worker id this response is for
+                                    // We need to process the responses the pool cares about,
+                                    // The pool made this request and it will handle responses (so return the results back up)
                                     let res: RpcResponse = serde_json::from_str(&message).unwrap();
                                     debug!(LOGGER, "{} - Received response {:?}", self.id, res);
-				    let mut workers_l = workers.lock().unwrap();
-				    // Get the worker index this response is for
-				    let w_id_usz: usize = match res.id.parse::<usize>() {
-					Ok(id) => id,
-					Err(err) => {
-	                                    let e = RpcError {
-	                                    	code: -1,
-	                                    	message: "Invalid Worker ID".to_string(),
-	                                    };
-	                                    return Err(e);
-					}
-				    };
-				    let w_id: usize = workers_l.iter().position(|ref i| i.id == w_id_usz).unwrap();
+                                    let mut workers_l = workers.lock().unwrap();
+                                    // Get the worker index this response is for
+                                    let w_id_usz: usize = match res.id.parse::<usize>() {
+                                        Ok(id) => id,
+                                        Err(err) => {
+                                            let e = RpcError {
+                                                code: -1,
+                                                message: "Invalid Worker ID".to_string(),
+                                            };
+                                            return Err(e);
+                                        }
+                                    };
+                                    let w_id: usize = workers_l
+                                        .iter()
+                                        .position(|ref i| i.id == w_id_usz)
+                                        .unwrap();
                                     match res.method.as_str() {
-					// This is a response to a getjobtemplate request made by the pool
+                                        // This is a response to a getjobtemplate request made by the pool
                                         "getjobtemplate" => {
                                             // Could be rpcerror - like "still syncing"
                                             match res.result {
                                                 Some(response) => {
                                                     let job: JobTemplate = serde_json::from_value(response).unwrap();
-                                                    debug!(LOGGER, "{} - Setting new job for height {}", self.id, job.height);
+                                                    debug!(
+                                                        LOGGER,
+                                                        "{} - Setting new job for height {}",
+                                                        self.id,
+                                                        job.height
+                                                    );
                                                     self.job = job;
                                                     return Ok(res.method.clone());
                                                 }
                                                 None => {
                                                     self.error = true;
-						    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
-						    // XXX TODO: Send response to the worker
+                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    // XXX TODO: Send response to the worker
                                                     return Err(e);
                                                 }
                                             }
                                         }
-					// This is a response to a login request the pool made to the grin node
-					// The pool made this request and it will handle responses
+                                        // This is a response to a login request the pool made to the grin node
+                                        // The pool made this request and it will handle responses
                                         "login" => {
                                             match res.result {
                                                 Some(response) => {
@@ -263,48 +325,58 @@ impl Server {
                                                 None => {
                                                     // Server did NOT accept our login
                                                     self.error = true;
-						    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
                                                     return Err(e);
                                                 }
                                             }
                                         }
-                                        "status" => { 
+                                        "status" => {
                                             // XXX TODO: Error checking
-                                            self.status = serde_json::from_value(res.result.unwrap()).unwrap();
+                                            self.status =
+                                                serde_json::from_value(res.result.unwrap())
+                                                    .unwrap();
                                             return Ok(res.method.clone());
                                         }
-                                        "submit" => { 
+                                        "submit" => {
                                             // XXX TODO: Error checking
-					    debug!(LOGGER, "w_id = {}", w_id);
+                                            debug!(LOGGER, "w_id = {}", w_id);
                                             match res.result {
-						Some(response) => {
-							// The share was accepted
-							debug!(LOGGER, "setting stats for worker id {:?}", res.id);
-							workers_l[w_id].status.accepted += 1;
-							debug!(LOGGER, "Server accepted our share");
-							workers_l[w_id].send_ok(res.method.clone());
-						}
-						None => {
-							// The share was not accepted, check RpcError.code for reason
-							// -32701: Node is syncing
-							// -32501: Share rejected due to low difficulty
-							// -32502: Failed to validate solution
-							// -32503: Solution submitted too late
-							// XXX TODO - handle more cases?
-							let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
-							match e.code {
-								-32503 => {
-								    workers_l[w_id].status.stale += 1;
-								    debug!(LOGGER, "Server rejected share as stale");
-								    
-								}
-								_ => {
-								    workers_l[w_id].status.rejected += 1;
-								    debug!(LOGGER, "Server rejected share as invalid");
-								}
-							}
-						}
-					    };
+                                                Some(response) => {
+                                                    // The share was accepted
+                                                    debug!(
+                                                        LOGGER,
+                                                        "setting stats for worker id {:?}", res.id
+                                                    );
+                                                    workers_l[w_id].status.accepted += 1;
+                                                    debug!(LOGGER, "Server accepted our share");
+                                                    workers_l[w_id].send_ok(res.method.clone());
+                                                }
+                                                None => {
+                                                    // The share was not accepted, check RpcError.code for reason
+                                                    // -32701: Node is syncing
+                                                    // -32501: Share rejected due to low difficulty
+                                                    // -32502: Failed to validate solution
+                                                    // -32503: Solution submitted too late
+                                                    // XXX TODO - handle more cases?
+                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    match e.code {
+                                                        -32503 => {
+                                                            workers_l[w_id].status.stale += 1;
+                                                            debug!(
+                                                                LOGGER,
+                                                                "Server rejected share as stale"
+                                                            );
+                                                        }
+                                                        _ => {
+                                                            workers_l[w_id].status.rejected += 1;
+                                                            debug!(
+                                                                LOGGER,
+                                                                "Server rejected share as invalid"
+                                                            );
+                                                        }
+                                                    }
+                                                }
+                                            };
                                             return Ok(res.method.clone());
                                         }
                                         "keepalive" => {
@@ -315,7 +387,12 @@ impl Server {
                                         }
                                         _ => {
                                             // XXX TODO: Unknown reponse type - log it and continue
-                                            debug!(LOGGER, "{} - Got unknown response type: {}", self.id, res.method.as_str());
+                                            debug!(
+                                                LOGGER,
+                                                "{} - Got unknown response type: {}",
+                                                self.id,
+                                                res.method.as_str()
+                                            );
                                             let e = RpcError {
                                                 code: -32600,
                                                 message: "Invalid Response".to_string(),
@@ -325,7 +402,9 @@ impl Server {
                                     }
                                 }
                             }
-                            None => { return Ok("None".to_string()); } // Not an error, just no messages for us right now
+                            None => {
+                                return Ok("None".to_string());
+                            } // Not an error, just no messages for us right now
                         }
                     }
                     Err(e) => {
@@ -344,7 +423,7 @@ impl Server {
                     message: "No upstream connection".to_string(),
                 };
                 return Err(e);
-	    }
+            }
         }
         //return Ok("unknown".to_string());
     }

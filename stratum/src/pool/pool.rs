@@ -18,17 +18,22 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use std::{thread, time};
 
+use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
-use pool::proto::{JobTemplate, SubmitParams, RpcError};
+use pool::proto::{JobTemplate, RpcError, SubmitParams};
 use pool::server::Server;
 use pool::worker::Worker;
-use pool::config::{Config, PoolConfig, NodeConfig, WorkerConfig};
 
 // ----------------------------------------
 // Worker Connection Thread Function
 
 // Run in a thread. Adds new connections to the workers list
-fn accept_workers( id: String, address: String, difficulty: u64, workers: &mut Arc<Mutex<Vec<Worker>>>) {
+fn accept_workers(
+    id: String,
+    address: String,
+    difficulty: u64,
+    workers: &mut Arc<Mutex<Vec<Worker>>>,
+) {
     let listener = TcpListener::bind(address).expect("Failed to bind to listen address");
     let mut worker_id: usize = 0;
     let banned: HashMap<SocketAddr, Instant> = HashMap::new();
@@ -95,15 +100,13 @@ impl Pool {
 
     /// Run the Pool
     pub fn run(&mut self) {
-
         // Start a thread for each listen port to accept new worker connections
-	for port_difficulty in &self.config.workers.port_difficulty {
+        for port_difficulty in &self.config.workers.port_difficulty {
             let mut workers_th = self.workers.clone();
             let id_th = self.id.clone();
-	    let address_th = self.config.workers.listen_address.clone() +
-                             ":" +
-                             &port_difficulty.port.to_string();
-	    let difficulty_th = port_difficulty.difficulty;
+            let address_th = self.config.workers.listen_address.clone() + ":"
+                + &port_difficulty.port.to_string();
+            let difficulty_th = port_difficulty.difficulty;
             let _listener_th = thread::spawn(move || {
                 accept_workers(id_th, address_th, difficulty_th, &mut workers_th);
             });
@@ -118,7 +121,10 @@ impl Pool {
             match self.server.connect() {
                 Ok(_) => {}
                 Err(e) => {
-                    error!(LOGGER, "{} - Unable to connect to upstream server: {}", self.id, e);
+                    error!(
+                        LOGGER,
+                        "{} - Unable to connect to upstream server: {}", self.id, e
+                    );
                     thread::sleep(time::Duration::from_secs(1));
                     continue;
                 }
@@ -156,10 +162,13 @@ impl Pool {
         match self.server.process_messages(&mut self.workers) {
             Ok(_) => {
                 return Ok(());
-            },
+            }
             Err(e) => {
                 // In most cases just log an error and continue
-                error!(LOGGER, "{} - Error processing upstream message: {:?}", self.id, e);
+                error!(
+                    LOGGER,
+                    "{} - Error processing upstream message: {:?}", self.id, e
+                );
                 // There are also special case(s) where we want to do something for a specific
                 // error
                 if e.message.contains("Node is syncing") {
@@ -203,9 +212,9 @@ impl Pool {
         // https://github.com/mimblewimble/grin/blob/2fa32d15ce5031aff9d3366b49c3aaca40adbdce/chain/src/pipe.rs#L280
         // XXX TODO: This
         // if header.pow.to_difficulty() < target_difficulty {
-		//	return Err(Error::DifficultyTooLow);
-		// }
-	// XXX Currently share difficulty is checked by the grin stratum server, and logged in the grin.log
+        //	return Err(Error::DifficultyTooLow);
+        // }
+        // XXX Currently share difficulty is checked by the grin stratum server, and logged in the grin.log
         return 0;
     }
 
@@ -233,24 +242,24 @@ impl Pool {
                         } else {
                             self.duplicates.insert(share.nonce, worker.id());
                         }
-			// XXX TODO:  
-			// Verify the timestamp matches what we sent so we know
-			//   this share comes from the job we sent
-// XXX TO DO This I need to deserialize the block header
-//			if share.pre_pow != self.current_block {
-//			    debug!(
-//                                LOGGER,
-//                                "{} - Rejected corrupt share from worker {} with login {}",
-//                                self.id,
-//                                worker.id(),
-//                                worker.login(),
-//                            );
-//                            worker.status.rejected += 1; 
-//                            worker.block_status.rejected += 1;
-//                            continue; // Dont process this share anymore
-//                        }
-			// We dont know the difficulty so we cant check that here
-			// Send it to the upstream server for further verification and logging
+                        // XXX TODO:
+                        // Verify the timestamp matches what we sent so we know
+                        //   this share comes from the job we sent
+                        // XXX TO DO This I need to deserialize the block header
+                        //			if share.pre_pow != self.current_block {
+                        //			    debug!(
+                        //                                LOGGER,
+                        //                                "{} - Rejected corrupt share from worker {} with login {}",
+                        //                                self.id,
+                        //                                worker.id(),
+                        //                                worker.login(),
+                        //                            );
+                        //                            worker.status.rejected += 1;
+                        //                            worker.block_status.rejected += 1;
+                        //                            continue; // Dont process this share anymore
+                        //                        }
+                        // We dont know the difficulty so we cant check that here
+                        // Send it to the upstream server for further verification and logging
                         self.server.submit_share(&share.clone(), worker.id());
                         warn!(LOGGER, "{} - Got share at height {} with nonce {} with difficulty {} from worker {}",
                                 self.id,
@@ -273,9 +282,9 @@ impl Pool {
             self.id,
             workers_l.len()
         );
-// XXX TODO: To do this I need to deserialize the block header
-// XXX TODO: need to randomize the nonce (just in case a miner forgets)
-// XXX TODO: need to set a unique timestamp and record it in the worker struct
+        // XXX TODO: To do this I need to deserialize the block header
+        // XXX TODO: need to randomize the nonce (just in case a miner forgets)
+        // XXX TODO: need to set a unique timestamp and record it in the worker struct
         for num in 0..workers_l.len() {
             workers_l[num].set_difficulty(1);
             workers_l[num].set_height(self.job.height);
