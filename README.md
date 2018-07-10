@@ -1,12 +1,12 @@
 # grin-pool
 
 ## What it is:
-A grin mining pool
+A [grin](https://github.com/mimblewimble/grin) mining pool
 
-### The archittecture:
+### The architecture:
 * Stateless Microservices
 
-### The compoents:
+### The components:
 * Pool Stratum Proxy: Rust
 * Pool data processing jobs: Python (rust?)
 * Database: MariaDB (percona cluster?)
