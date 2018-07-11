@@ -1,48 +1,48 @@
-FROM ubuntu:17.10
+# Multistage docker build, requires docker 17.05
 
-# Reference: https://howtomine.co/2018/01/11/how-to-mine-grin-testnet/
+# builder stage
+FROM rust:1.26 as builder
 
-RUN set -e && \
-  apt-get update -q && \
-  apt-get install -q -y --no-install-recommends ca-certificates curl && \
-  apt-get install -y software-properties-common && \
-  apt-get install -y build-essential python python-pip g++ git cmake libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils clang-3.8 cargo
+RUN set -ex && \
+    apt-get update && \
+    apt-get --no-install-recommends --yes install \
+        clang \
+        libclang-dev \
+        llvm-dev \
+        libncurses5 \
+        libncursesw5 \
+        cmake \
+        git
 
-#RUN set -e && \
-#    apt-get install -q -y librocksdb-dev
-RUN apt-get install -q -y  libncurses5-dev libncursesw5-dev \
-                           net-tools vim psmisc && \
-    pip install python-dateutil && \
-    pip install pytz
+WORKDIR /usr/src/grin
 
-ENV PATH=/root/.cargo/bin:${PATH}
-ENV LANG=C.UTF-8
+# Copying Grin
+RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; git pull;
 
-# Install Rust
-RUN curl https://sh.rustup.rs -sSf > irsut.sh && \
-    sh ./irsut.sh -y && \
-    rustc -V && \
-    rustup component add --toolchain stable rustfmt-preview
+# Building Grin
+RUN cargo build --release
 
-RUN cd / && \
-    git clone https://github.com/mimblewimble/grin.git && \
-    cd /grin && \
-    git checkout master && \
-    git pull && \
-    cargo build --release
+# runtime stage
+FROM debian:9.4
 
-RUN touch REBUILD_x
-RUN cd /grin && \
-    git checkout master && \
-    git pull && \
-    cargo build --release
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales
 
-ENV PATH=/grin/target/release:/grin/target/debug:${PATH}
-ENV TERM=vt100
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales && \
+    update-locale LANG=en_US.UTF-8
 
-WORKDIR /grin
+ENV LANG en_US.UTF-8
 
+COPY --from=builder /usr/src/grin/target/release/grin /usr/local/bin/grin
+COPY --from=builder /usr/src/grin/grin.toml /usr/src/grin/grin.toml
+
+WORKDIR /usr/src/grin
+
+EXPOSE 13413
+EXPOSE 13414
+EXPOSE 13415
+EXPOSE 13416
+
+ENTRYPOINT ["grin", "server", "run"]
 COPY run.sh /
-CMD ["/run.sh"]
-
-
+ENTRYPOINT ["/run.sh"]

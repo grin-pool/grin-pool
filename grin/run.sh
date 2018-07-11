@@ -1,9 +1,7 @@
 #!/bin/bash
 
-killall grin
-
 # /server can be a mounted or shared filesystem
-cp /grin/grin.toml /server/
+cp /usr/src/grin/grin.toml /server/grin.toml
 cd /server
 
 sed -i 's/^archive_mode = .*$/archive_mode = true/' grin.toml
