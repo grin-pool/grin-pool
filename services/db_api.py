@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Database Schema and API
 
 import mysql.connector
@@ -22,24 +21,24 @@ from datetime import datetime
 import uuid
 import lib
 
+
 class db_api:
     TABLES = {}
-    TABLES['blocks'] = (
-        "CREATE TABLE `blocks` ("
-        "  `hash` varchar(64) NOT NULL,"
-        "  `version` smallint NOT NULL,"
-        "  `height` bigint NOT NULL,"
-        "  `previous` varchar(64) NOT NULL,"
-        "  `timestamp` DATETIME NOT NULL,"
-        "  `output_root` varchar(64) NOT NULL,"
-        "  `range_proof_root` varchar(64) NOT NULL,"
-        "  `kernel_root` varchar(64) NOT NULL,"
-        "  `nonce` varchar(20) NOT NULL,"
-        "  `total_difficulty` bigint NOT NULL,"
-        "  `total_kernel_offset` varchar(64) NOT NULL,"
-        "  `state` varchar(64) NOT NULL,"
-        "  PRIMARY KEY (`height`), UNIQUE KEY `hash` (`hash`)"
-        ") ENGINE=InnoDB")
+    TABLES['blocks'] = ("CREATE TABLE `blocks` ("
+                        "  `hash` varchar(64) NOT NULL,"
+                        "  `version` smallint NOT NULL,"
+                        "  `height` bigint NOT NULL,"
+                        "  `previous` varchar(64) NOT NULL,"
+                        "  `timestamp` DATETIME NOT NULL,"
+                        "  `output_root` varchar(64) NOT NULL,"
+                        "  `range_proof_root` varchar(64) NOT NULL,"
+                        "  `kernel_root` varchar(64) NOT NULL,"
+                        "  `nonce` varchar(20) NOT NULL,"
+                        "  `total_difficulty` bigint NOT NULL,"
+                        "  `total_kernel_offset` varchar(64) NOT NULL,"
+                        "  `state` varchar(64) NOT NULL,"
+                        "  PRIMARY KEY (`height`), UNIQUE KEY `hash` (`hash`)"
+                        ") ENGINE=InnoDB")
     TABLES['pool_blocks'] = (
         "CREATE TABLE `pool_blocks` ("
         "  `hash` varchar(64) NOT NULL,"
@@ -49,67 +48,62 @@ class db_api:
         "  `net_difficulty` bigint NOT NULL,"
         "  `timestamp` DATETIME NOT NULL,"
         "  `found_by` varchar(1024) NOT NULL,"
-#	"  `reward` smallint NOT NULL," <--- ADD THIS TODO XXX
+        #	"  `reward` smallint NOT NULL," <--- ADD THIS TODO XXX
         "  `state` varchar(20) NOT NULL,"
         "  PRIMARY KEY (`height`), UNIQUE KEY `nonce` (`nonce`)"
         ") ENGINE=InnoDB")
-    TABLES['pool_shares'] = (
-        "CREATE TABLE `pool_shares` ("
-        "  `height` bigint NOT NULL,"
-        "  `nonce` varchar(20) NOT NULL,"
-        "  `worker_difficulty` bigint NOT NULL,"
-        "  `timestamp` DATETIME NOT NULL,"
-        "  `found_by` varchar(1024) NOT NULL,"
-        "  `validated` boolean NOT NULL,"
-        "  `is_valid` boolean,"
-        "  `invalid_reason` varchar(1024),"
-        "  PRIMARY KEY (`nonce`)"
-        ") ENGINE=InnoDB")
-    TABLES['grin_shares'] = (
-        "CREATE TABLE `grin_shares` ("
-        "  `hash` varchar(64) NOT NULL,"
-        "  `height` bigint NOT NULL,"
-        "  `nonce` varchar(20) NOT NULL,"
-        "  `actual_difficulty` bigint NOT NULL,"
-        "  `net_difficulty` bigint NOT NULL,"
-        "  `timestamp` DATETIME NOT NULL,"
-        "  `found_by` varchar(1024) NOT NULL,"
-        "  `is_solution` boolean NOT NULL,"
-        "  PRIMARY KEY (`nonce`)"
-        ") ENGINE=InnoDB")
-    TABLES['payments'] = (
-        "CREATE TABLE `payments` ("
-	"  `id` bigint NOT NULL AUTO_INCREMENT,"
-        "  `height` bigint NOT NULL,"
-        "  `address` varchar(1024) NOT NULL,"
-        "  `reward` FLOAT NOT NULL,"
-        "  PRIMARY KEY (`id`)"
-        ") ENGINE=InnoDB")
-    TABLES['last_run'] = (
-        "CREATE TABLE `last_run` ("
-	"  `process` varchar(64) NOT NULL,"
-        "  `timestamp` varchar(1024) NOT NULL,"
-        "  PRIMARY KEY (`process`)"
-        ") ENGINE=InnoDB")
-    TABLES['pool_utxo'] = (
-        "CREATE TABLE `pool_utxo` ("
-	"  `id` CHAR(36) NOT NULL,"
-        "  `address` varchar(1024) NOT NULL,"
-        "  `amount` FLOAT NOT NULL,"
-        "  PRIMARY KEY (`id`)"
-        ") ENGINE=InnoDB")
-
+    TABLES['pool_shares'] = ("CREATE TABLE `pool_shares` ("
+                             "  `height` bigint NOT NULL,"
+                             "  `nonce` varchar(20) NOT NULL,"
+                             "  `worker_difficulty` bigint NOT NULL,"
+                             "  `timestamp` DATETIME NOT NULL,"
+                             "  `found_by` varchar(1024) NOT NULL,"
+                             "  `validated` boolean NOT NULL,"
+                             "  `is_valid` boolean,"
+                             "  `invalid_reason` varchar(1024),"
+                             "  PRIMARY KEY (`nonce`)"
+                             ") ENGINE=InnoDB")
+    TABLES['grin_shares'] = ("CREATE TABLE `grin_shares` ("
+                             "  `hash` varchar(64) NOT NULL,"
+                             "  `height` bigint NOT NULL,"
+                             "  `nonce` varchar(20) NOT NULL,"
+                             "  `actual_difficulty` bigint NOT NULL,"
+                             "  `net_difficulty` bigint NOT NULL,"
+                             "  `timestamp` DATETIME NOT NULL,"
+                             "  `found_by` varchar(1024) NOT NULL,"
+                             "  `is_solution` boolean NOT NULL,"
+                             "  PRIMARY KEY (`nonce`)"
+                             ") ENGINE=InnoDB")
+    TABLES['payments'] = ("CREATE TABLE `payments` ("
+                          "  `id` bigint NOT NULL AUTO_INCREMENT,"
+                          "  `height` bigint NOT NULL,"
+                          "  `address` varchar(1024) NOT NULL,"
+                          "  `reward` FLOAT NOT NULL,"
+                          "  PRIMARY KEY (`id`)"
+                          ") ENGINE=InnoDB")
+    TABLES['last_run'] = ("CREATE TABLE `last_run` ("
+                          "  `process` varchar(64) NOT NULL,"
+                          "  `timestamp` varchar(1024) NOT NULL,"
+                          "  PRIMARY KEY (`process`)"
+                          ") ENGINE=InnoDB")
+    TABLES['pool_utxo'] = ("CREATE TABLE `pool_utxo` ("
+                           "  `id` CHAR(36) NOT NULL,"
+                           "  `address` varchar(1024) NOT NULL,"
+                           "  `amount` FLOAT NOT NULL,"
+                           "  PRIMARY KEY (`id`)"
+                           ") ENGINE=InnoDB")
 
     def __init__(self):
         config = lib.get_config()
         my_host = config["db"]["address"]
-	my_port = config["db"]["port"]
-	my_user = config["db"]["user"]
-	my_pass = config["db"]["password"]
-	my_dbname = config["db"]["db_name"]
+        my_port = config["db"]["port"]
+        my_user = config["db"]["user"]
+        my_pass = config["db"]["password"]
+        my_dbname = config["db"]["db_name"]
         # Connect to mysql server
         try:
-            self.cnx = mysql.connector.connect(host=my_host, port=my_port, user=my_user, password=my_pass)
+            self.cnx = mysql.connector.connect(
+                host=my_host, port=my_port, user=my_user, password=my_pass)
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 print("Something is wrong with your user name or password")
@@ -137,13 +131,14 @@ class db_api:
     def create_database(self, cursor):
         try:
             cursor.execute(
-                "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(my_dbname))
+                "CREATE DATABASE {} DEFAULT CHARACTER SET 'utf8'".format(
+                    my_dbname))
         except mysql.connector.Error as err:
             print("Failed creating database: {}".format(err))
             exit(1)
-    
+
     def create_tables(self, cursor):
-        for name, ddl in self.TABLES.iteritems():
+        for name, ddl in self.TABLES.items():
             try:
                 print("Creating table {}: ".format(name))
                 cursor.execute(ddl)
@@ -160,12 +155,12 @@ class db_api:
     SQL_add_block = (
         "INSERT INTO blocks "
         "(hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, total_difficulty, total_kernel_offset, state) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    )
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+
     def add_blocks(self, blocks, ignore_dup=False):
         cursor = self.cnx.cursor()
         for block in blocks:
-            block = block + ("new",)
+            block = block + ("new", )
             try:
                 cursor.execute(self.SQL_add_block, block)
             except mysql.connector.IntegrityError:
@@ -173,45 +168,54 @@ class db_api:
                     raise
         cursor.close()
         self.cnx.commit()
+
     #
     # Read Blocks from the database
     SQL_get_blocks_by_height = (
         "SELECT hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, total_difficulty, total_kernel_offset, state FROM blocks "
-        "WHERE height IN (%s)"
-    )
+        "WHERE height IN (%s)")
+
     def get_blocks_by_height(self, requested):
         result = []
         cursor = self.cnx.cursor()
         cursor.execute(self.SQL_get_blocks_by_height, requested)
-        for(bhash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, total_difficulty, total_kernel_offset, state) in cursor:
-            res = (bhash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, total_difficulty, total_kernel_offset, state)
+        for (bhash, version, height, previous, timestamp, output_root,
+             range_proof_root, kernel_root, nonce, total_difficulty,
+             total_kernel_offset, state) in cursor:
+            res = (bhash, version, height, previous, timestamp, output_root,
+                   range_proof_root, kernel_root, nonce, total_difficulty,
+                   total_kernel_offset, state)
             result.append(res)
         cursor.close()
         self.cnx.commit()
         return result
+
     #
     # Update Blocks
-    SQL_set_block_state = (
-        "UPDATE blocks "
-        "SET state = (%s) "
-        "WHERE height = (%s)"
-    )
+    SQL_set_block_state = ("UPDATE blocks "
+                           "SET state = (%s) "
+                           "WHERE height = (%s)")
+
     def set_block_state(self, state, requested):
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_set_block_state, (state, requested,))
+        cursor.execute(self.SQL_set_block_state, (
+            state,
+            requested,
+        ))
         self.cnx.commit()
         cursor.close()
+
     #
     # Add PoolBlocks to the database
     SQL_add_poolblock = (
         "INSERT INTO pool_blocks "
         "(hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    )
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+
     def add_poolblocks(self, poolblocks, ignore_dup=False):
         cursor = self.cnx.cursor()
         for poolblock in poolblocks:
-            poolblock = poolblock + ("new",)
+            poolblock = poolblock + ("new", )
             try:
                 cursor.execute(self.SQL_add_poolblock, poolblock)
             except mysql.connector.IntegrityError:
@@ -219,65 +223,77 @@ class db_api:
                     raise
         cursor.close()
         self.cnx.commit()
+
     #
     # Read PoolBlocks from the database
     SQL_get_poolblocks_by_height = (
         "SELECT hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state FROM pool_blocks "
-        "WHERE height IN (%s)"
-    )
+        "WHERE height IN (%s)")
+
     def get_poolblocks_by_height(self, requested):
         result = []
         cursor = self.cnx.cursor()
         cursor.execute(self.SQL_get_poolblocks_by_height, requested)
-        for(hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state) in cursor:
-            res = (hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state)
+        for (hash, height, nonce, actual_difficulty, net_difficulty, timestamp,
+             found_by, state) in cursor:
+            res = (hash, height, nonce, actual_difficulty, net_difficulty,
+                   timestamp, found_by, state)
             result.append(res)
         cursor.close()
         self.cnx.commit()
         return result
+
     SQL_get_poolblocks_by_state = (
         "SELECT hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state FROM pool_blocks "
-        "WHERE state LIKE (%s)"
-    )
+        "WHERE state LIKE (%s)")
+
     def get_poolblocks_by_state(self, requested):
         result = []
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_get_poolblocks_by_state, (requested,))
-        for(hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state) in cursor:
-            res = (hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, state)
+        cursor.execute(self.SQL_get_poolblocks_by_state, (requested, ))
+        for (hash, height, nonce, actual_difficulty, net_difficulty, timestamp,
+             found_by, state) in cursor:
+            res = (hash, height, nonce, actual_difficulty, net_difficulty,
+                   timestamp, found_by, state)
             result.append(res)
         cursor.close()
         self.cnx.commit()
         return result
+
     #
     # Update PoolBlocks
-    SQL_set_poolblock_state = (
-        "UPDATE pool_blocks "
-        "SET state = (%s) "
-        "WHERE height = (%s)"
-    )
+    SQL_set_poolblock_state = ("UPDATE pool_blocks "
+                               "SET state = (%s) "
+                               "WHERE height = (%s)")
+
     def set_poolblock_state(self, state, requested):
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_set_poolblock_state, (state, requested,))
+        cursor.execute(self.SQL_set_poolblock_state, (
+            state,
+            requested,
+        ))
         self.cnx.commit()
         cursor.close()
-
 
     #
     # Add Pool-Reported Shares to the database
     SQL_add_poolshares = (
         "INSERT INTO pool_shares "
         "(height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    )
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+
     def add_poolshares(self, shares, ignore_dup=False):
-	# A few default values
+        # A few default values
         cursor = self.cnx.cursor()
-	invalid_reason = "NULL"
-	is_valid = "NULL"
-	validated = "False"
+        invalid_reason = "NULL"
+        is_valid = "NULL"
+        validated = "False"
         for share in shares:
-            share = share + (validated, is_valid, invalid_reason,)
+            share = share + (
+                validated,
+                is_valid,
+                invalid_reason,
+            )
             try:
                 cursor.execute(self.SQL_add_poolshares, share)
             except mysql.connector.IntegrityError:
@@ -285,80 +301,101 @@ class db_api:
                     raise
         cursor.close()
         self.cnx.commit()
+
     #
     # Get all pool shares not yet [in]validated
     SQL_get_unvalidated_poolshares = (
         "SELECT height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason "
-	"FROM pool_shares "
-        "WHERE validated = False "
-    )
+        "FROM pool_shares "
+        "WHERE validated = False ")
+
     def get_unvalidated_poolshares(self):
         result = []
         cursor = self.cnx.cursor()
         cursor.execute(self.SQL_get_unvalidated_poolshares)
-        for(height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason) in cursor:
-            res = (height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason,)
+        for (height, nonce, worker_difficulty, timestamp, found_by, validated,
+             is_valid, invalid_reason) in cursor:
+            res = (
+                height,
+                nonce,
+                worker_difficulty,
+                timestamp,
+                found_by,
+                validated,
+                is_valid,
+                invalid_reason,
+            )
             result.append(res)
         cursor.close()
         self.cnx.commit()
         return result
+
     #
     # [In]Validate a PoolShare
-    SQL_set_poolshare_validation = (
-        "UPDATE pool_shares "
-        "SET validated = True, "
-        "    is_valid = (%s), "
-        "    invalid_reason = (%s) "
-        "WHERE nonce = %s"
-    )
+    SQL_set_poolshare_validation = ("UPDATE pool_shares "
+                                    "SET validated = True, "
+                                    "    is_valid = (%s), "
+                                    "    invalid_reason = (%s) "
+                                    "WHERE nonce = %s")
+
     def set_poolshare_validation(self, is_valid, invalid_reason, nonce):
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_set_poolshare_validation, (is_valid, invalid_reason, nonce))
+        cursor.execute(self.SQL_set_poolshare_validation,
+                       (is_valid, invalid_reason, nonce))
         self.cnx.commit()
         cursor.close()
+
     #
     # Get valid pool shares by height
     SQL_get_valid_poolshares_by_height = (
-	"SELECT height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason "
-	"FROM pool_shares "
-	"WHERE validated = True "
-	"AND is_valid = True "
+        "SELECT height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason "
+        "FROM pool_shares "
+        "WHERE validated = True "
+        "AND is_valid = True "
         "AND height = %s "
-	"ORDER BY height"
-    )
+        "ORDER BY height")
+
     def get_valid_poolshares_by_height(self, requested):
-	result = []
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_get_valid_poolshares_by_height, (requested,))
-	for(height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason) in cursor:
-            res = (height, nonce, worker_difficulty, timestamp, found_by, validated, is_valid, invalid_reason,)
+        result = []
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_get_valid_poolshares_by_height, (requested, ))
+        for (height, nonce, worker_difficulty, timestamp, found_by, validated,
+             is_valid, invalid_reason) in cursor:
+            res = (
+                height,
+                nonce,
+                worker_difficulty,
+                timestamp,
+                found_by,
+                validated,
+                is_valid,
+                invalid_reason,
+            )
             result.append(res)
         cursor.close()
         self.cnx.commit()
         return result
+
     #
     # Remove Pool-Reported Shares from the database
-    SQL_remove_poolshares_to_height = (
-        "DELETE FROM pool_shares "
-        "WHERE height <= %s"
-    )
+    SQL_remove_poolshares_to_height = ("DELETE FROM pool_shares "
+                                       "WHERE height <= %s")
+
     def remove_poolshares_to_height(self, requested):
         result = []
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_remove_poolshares_to_height, (requested,))
+        cursor.execute(self.SQL_remove_poolshares_to_height, (requested, ))
         cursor.close()
         self.cnx.commit()
         return result
-
-
 
     #
     # Add Grin-Reported Shares to the database
     SQL_add_grinshares = (
         "INSERT INTO grin_shares "
         "(hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, is_solution) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    )
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
+
     def add_grinshares(self, shares, ignore_dup=False):
         cursor = self.cnx.cursor()
         for share in shares:
@@ -369,145 +406,151 @@ class db_api:
                     raise
         cursor.close()
         self.cnx.commit()
+
     #
     # Read Grin-Reported Shares from the database
-    SQL_get_grinshares_by_nonce = (
-        "SELECT * FROM grin_shares "
-        "WHERE nonce IN (%s)"
-    )
+    SQL_get_grinshares_by_nonce = ("SELECT * FROM grin_shares "
+                                   "WHERE nonce IN (%s)")
+
     def get_grin_share_by_nonce(self, requested):
         result = None
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_get_grinshares_by_nonce, (requested,))
-        for(hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, is_solution) in cursor:
-            res = (hash, height, nonce, actual_difficulty, net_difficulty, timestamp, found_by, is_solution)
+        cursor.execute(self.SQL_get_grinshares_by_nonce, (requested, ))
+        for (hash, height, nonce, actual_difficulty, net_difficulty, timestamp,
+             found_by, is_solution) in cursor:
+            res = (hash, height, nonce, actual_difficulty, net_difficulty,
+                   timestamp, found_by, is_solution)
             result = res
         cursor.close()
         self.cnx.commit()
         return result
+
     #
     # Remove Grin-Reported Shares from the database
-    SQL_remove_grinshares_to_height = (
-        "DELETE FROM grin_shares "
-        "WHERE height <= %s"
-    )
+    SQL_remove_grinshares_to_height = ("DELETE FROM grin_shares "
+                                       "WHERE height <= %s")
+
     def remove_grinshares_to_height(self, requested):
         result = []
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_remove_grinshares_to_height, (requested,))
+        cursor.execute(self.SQL_remove_grinshares_to_height, (requested, ))
         cursor.close()
         self.cnx.commit()
         return result
 
-
     #
     # Set "last run" timestamp
-    SQL_set_last_run = (
-        "INSERT INTO last_run "
-        "VALUES (%s, %s) "
-        "ON DUPLICATE KEY UPDATE timestamp=%s"
-    )
+    SQL_set_last_run = ("INSERT INTO last_run "
+                        "VALUES (%s, %s) "
+                        "ON DUPLICATE KEY UPDATE timestamp=%s")
+
     def set_last_run(self, pr, ts):
         cursor = self.cnx.cursor()
-        cursor.execute(self.SQL_set_last_run, (pr, ts, ts,))
+        cursor.execute(self.SQL_set_last_run, (
+            pr,
+            ts,
+            ts,
+        ))
         cursor.close()
         self.cnx.commit()
 
     #
     # Create payment record for a worker
-    SQL_create_payments = (
-	"INSERT INTO payments "
-	"(height, address, reward)"
-        "VALUES (%s, %s, %s)"
-    )
+    SQL_create_payments = ("INSERT INTO payments "
+                           "(height, address, reward)"
+                           "VALUES (%s, %s, %s)")
+
     def create_payments(self, height, address, reward):
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_create_payments, (height, address, reward,))
-	cursor.close()
-        self.cnx.commit()
-    #
-    # Get all pending payment records
-    SQL_get_payments = (
-	"SELECT * FROM payments "
-        "ORDER BY id "
-    )
-    def get_payments(self):
-        result = []
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_get_payments, )
-	for(p_id, height, address, amount) in cursor:
-            res = (p_id, height, address, amount,)
-            result.append(res)
-	cursor.close()
-        self.cnx.commit()
-	return result;
-    #
-    # Delete payment records from the database
-    SQL_remove_payment = (
-	"DELETE FROM payments "
-        "WHERE id = %s"
-    )
-    def remove_payment(self, requested):
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_remove_payment, (requested,))
-	cursor.close()
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_create_payments, (
+            height,
+            address,
+            reward,
+        ))
+        cursor.close()
         self.cnx.commit()
 
+    #
+    # Get all pending payment records
+    SQL_get_payments = ("SELECT * FROM payments " "ORDER BY id ")
+
+    def get_payments(self):
+        result = []
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_get_payments, )
+        for (p_id, height, address, amount) in cursor:
+            res = (
+                p_id,
+                height,
+                address,
+                amount,
+            )
+            result.append(res)
+        cursor.close()
+        self.cnx.commit()
+        return result
+
+    #
+    # Delete payment records from the database
+    SQL_remove_payment = ("DELETE FROM payments " "WHERE id = %s")
+
+    def remove_payment(self, requested):
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_remove_payment, (requested, ))
+        cursor.close()
+        self.cnx.commit()
 
     #
     # Create or Add to worker UTXO
-    SQL_create_or_add_utxo = (
-	"INSERT INTO pool_utxo "
-	"(id, address, amount)"
-        "VALUES (%s, %s, %s) "
-	"ON DUPLICATE KEY UPDATE amount=amount+%s"
-    )
+    SQL_create_or_add_utxo = ("INSERT INTO pool_utxo "
+                              "(id, address, amount)"
+                              "VALUES (%s, %s, %s) "
+                              "ON DUPLICATE KEY UPDATE amount=amount+%s")
+
     def create_or_add_utxo(self, address, amount):
-	p_id = str(uuid.uuid3(uuid.NAMESPACE_URL, str(address)))
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_create_or_add_utxo, (p_id, address, amount, amount,))
-	cursor.close()
+        p_id = str(uuid.uuid3(uuid.NAMESPACE_URL, str(address)))
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_create_or_add_utxo, (
+            p_id,
+            address,
+            amount,
+            amount,
+        ))
+        cursor.close()
         self.cnx.commit()
+
     #
     # Get UTXO records from the DB
-    SQL_get_utxo = (
-	"SELECT * FROM pool_utxo "
-	"WHERE amount >= %s "
-        "ORDER BY amount "
-    )
+    SQL_get_utxo = ("SELECT * FROM pool_utxo "
+                    "WHERE amount >= %s "
+                    "ORDER BY amount ")
+
     def get_utxo(self, requested):
-	result = []
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_get_utxo, (requested,))
-	for(u_id, u_address, u_amount) in cursor:
-	    res = (u_id, u_address, u_amount)
-	    result.append(res)
-	cursor.close()
+        result = []
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_get_utxo, (requested, ))
+        for (u_id, u_address, u_amount) in cursor:
+            res = (u_id, u_address, u_amount)
+            result.append(res)
+        cursor.close()
         self.cnx.commit()
-	return result;
+        return result
+
     #
     # Delete utxo records from the database
-    SQL_remove_utxo = (
-	"DELETE FROM pool_utxo "
-        "WHERE id = %s"
-    )
+    SQL_remove_utxo = ("DELETE FROM pool_utxo " "WHERE id = %s")
+
     def remove_utxo(self, requested):
-	cursor = self.cnx.cursor()
-	cursor.execute(self.SQL_remove_utxo, (requested,))
-	cursor.close()
+        cursor = self.cnx.cursor()
+        cursor.execute(self.SQL_remove_utxo, (requested, ))
+        cursor.close()
         self.cnx.commit()
-
-    
-
-
-
 
 
 # ----------------
 # Random helper functions - move this to lib.py
 def to_sqltimestamp(s_timestamp):
-	year = str(datetime.today().year)
-	tm = datetime.strptime(s_timestamp, '%b %d %H:%M:%S.%f')
-	sql_timestamp = year + "-" + tm.strftime("%m-%d %H:%M:%S")
-	return sql_timestamp
-
+    year = str(datetime.today().year)
+    tm = datetime.strptime(s_timestamp, '%b %d %H:%M:%S.%f')
+    sql_timestamp = year + "-" + tm.strftime("%m-%d %H:%M:%S")
+    return sql_timestamp

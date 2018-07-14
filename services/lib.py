@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 #
 # Common Routines for Grin-Pool Services
 #
@@ -22,8 +21,8 @@ import sys
 import time
 import configparser
 
+
 def get_config():
     config = configparser.ConfigParser()
     config.read('/services/config.ini')
     return config
-

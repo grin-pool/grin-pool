@@ -8,9 +8,9 @@ RUN set -ex && \
         curl \
         software-properties-common \
         build-essential \
-        python \
-        python-pip \
-        python-setuptools \
+        python3 \
+        python3-pip \
+        python3-setuptools \
         g++ \
         git \
         cmake \
@@ -30,15 +30,18 @@ RUN set -ex && \
     sed -i '157 s/^##*//' /etc/locale.gen && \
     locale-gen
 
-RUN pip install wheel && \
-    pip install python-dateutil && \
-    pip install pytz && \
-    pip install requests && \
-    pip install mysql-connector && \
-    pip install configparser
+RUN pip3 install wheel && \
+    pip3 install python-dateutil && \
+    pip3 install pytz && \
+    pip3 install requests && \
+    pip3 install mysql-connector && \
+    pip3 install configparser
+
+RUN cd /usr/bin && ln -s python3 python
 
 ENV PATH=/usr/local/bin:$PATH
 WORKDIR /services
 
 COPY . /usr/local/bin/
 
+CMD ["/bin/sh"]

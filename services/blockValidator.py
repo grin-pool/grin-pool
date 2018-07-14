@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Verify our mysql chain against the grin network
 #  Add missing blocks.
 #  Mark orphan blocks.
@@ -25,7 +24,8 @@ import time
 import db_api
 import lib
 
-PROCESS="blockValidator"
+PROCESS = "blockValidator"
+
 
 def main():
     db = db_api.db_api()
@@ -38,14 +38,24 @@ def main():
 
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
-    last = latest - validation_depth # start a reasonable distance back
+    last = latest - validation_depth  # start a reasonable distance back
     print("Starting from block #{}".format(last))
-#    last = 0
+    #    last = 0
     for i in range(last, latest):
         url = blocks_url + str(i)
         response = requests.get(url).json()
         # print("{}: {}".format(response["header"]["height"], response["header"]["hash"]))
-        data_block = (response["header"]["hash"], response["header"]["version"], response["header"]["height"], response["header"]["previous"], response["header"]["timestamp"][:-1], response["header"]["output_root"], response["header"]["range_proof_root"], response["header"]["kernel_root"], response["header"]["nonce"], response["header"]["total_difficulty"], response["header"]["total_kernel_offset"])
+        data_block = (response["header"]["hash"],
+                      response["header"]["version"],
+                      response["header"]["height"],
+                      response["header"]["previous"],
+                      response["header"]["timestamp"][:-1],
+                      response["header"]["output_root"],
+                      response["header"]["range_proof_root"],
+                      response["header"]["kernel_root"],
+                      response["header"]["nonce"],
+                      response["header"]["total_difficulty"],
+                      response["header"]["total_kernel_offset"])
 
         try:
             rec = db.get_blocks_by_height([i])
@@ -56,11 +66,12 @@ def main():
                     print("XXXXXXXXXXXXXXXXXXXXXXX ORPHAN {}".format(r[2]))
                     print("  {} vs".format(r[0]))
                     print("  {}".format(response["header"]["hash"]))
-                    db.set_block_state("orphan", int(i));
+                    db.set_block_state("orphan", int(i))
             else:
-                print("Adding missing block: {}".format(response["header"]["height"]))
-		# XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
-                db.add_blocks([data_block], True)   
+                print("Adding missing block: {}".format(
+                    response["header"]["height"]))
+                # XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
+                db.add_blocks([data_block], True)
         except:
             # XXX TODO: Something
             pass
@@ -71,5 +82,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
