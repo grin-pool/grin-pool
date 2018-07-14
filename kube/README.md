@@ -41,3 +41,9 @@ kubectl create -f claim.yaml
 cd ~/dev/grin-pool/kube
 for f in *.yaml; do kubectl create -f $f; done
 ```
+
+Place config files as follows:
+  /data/stratum/grin-pool.toml
+  /data/grin/grin.toml
+  /data/services/config.ini
+  
