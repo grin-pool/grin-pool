@@ -201,9 +201,13 @@ impl Worker {
                             }
                             "submit" => {
                                 debug!(LOGGER, "Worker {} - Accepting share", self.id);
-                                let share: SubmitParams =
-                                    serde_json::from_value(req.params.unwrap()).unwrap();
-                                self.shares.push(share);
+                                match serde_json::from_value(req.params.unwrap()) {
+					Result::Ok(share) => {
+                           			self.shares.push(share);
+					},
+					Result::Err(err) => { }
+				};
+					
                             }
                             "status" => {
                                 trace!(LOGGER, "Worker {} - Accepting status request", self.id);

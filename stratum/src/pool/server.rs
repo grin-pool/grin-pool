@@ -242,9 +242,10 @@ impl Server {
                                             let job: JobTemplate = serde_json::from_value(req.params.unwrap()).unwrap();
                                             debug!(
                                                 LOGGER,
-                                                "{} - Setting new job for height {}",
+                                                "{} - Setting new job for height {} job_id {}",
                                                 self.id,
-                                                job.height
+                                                job.height,
+						job.job_id,
                                             );
                                             self.job = job;
                                             return Ok(req.method.clone());

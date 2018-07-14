@@ -8,15 +8,15 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 
 ### The components:
 * Pool Stratum Proxy: Rust
-* Pool data processing jobs: Python (rust?)
-* Database: MariaDB (percona cluster?)
-* Build CI/CD: Docker
-* Orchestration: Kubernetes
+* Pool data processing jobs: Python3
+* Database: MariaDB (percona or galera cluster?)
+* Build CI/CD: Docker (+ travis or jenkins?)
+* Orchestration: Kubernetes or systemd+cron
 
 #### To run: [kube/README.md](kube/README.md)
 
 #### To build use the Dockerfile in: [stratum](stratum/) and [services](services/)
 
 ### Current Status:
-This project is under development, ~30% complete.
+This project is under development, ~32% complete.
 Please contribute!

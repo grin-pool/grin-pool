@@ -64,6 +64,7 @@ pub struct LoginParams {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitParams {
     height: u64,
+    pub job_id: u64,
     pub nonce: u64,
     pow: Vec<u32>,
 }
@@ -71,6 +72,7 @@ pub struct SubmitParams {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct JobTemplate {
     pub height: u64,
+    pub job_id: u64,
     pub difficulty: u64,
     pub pre_pow: String,
 }
@@ -79,6 +81,7 @@ impl JobTemplate {
     pub fn new() -> JobTemplate {
         JobTemplate {
             height: 0,
+            job_id: 0,
             difficulty: 0,
             pre_pow: "".to_string(),
         }
