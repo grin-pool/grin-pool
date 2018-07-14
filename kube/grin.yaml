@@ -42,6 +42,7 @@ spec:
       containers:
       - name: grin
         image: grinpool/grin:latest
+#        command: ["sleep", "9999"]
         command: ["/run.sh"]
         ports:
         - containerPort: 13413

@@ -30,7 +30,7 @@ PROCESS="makePayouts"
 
 def makePayout(utxo):
     (u_id, u_address, u_amount) = utxo
-    send_cmd = ["/grin/target/release/grin", "wallet", "send", "-s", "smallest", "-d", str(u_address), str(u_amount)]
+    send_cmd = ["/usr/local/bin/grin", "wallet", "send", "-s", "smallest", "-d", str(u_address), str(u_amount)]
     print("Sending Grin: ", send_cmd)
     ok = subprocess.call(send_cmd, stderr=subprocess.STDOUT, shell=False)
     print("ok result: ", ok)
