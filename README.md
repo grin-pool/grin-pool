@@ -20,3 +20,10 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 ### Current Status:
 This project is under development, ~32% complete.
 Please contribute!
+
+## How to try it:
+Currently mining on **testnet3**
+* Supports Linux and Windows miners: [https://github.com/mimblewimble/grin-miner](mimblewimble/grin-miner) and [https://github.com/mozkomor/GrinGoldMiner](mozkomor/GrinGoldMiner)
+* Configure your miner to connect to:  grin-pool.us:3333
+* Use your grin wallet URL as your login, no password necessary
+* Start your miner and watch your wallet fill with grin
