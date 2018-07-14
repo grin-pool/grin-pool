@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import sys
 import os
 import time
@@ -21,20 +20,26 @@ import subprocess
 import db_api
 import lib
 
-PROCESS="makePayouts"
+PROCESS = "makePayouts"
 
 # pool_utxo <--- these are our user records.  A record of each pending payout (one per unique miner payout address)
 # makePayouts.py gets the list of pool_utxo records with value greater than threshold and attepmts to make a payment.
 #     * Bonus: Do all payouts in a single tx ?
 #     * updates pool_utxo with new total, timestamp of last payout, number of failed payout attempts
 
+
 def makePayout(utxo):
     (u_id, u_address, u_amount) = utxo
-    send_cmd = ["/usr/local/bin/grin", "wallet", "send", "-s", "smallest", "-d", str(u_address), str(u_amount)]
+    send_cmd = [
+        "/usr/local/bin/grin", "wallet", "send", "-s", "smallest", "-d",
+        str(u_address),
+        str(u_amount)
+    ]
     print("Sending Grin: ", send_cmd)
     ok = subprocess.call(send_cmd, stderr=subprocess.STDOUT, shell=False)
     print("ok result: ", ok)
     return ok
+
 
 def main():
     db = db_api.db_api()
@@ -44,15 +49,16 @@ def main():
     os.chdir(wallet_dir)
     utxos = db.get_utxo(minimum_payout)
     for utxo in utxos:
-	(u_id, u_address, u_amount) = utxo
-	ok = makePayout(utxo)
-	if ok == 0:
-	    db.remove_utxo(u_id)
-	else:
-	    print("Failed to make payout: ", u_id)
+        (u_id, u_address, u_amount) = utxo
+        ok = makePayout(utxo)
+        if ok == 0:
+            db.remove_utxo(u_id)
+        else:
+            print("Failed to make payout: ", u_id)
     db.set_last_run(PROCESS, str(time.time()))
     db.close()
     sys.stdout.flush()
+
 
 if __name__ == "__main__":
     main()

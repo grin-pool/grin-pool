@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Checks blocks found by the pool to see if they are ready to be unlocked and made available for payout.
-#  
+#
 
 import sys
 import requests
@@ -24,12 +23,13 @@ import time
 import db_api
 import lib
 
-PROCESS="blockUnlocker"
+PROCESS = "blockUnlocker"
+
 
 def main():
     db = db_api.db_api()
     config = lib.get_config()
-    # Get the list of pool_blocks that are 
+    # Get the list of pool_blocks that are
     # old enough to unlock and
     # are not orphan blocks
 
@@ -48,12 +48,13 @@ def main():
     print("Latest: {}", format(latest))
 
     new_poolblocks = db.get_poolblocks_by_state('new')
-    for (pb_hash, pb_height, pb_nonce, pb_actual_difficulty, pb_net_difficulty, pb_timestamp, pb_found_by, pb_state) in new_poolblocks:
+    for (pb_hash, pb_height, pb_nonce, pb_actual_difficulty, pb_net_difficulty,
+         pb_timestamp, pb_found_by, pb_state) in new_poolblocks:
         if pb_height < latest - block_expiretime:
-          # Dont re-process very old blocks - protection against duplicate payouts.
-          print("XXXXXX EXPIRED ^^^")
-          db.set_poolblock_state("expired", int(pb_height))
-          continue
+            # Dont re-process very old blocks - protection against duplicate payouts.
+            print("XXXXXX EXPIRED ^^^")
+            db.set_poolblock_state("expired", int(pb_height))
+            continue
         response = requests.get(blocks_url + str(pb_height)).json()
         print("Response: {}".format(response))
         if int(response["header"]["nonce"]) != int(pb_nonce):
@@ -68,7 +69,6 @@ def main():
     db.set_last_run(PROCESS, str(time.time()))
     db.close()
 
+
 if __name__ == "__main__":
     main()
-
-

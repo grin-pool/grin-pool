@@ -13,13 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Watches both the pool and grin logs and adds the records from each to separate tables:
 #   pool log -> pool_shares: height, nonce, *user_address*, *expected_difficulty*
 #   grin log -> grin_shares: height, nonce, *share_difficulty*
 # Adds shares to *grin_shares* and *pool_shares* tables
 # Adds pool solved blocks to *pool_blocks* table
-
 
 import sys
 import subprocess
@@ -30,24 +28,34 @@ import time
 import db_api
 import lib
 
+
 # Looking for share messages matching:  "Accepted share at height {} with nonce {} with difficulty {} from worker {}"
 def process_pool_logmessage(line, db):
-        # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
-        if "Got share at height" in line:
-            match = re.search(r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$', line)
-            s_timestamp = match.group(1)
-            s_height = int(match.group(2))
-            s_nonce = match.group(3)
-            s_difficulty = int(match.group(4))
-            s_worker = match.group(5)
-            # Dont re-add shares that were already processed and deleted
-	    # XXX TODO - use last_run date of processPayments
-            # Package the share in a tuple
-	    sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
-            data_poolshare = (s_height, s_nonce, s_difficulty, sql_timestamp, s_worker, )
-            db.add_poolshares([data_poolshare], True)
-	    print("Added PoolShare: ", data_poolshare)
-            sys.stdout.flush()
+    # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
+    if "Got share at height" in line:
+        match = re.search(
+            r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$',
+            line)
+        s_timestamp = match.group(1)
+        s_height = int(match.group(2))
+        s_nonce = match.group(3)
+        s_difficulty = int(match.group(4))
+        s_worker = match.group(5)
+        # Dont re-add shares that were already processed and deleted
+        # XXX TODO - use last_run date of processPayments
+        # Package the share in a tuple
+        sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
+        data_poolshare = (
+            s_height,
+            s_nonce,
+            s_difficulty,
+            sql_timestamp,
+            s_worker,
+        )
+        db.add_poolshares([data_poolshare], True)
+        print("Added PoolShare: ", data_poolshare)
+        sys.stdout.flush()
+
 
 def process_pool_log():
     # Get a handle to the DB API
@@ -57,7 +65,7 @@ def process_pool_log():
     POOL_LOG = config["stratum"]["log_dir"] + "/" + config["stratum"]["log_filename"]
 
     # (re)Process all logs
-    logfiles = glob.glob(POOL_LOG+'*')
+    logfiles = glob.glob(POOL_LOG + '*')
     print("Processing existing logs: {}".format(logfiles))
     sys.stdout.flush()
     for logfile in logfiles:
@@ -69,40 +77,62 @@ def process_pool_log():
     # Read future log messages
     print("Processing new logs: {}".format(POOL_LOG))
     sys.stdout.flush()
-    poollog = subprocess.Popen(['tail','-F',POOL_LOG],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    poollog = subprocess.Popen(
+        ['tail', '-F', POOL_LOG],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     while True:
         line = poollog.stdout.readline()
         process_pool_logmessage(line, db)
 
 
-
 # Looking for share messages
 # Add them to the grin_shares table
 def process_grin_logmessage(line, db):
-        # Looking for: "Jun 07 02:07:48.470 INFO (Server ID: StratumServer) Got share for block: hash 1a4480ad, height 99845, nonce 14139347905838955360, difficulty 9/1, submitted by 192.168.2.100:13415"
-        if "Got share for block:" in line:
-            match = re.search(r'^(.+) INFO .+ Got share for block: hash (.+), height (\d+), nonce (\d+), difficulty (\d+)/(\d+), submitted by (.+)$', line)
-	    s_timestamp = match.group(1)
-            s_hash = match.group(2)
-            s_height = int(match.group(3))
-            s_nonce = match.group(4)
-            s_share_difficulty = int(match.group(5))
-            s_network_difficulty = int(match.group(6))
-            s_worker = match.group(7)
-            # Package the share in a tuple
-	    sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
-	    if s_share_difficulty >= s_network_difficulty:
-		is_solution = True
-	    else:
-		is_solution = False
-            data_grinshare = (s_hash, s_height, s_nonce, s_share_difficulty, s_network_difficulty, sql_timestamp, s_worker, is_solution,)
-	    print("Added GrinShare: ", data_grinshare)
-            db.add_grinshares([data_grinshare], True)
-	    # If this is a full solution found by us, also add it as a pool block
-	    if s_share_difficulty >= s_network_difficulty:
-                data_poolblock = (s_hash, s_height, s_nonce, s_share_difficulty, s_network_difficulty, sql_timestamp, s_worker,)
-	    	db.add_poolblocks([data_poolblock], True)
-            sys.stdout.flush()
+    # Looking for: "Jun 07 02:07:48.470 INFO (Server ID: StratumServer) Got share for block: hash 1a4480ad, height 99845, nonce 14139347905838955360, difficulty 9/1, submitted by 192.168.2.100:13415"
+    if "Got share for block:" in line:
+        match = re.search(
+            r'^(.+) INFO .+ Got share for block: hash (.+), height (\d+), nonce (\d+), difficulty (\d+)/(\d+), submitted by (.+)$',
+            line)
+        s_timestamp = match.group(1)
+        s_hash = match.group(2)
+        s_height = int(match.group(3))
+        s_nonce = match.group(4)
+        s_share_difficulty = int(match.group(5))
+        s_network_difficulty = int(match.group(6))
+        s_worker = match.group(7)
+        # Package the share in a tuple
+        sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
+        if s_share_difficulty >= s_network_difficulty:
+            is_solution = True
+        else:
+            is_solution = False
+        data_grinshare = (
+            s_hash,
+            s_height,
+            s_nonce,
+            s_share_difficulty,
+            s_network_difficulty,
+            sql_timestamp,
+            s_worker,
+            is_solution,
+        )
+        print("Added GrinShare: ", data_grinshare)
+        db.add_grinshares([data_grinshare], True)
+        # If this is a full solution found by us, also add it as a pool block
+        if s_share_difficulty >= s_network_difficulty:
+            data_poolblock = (
+                s_hash,
+                s_height,
+                s_nonce,
+                s_share_difficulty,
+                s_network_difficulty,
+                sql_timestamp,
+                s_worker,
+            )
+            db.add_poolblocks([data_poolblock], True)
+        sys.stdout.flush()
+
 
 def process_grin_log():
     # Get a handle to the DB API
@@ -112,7 +142,7 @@ def process_grin_log():
     GRIN_LOG = config["grin_node"]["log_dir"] + "/" + config["grin_node"]["log_filename"]
 
     # (re)Process all logs
-    logfiles = glob.glob(GRIN_LOG+'*')
+    logfiles = glob.glob(GRIN_LOG + '*')
     print("Processing existing logs: {}".format(logfiles))
     sys.stdout.flush()
     for logfile in logfiles:
@@ -124,17 +154,19 @@ def process_grin_log():
     # Read future log messages
     print("Processing new logs: {}".format(GRIN_LOG))
     sys.stdout.flush()
-    grinlog = subprocess.Popen(['tail','-F',GRIN_LOG],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    grinlog = subprocess.Popen(
+        ['tail', '-F', GRIN_LOG],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
     while True:
         line = grinlog.stdout.readline()
         process_grin_logmessage(line, db)
 
 
-
 def main():
     # XXX TODO:  Kubernetes does not always get the volume mounted before the processes start
     # maybe need a loop waiting on it
-    # XXX TODO:  Need to handle the case where one thread dies but the other lives - probably 
+    # XXX TODO:  Need to handle the case where one thread dies but the other lives - probably
     # want to to exit with error status if both threads are not healthy
     t_pool = threading.Thread(name='PoolShareWatcher', target=process_pool_log)
     t_grin = threading.Thread(name='GrinShareWatcher', target=process_grin_log)
@@ -143,7 +175,6 @@ def main():
     t_pool.join()
     t_grin.join()
 
+
 if __name__ == "__main__":
     main()
-
-

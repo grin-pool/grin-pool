@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Watches the blockchain for new blocks
-#  Request chain height from grin core every x seconds. 
+#  Request chain height from grin core every x seconds.
 #  If the height increased request each block from grin core.
 #  Adds them to the database.
 # This keeps a record of each block *as we see it* (before any chain reorgs).
@@ -27,10 +26,12 @@ from time import sleep
 import db_api
 import lib
 
+
 def get_current_height(url):
     response = requests.get(url)
     latest = response.json()["tip"]["height"]
     return latest
+
 
 def main():
     db = db_api.db_api()
@@ -44,18 +45,30 @@ def main():
     last = get_current_height(status_url)
     while True:
         latest = get_current_height(status_url)
-        for i in range(last+1, latest+1):
+        for i in range(last + 1, latest + 1):
             last = latest
             url = blocks_url + str(i)
             response = requests.get(url).json()
-            print("New Block: {} at {}".format(response["header"]["hash"], response["header"]["height"]))
-            data_block = (response["header"]["hash"], response["header"]["version"], response["header"]["height"], response["header"]["previous"], response["header"]["timestamp"][:-1], response["header"]["output_root"], response["header"]["range_proof_root"], response["header"]["kernel_root"], response["header"]["nonce"], response["header"]["total_difficulty"], response["header"]["total_kernel_offset"])
+            print("New Block: {} at {}".format(response["header"]["hash"],
+                                               response["header"]["height"]))
+            data_block = (response["header"]["hash"],
+                          response["header"]["version"],
+                          response["header"]["height"],
+                          response["header"]["previous"],
+                          response["header"]["timestamp"][:-1],
+                          response["header"]["output_root"],
+                          response["header"]["range_proof_root"],
+                          response["header"]["kernel_root"],
+                          response["header"]["nonce"],
+                          response["header"]["total_difficulty"],
+                          response["header"]["total_kernel_offset"])
             try:
-                db.add_blocks([data_block])   
+                db.add_blocks([data_block])
             except:
                 pass
-        sys.stdout.flush();
+        sys.stdout.flush()
         sleep(check_interval)
+
 
 if __name__ == "__main__":
     main()
