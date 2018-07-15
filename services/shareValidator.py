@@ -31,12 +31,13 @@ import requests
 import json
 import time
 import db_api
+import lib
 
 PROCESS = "shareValidator"
 
-
 def main():
     db = db_api.db_api()
+    logger = lib.get_logger(PROCESS)
     new_poolshares = db.get_unvalidated_poolshares()
 
     for pool_share in new_poolshares:
@@ -59,8 +60,8 @@ def main():
             if ps_worker_difficulty > gs_actual_difficulty:
                 ok = False
                 invalid_reason = "low difficulty"
-    # Update record
-        print("Share {}, {} is {} because {}".format(ps_height, ps_nonce, ok,
+        # Update record
+        logger.warn("Share {}, {} is {} because {}".format(ps_height, ps_nonce, ok,
                                                      invalid_reason))
         db.set_poolshare_validation(ok, invalid_reason, ps_nonce)
 

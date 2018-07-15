@@ -35,28 +35,33 @@ def makePayout(utxo):
         str(u_address),
         str(u_amount)
     ]
-    print("Sending Grin: ", send_cmd)
     ok = subprocess.call(send_cmd, stderr=subprocess.STDOUT, shell=False)
-    print("ok result: ", ok)
     return ok
 
 
 def main():
     db = db_api.db_api()
     config = lib.get_config()
-    wallet_dir = config["makepayouts"]["wallet_dir"]
-    minimum_payout = int(config["makepayouts"]["minimum_payout"])
+    logger = lib.get_logger(PROCESS)
+    logger.warn("=== Starting {}".format(PROCESS))
+
+    wallet_dir = config[PROCESS]["wallet_dir"]
+    minimum_payout = int(config[PROCESS]["minimum_payout"])
     os.chdir(wallet_dir)
     utxos = db.get_utxo(minimum_payout)
     for utxo in utxos:
         (u_id, u_address, u_amount) = utxo
+        logger.warn("Trying to pay: {} {} {}".format(u_id, u_address, u_amount))
         ok = makePayout(utxo)
+        logger.warn("result: {}".format(ok))
         if ok == 0:
+            logger.warn("Made payout - deleting utxo for {} {} {}".format(u_id, u_address, u_amount))
             db.remove_utxo(u_id)
         else:
-            print("Failed to make payout: ", u_id)
+            logger.error("Failed to make payout: {} {} {}".format(u_id, u_address, u_amount))
     db.set_last_run(PROCESS, str(time.time()))
     db.close()
+    logger.warn("=== Completed {}".format(PROCESS))
     sys.stdout.flush()
 
 
