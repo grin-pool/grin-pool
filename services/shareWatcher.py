@@ -32,7 +32,7 @@ import lib
 # Looking for share messages matching:  "Accepted share at height {} with nonce {} with difficulty {} from worker {}"
 def process_pool_logmessage(line, db):
     # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
-    if "Got share at height" in line:
+    if line.find('Got share at height') >= 0:
         match = re.search(
             r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$',
             line)
@@ -71,7 +71,10 @@ def process_pool_log():
     for logfile in logfiles:
         with open(logfile) as f:
             for line in f:
-                process_pool_logmessage(line, db)
+                try:
+                    process_pool_logmessage(line, db)
+                except:
+                    print("Failed to process log message: ", sys.exc_info()[0])
         f.close()
 
     # Read future log messages
@@ -82,8 +85,11 @@ def process_pool_log():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     while True:
-        line = poollog.stdout.readline()
-        process_pool_logmessage(line, db)
+        line = poollog.stdout.readline().decode('utf-8')
+        try:
+            process_pool_logmessage(line, db)
+        except:
+            print("Failed to process log message: ", sys.exc_info()[0])
 
 
 # Looking for share messages
@@ -159,8 +165,12 @@ def process_grin_log():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     while True:
-        line = grinlog.stdout.readline()
-        process_grin_logmessage(line, db)
+        line = grinlog.stdout.readline().decode('utf-8')
+        try:
+            process_grin_logmessage(line, db)
+        except:
+            print("Failed to process log message: ", sys.exc_info()[0])
+
 
 
 def main():
