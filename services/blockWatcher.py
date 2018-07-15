@@ -26,6 +26,7 @@ from time import sleep
 import db_api
 import lib
 
+PROCESS = "blockWatcher"
 
 def get_current_height(url):
     response = requests.get(url)
@@ -36,11 +37,13 @@ def get_current_height(url):
 def main():
     db = db_api.db_api()
     config = lib.get_config()
+    logger = lib.get_logger(PROCESS)
+    logger.warn("=== Starting {}".format(PROCESS))
 
     grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
     status_url = grin_api_url + "/v1/status"
     blocks_url = grin_api_url + "/v1/blocks/"
-    check_interval = float(config["blockwatcher"]["check_interval"])
+    check_interval = float(config[PROCESS]["check_interval"])
 
     last = get_current_height(status_url)
     while True:
@@ -49,8 +52,8 @@ def main():
             last = latest
             url = blocks_url + str(i)
             response = requests.get(url).json()
-            print("New Block: {} at {}".format(response["header"]["hash"],
-                                               response["header"]["height"]))
+            logger.warn("New Block: {} at {}".format(response["header"]["hash"],
+                                              response["header"]["height"]))
             data_block = (response["header"]["hash"],
                           response["header"]["version"],
                           response["header"]["height"],
@@ -68,6 +71,7 @@ def main():
                 pass
         sys.stdout.flush()
         sleep(check_interval)
+    logger.warn("=== Completed {}".format(PROCESS))
 
 
 if __name__ == "__main__":

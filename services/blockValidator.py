@@ -30,16 +30,18 @@ PROCESS = "blockValidator"
 def main():
     db = db_api.db_api()
     config = lib.get_config()
+    logger = lib.get_logger(PROCESS)
+    logger.warn("=== Starting {}".format(PROCESS))
 
     grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
     status_url = grin_api_url + "/v1/status"
     blocks_url = grin_api_url + "/v1/blocks/"
-    validation_depth = int(config["blockvalidator"]["validation_depth"])
+    validation_depth = int(config[PROCESS]["validation_depth"])
 
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
     last = latest - validation_depth  # start a reasonable distance back
-    print("Starting from block #{}".format(last))
+    logger.warn("Starting from block #{}".format(last))
     #    last = 0
     for i in range(last, latest):
         url = blocks_url + str(i)
@@ -63,13 +65,10 @@ def main():
                 r = rec[0]
                 #print("Got block {} at height {}".format(r[0], r[2]))
                 if r[0] != response["header"]["hash"]:
-                    print("XXXXXXXXXXXXXXXXXXXXXXX ORPHAN {}".format(r[2]))
-                    print("  {} vs".format(r[0]))
-                    print("  {}".format(response["header"]["hash"]))
+                    logger.warn("Found an orphan - height: {}, hash: {} vs {}".format(r[2], r[0], response["header"]["hash"]))
                     db.set_block_state("orphan", int(i))
             else:
-                print("Adding missing block: {}".format(
-                    response["header"]["height"]))
+                logger.warn("Adding missing block - height: {}".format(response["header"]["height"]))
                 # XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
                 db.add_blocks([data_block], True)
         except:

@@ -27,6 +27,7 @@
 import sys
 import db_api
 import time
+import lib
 
 PROCESS = "paymentMaker"
 REWARD = 60.0  # XXX TODO: use the actual reward of each block
@@ -34,13 +35,17 @@ REWARD = 60.0  # XXX TODO: use the actual reward of each block
 
 def main():
     db = db_api.db_api()
+    logger = lib.get_logger(PROCESS)
+    logger.warn("=== Starting {}".format(PROCESS))
+
     latest_block = 0
 
     # XXX All in one db transaction....
     # Get unlocked blocks from the db
     unlocked_blocks = db.get_poolblocks_by_state("unlocked")
     for pb in unlocked_blocks:
-        print("unlocked block: {}".format(pb))
+        logger.warn("Processing unlocked block: {}".format(pb))
+        # XXX TODO: If there are no shares for this block dont process it
         (pb_hash, pb_height, pb_nonce, pb_actual_difficulty, pb_net_difficulty,
          pb_timestamp, pb_found_by, pb_state) = pb
         if pb_height > latest_block:
@@ -50,7 +55,7 @@ def main():
         # Calculate Payment info:
         worker_shares = {}
         for ps in pool_shares:
-            print("pool_shares: ", format(ps))
+            logger.warn("Processing pool_shares: {}".format(ps))
             (ps_height, ps_nonce, ps_difficulty, ps_timestamp, ps_found_by,
              ps_validated, ps_is_valid, ps_invalid_reason) = ps
             gs = db.get_grin_share_by_nonce(ps_nonce)
@@ -63,7 +68,6 @@ def main():
                 worker_shares[ps_found_by] += gs_actual_difficulty
             else:
                 worker_shares[ps_found_by] = gs_actual_difficulty
-        print(worker_shares)
         if len(worker_shares) > 0:
             # Calcualte reward/difficulty: XXX TODO: Enhance
             #  What algorithm to use?  Maybe: https://slushpool.com/help/manual/rewards
@@ -74,12 +78,13 @@ def main():
                 # Add or create worker rewards
                 # XXX TODO: Batch these
                 db.create_or_add_utxo(worker, worker_rewards)
-                print("Credit to user: ", worker, worker_rewards)
-    # Mark the pool_block state="paid" (maybe "processed" would be more accurate?)
+                logger.warn("Credit to user: {} = {}".format(worker, worker_rewards))
+        # Mark the pool_block state="paid" (maybe "processed" would be more accurate?)
         db.set_poolblock_state("paid", int(pb_height))
-    sys.stdout.flush()
     db.set_last_run(PROCESS, str(time.time()))
     db.close()
+    logger.warn("=== Completed {}".format(PROCESS))
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":

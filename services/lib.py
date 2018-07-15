@@ -20,9 +20,43 @@
 import sys
 import time
 import configparser
+import logging
+import threading
 
+LOGGER = None
+CONFIG = None
 
 def get_config():
-    config = configparser.ConfigParser()
-    config.read('/services/config.ini')
-    return config
+    rlock = threading.RLock()
+    with rlock:
+        global CONFIG
+        if CONFIG == None:
+            c = configparser.ConfigParser()
+            c.read('/services/config.ini')
+            CONFIG = c
+        return CONFIG
+
+# Log to both stdout and the log file
+def get_logger(program):
+    rlock = threading.RLock()
+    with rlock:
+        global LOGGER
+        if LOGGER == None:
+            config = get_config()
+            log_dir = config[program]["log_dir"]
+            log_level = config[program]["log_level"]
+
+            logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
+            l = logging.getLogger()
+
+            fileHandler = logging.FileHandler("{0}/{1}.log".format(log_dir, program))
+            fileHandler.setFormatter(logFormatter)
+            fileHandler.setLevel(log_level)
+            l.addHandler(fileHandler)
+
+            consoleHandler = logging.StreamHandler()
+            consoleHandler.setFormatter(logFormatter)
+            consoleHandler.setLevel(log_level)
+            l.addHandler(consoleHandler)
+            LOGGER = l
+        return LOGGER

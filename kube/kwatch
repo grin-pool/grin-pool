@@ -1,0 +1,9 @@
+#!/bin/bash
+
+watch "echo == Nodes ======; kubectl get nodes; \
+       echo == Services ======; kubectl get services; \
+       echo == Secrets ======; kubectl get secrets; \
+       echo == Deploy ======;  kubectl get deploy; \
+       echo == CronJob ======; kubectl get cronjob; \
+       echo == Pods ======; kubectl get pods;"
+
