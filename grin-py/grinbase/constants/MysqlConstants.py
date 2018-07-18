@@ -1,6 +1,6 @@
 class MysqlConstants:
-    def __init__(self):
-        self.mysql_host = "127.0.0.1"
-        self.mysql_user = "pooluser"
-        self.mysql_passwd = "pooluser"
-        self.mysql_db = "pool"
+    def __init__(self, host, user, password, db):
+        self.mysql_host = host
+        self.mysql_user = user
+        self.mysql_passwd = password
+        self.mysql_db = db

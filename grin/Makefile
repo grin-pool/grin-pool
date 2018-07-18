@@ -2,7 +2,7 @@
 CONTAINER := grin
 REGISTRY := docker.io/grinpool
 
-default: build
+default: build push
 
 build:
 	curl -s https://raw.githubusercontent.com/mimblewimble/grin/master/Dockerfile > Dockerfile
