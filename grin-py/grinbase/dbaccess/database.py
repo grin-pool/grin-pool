@@ -15,7 +15,7 @@ class database_details:
         self.session = {}
         self.engine = None
 
-        self.mysql_string = "mysql+pymysql://{user}:{passwd}@{host}:3306/{db_name}".format(
+        self.mysql_string = "mysql+pymysql://{user}:{passwd}@{host}/{db_name}".format(
             user=MYSQL_CONSTANTS.mysql_user if user is None else user,
             passwd=MYSQL_CONSTANTS.mysql_passwd,
             host=MYSQL_CONSTANTS.mysql_host,

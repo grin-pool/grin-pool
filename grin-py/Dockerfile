@@ -6,6 +6,7 @@ RUN set -ex && \
         locales \
         ca-certificates \
         curl \
+	telnet \
         software-properties-common \
         build-essential \
         python3 \
@@ -35,13 +36,17 @@ RUN pip3 install wheel && \
     pip3 install pytz && \
     pip3 install requests && \
     pip3 install mysql-connector && \
-    pip3 install configparser
+    pip3 install configparser && \
+    pip3 install sqlalchemy && \
+    pip3 install pymysql
 
 RUN cd /usr/bin && ln -s python3 python
 
 ENV PATH=/usr/local/bin:$PATH
+ENV PYTHONPATH=/usr/local/bin
 WORKDIR /services
 
-COPY . /usr/local/bin/
+COPY grinbase/ /usr/local/bin/grinbase/
+COPY services/*.py /usr/local/bin/
 
 CMD ["/bin/sh"]
