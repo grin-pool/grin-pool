@@ -15,7 +15,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 
 #### To run: [kube/README.md](kube/README.md)
 
-#### To build use the Dockerfile in: [stratum](stratum/) and [services](services/)
+#### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
 ### Current Status:
 This project is under development, ~32% complete.
