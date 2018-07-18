@@ -30,10 +30,12 @@ import lib
 
 
 PROCESS = "shareWatcher"
+LOGGER = None
+CONFIG = None
 
 # Looking for share messages matching:  "Accepted share at height {} with nonce {} with difficulty {} from worker {}"
 def process_pool_logmessage(line, db):
-    logger = lib.get_logger(PROCESS)
+    global LOGGER
     # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
     if line.find('Got share at height') >= 0:
         match = re.search(
@@ -56,22 +58,21 @@ def process_pool_logmessage(line, db):
             s_worker,
         )
         db.add_poolshares([data_poolshare], True)
-        logger.warn("Added PoolShare: {}".format(data_poolshare))
+        LOGGER.warn("Added PoolShare: {}".format(data_poolshare))
         sys.stdout.flush()
 
 
 def process_pool_log():
+    global LOGGER
+    global CONFIG
     # Get a handle to the DB API
     db = db_api.db_api()
-    config = lib.get_config()
-    logger = lib.get_logger(PROCESS)
 
-
-    POOL_LOG = config["stratum"]["log_dir"] + "/" + config["stratum"]["log_filename"]
+    POOL_LOG = CONFIG["stratum"]["log_dir"] + "/" + CONFIG["stratum"]["log_filename"]
 
     # (re)Process all logs
     logfiles = glob.glob(POOL_LOG + '*')
-    logger.warn("Processing existing logs: {}".format(logfiles))
+    LOGGER.warn("Processing existing logs: {}".format(logfiles))
     sys.stdout.flush()
     for logfile in logfiles:
         with open(logfile) as f:
@@ -79,11 +80,11 @@ def process_pool_log():
                 try:
                     process_pool_logmessage(line, db)
                 except:
-                    logger.error("Failed to process log message: ",format(sys.exc_info()[0]))
+                    LOGGER.error("Failed to process log message: ",format(sys.exc_info()[0]))
         f.close()
 
     # Read future log messages
-    logger.warn("Processing new logs: {}".format(POOL_LOG))
+    LOGGER.warn("Processing new logs: {}".format(POOL_LOG))
     sys.stdout.flush()
     poollog = subprocess.Popen(
         ['tail', '-F', POOL_LOG],
@@ -94,13 +95,13 @@ def process_pool_log():
         try:
             process_pool_logmessage(line, db)
         except:
-            logger.warn("Failed to process log message: ".format(sys.exc_info()[0]))
+            LOGGER.warn("Failed to process log message: ".format(sys.exc_info()[0]))
 
 
 # Looking for share messages
 # Add them to the grin_shares table
 def process_grin_logmessage(line, db):
-    logger = lib.get_logger(PROCESS)
+    global LOGGER
     # Looking for: "Jun 07 02:07:48.470 INFO (Server ID: StratumServer) Got share for block: hash 1a4480ad, height 99845, nonce 14139347905838955360, difficulty 9/1, submitted by 192.168.2.100:13415"
     if "Got share for block:" in line:
         match = re.search(
@@ -130,7 +131,7 @@ def process_grin_logmessage(line, db):
             is_solution,
         )
         db.add_grinshares([data_grinshare], True)
-        logger.warn("Added GrinShare: {}".format(data_grinshare))
+        LOGGER.warn("Added GrinShare: {}".format(data_grinshare))
         # If this is a full solution found by us, also add it as a pool block
         if s_share_difficulty >= s_network_difficulty:
             data_poolblock = (
@@ -143,21 +144,21 @@ def process_grin_logmessage(line, db):
                 s_worker,
             )
             db.add_poolblocks([data_poolblock], True)
-            logger.warn("Added Pool Block: {}".format(data_poolblock))
+            LOGGER.warn("Added Pool Block: {}".format(data_poolblock))
         sys.stdout.flush()
 
 
 def process_grin_log():
+    global LOGGER
+    global CONFIG
     # Get a handle to the DB API
     db = db_api.db_api()
-    config = lib.get_config()
-    logger = lib.get_logger(PROCESS)
 
-    GRIN_LOG = config["grin_node"]["log_dir"] + "/" + config["grin_node"]["log_filename"]
+    GRIN_LOG = CONFIG["grin_node"]["log_dir"] + "/" + CONFIG["grin_node"]["log_filename"]
 
     # (re)Process all logs
     logfiles = glob.glob(GRIN_LOG + '*')
-    logger.warn("Processing existing logs: {}".format(logfiles))
+    LOGGER.warn("Processing existing logs: {}".format(logfiles))
     sys.stdout.flush()
     for logfile in logfiles:
         with open(logfile) as f:
@@ -166,7 +167,7 @@ def process_grin_log():
         f.close()
 
     # Read future log messages
-    logger.warn("Processing new logs: {}".format(GRIN_LOG))
+    LOGGER.warn("Processing new logs: {}".format(GRIN_LOG))
     sys.stdout.flush()
     grinlog = subprocess.Popen(
         ['tail', '-F', GRIN_LOG],
@@ -177,11 +178,16 @@ def process_grin_log():
         try:
             process_grin_logmessage(line, db)
         except:
-            logger.warn("Failed to process log message: ".format(sys.exc_info()[0]))
+            LOGGER.warn("Failed to process log message: ".format(sys.exc_info()[0]))
 
 
 
 def main():
+    global PROCESS
+    global LOGGER
+    global CONFIG
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
     # XXX TODO:  Kubernetes does not always get the volume mounted before the processes start
     # maybe need a loop waiting on it
     # XXX TODO:  Need to handle the case where one thread dies but the other lives - probably

@@ -1,0 +1,6 @@
+SQLAlchemy
+pymysql
+Flask
+wtforms
+wtforms_components
+pytz
