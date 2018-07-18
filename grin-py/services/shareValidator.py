@@ -38,8 +38,9 @@ PROCESS = "shareValidator"
 def main():
     db = db_api.db_api()
     logger = lib.get_logger(PROCESS)
-    new_poolshares = db.get_unvalidated_poolshares()
+    logger.warn("=== Starting {}".format(PROCESS))
 
+    new_poolshares = db.get_unvalidated_poolshares()
     for pool_share in new_poolshares:
         invalid_reason = "NULL"
         ok = True
@@ -67,6 +68,7 @@ def main():
 
     db.set_last_run(PROCESS, str(time.time()))
     db.close()
+    logger.warn("=== Completed {}".format(PROCESS))
 
 
 if __name__ == "__main__":
