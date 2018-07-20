@@ -20,7 +20,8 @@ import sys
 import requests
 import json
 import time
-import lib
+
+from grinlib import lib
 from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "poolblockUnlocker"
@@ -50,7 +51,7 @@ def main():
 
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
-    LOGGER.warn("Latest: {}", format(latest))
+    LOGGER.warn("Latest: {}".format(latest))
 
     new_poolblocks = Pool_blocks.get_all_new()
     for pb in new_poolblocks:

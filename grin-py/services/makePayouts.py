@@ -18,7 +18,8 @@ import os
 import time
 import subprocess
 from datetime import datetime
-import lib
+
+from grinlib import lib
 from grinbase.model.pool_utxo import Pool_utxo
 
 PROCESS = "makePayouts"

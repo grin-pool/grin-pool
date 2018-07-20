@@ -29,7 +29,8 @@
 import sys
 import time
 from datetime import datetime
-import lib
+
+from grinlib import lib
 from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.grin_shares import Grin_shares
 

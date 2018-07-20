@@ -23,7 +23,8 @@ import sys
 import requests
 import json
 from time import sleep
-import lib
+
+from grinlib import lib
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockWatcher"
