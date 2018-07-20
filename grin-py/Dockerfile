@@ -47,6 +47,7 @@ ENV PYTHONPATH=/usr/local/bin
 WORKDIR /services
 
 COPY grinbase/ /usr/local/bin/grinbase/
+COPY grinlib/ /usr/local/bin/grinlib/
 COPY services/*.py /usr/local/bin/
 
 CMD ["/bin/sh"]

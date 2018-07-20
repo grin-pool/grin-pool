@@ -62,3 +62,11 @@ class Pool_shares(Base):
     @classmethod
     def get_valid_by_height(cls, height):
         return list(database.db.getSession().query(Pool_shares).filter_by(height=height).filter_by(is_valid=True).filter_by(validated=True))
+
+    # XXX
+
+    # Get all shares found by user in the past n minutes
+    @classmethod
+    def get_all_by_user_and_minutes(cls, user, minutes):
+        since_timestamp = now() - minutes
+        return list(database.db.getSession().query(Pool_shares).filter_by(found_by=user).filter_by(timestamp>since_timestamp))

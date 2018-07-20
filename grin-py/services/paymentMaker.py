@@ -26,7 +26,8 @@
 
 import sys
 import time
-import lib
+
+from grinlib import lib
 from grinbase.model.pool_blocks import Pool_blocks
 from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.grin_shares import Grin_shares

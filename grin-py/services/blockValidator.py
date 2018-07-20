@@ -21,8 +21,8 @@ import sys
 import requests
 import json
 import time
-import lib
 
+from grinlib import lib
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockValidator"
@@ -57,11 +57,10 @@ def main():
         try:
             rec = Blocks.get_by_height([i])
             if rec is not None:
-                #print("Got block {} at height {}".format(r[0], r[2]))
-                if rec.hash != response["header"]["hash"]:
+                if rec.hash != response["header"]["hash"] and rec.state != "orphan":
                     LOGGER.warn("Found an orphan - height: {}, hash: {} vs {}".format(rec.height, rec.hash, response["header"]["hash"]))
                     rec.state = "orphan"
-                    db.set_block_state("orphan")
+                    database.db.getSession().commit()
             else:
                 LOGGER.warn("Adding missing block - height: {}".format(response["header"]["height"]))
                 # XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
@@ -75,14 +74,14 @@ def main():
                                        kernel_root = response["header"]["kernel_root"],
                                        nonce = response["header"]["nonce"],
                                        total_difficulty = response["header"]["total_difficulty"],
-                                       total_kernel_offset = response["header"]["total_kernel_offset"] )
+                                       total_kernel_offset = response["header"]["total_kernel_offset"],
+                                       state = "missing")
                 database.db.createDataObj(missing_block)
         except Exception as e:
             # XXX TODO: Something more ?
             LOGGER.error("Something went wrong: {}".format(e))
         sys.stdout.flush()
     # db.set_last_run(PROCESS, str(time.time()))
-    # db.close()
     database.db.getSession().commit()
 
 
