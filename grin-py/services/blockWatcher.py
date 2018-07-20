@@ -72,7 +72,6 @@ def main():
                                    total_kernel_offset = response["header"]["total_kernel_offset"],
                                    state = "new")
                 database.db.createDataObj(new_block)
-                database.db.getSession().commit()
             except Exception as e:
                 LOGGER.error("Something went wrong: {}".format(e))
         sys.stdout.flush()
