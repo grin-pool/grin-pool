@@ -20,58 +20,60 @@ import sys
 import requests
 import json
 import time
-import db_api
 import lib
+from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "poolblockUnlocker"
-
+LOGGER = None
+CONFIG = None
 
 def main():
-    db = db_api.db_api()
-    config = lib.get_config()
-    logger = lib.get_logger(PROCESS)
-    logger.warn("=== Starting {}".format(PROCESS))
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
+    # Connect to DB
+    database = lib.get_db()
 
     # Get the list of pool_blocks that are
     # old enough to unlock and
     # are not orphan blocks
 
-    logger.debug(config.sections())
-
     # XXX TODO: The node may not be synced, may need to wait?
+    #  move this functionality to the lib
 
-    grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
+    grin_api_url = "http://" + CONFIG["grin_node"]["address"] + ":" + CONFIG["grin_node"]["api_port"]
     status_url = grin_api_url + "/v1/status"
     blocks_url = grin_api_url + "/v1/blocks/"
-    block_locktime = int(config[PROCESS]["block_locktime"])
-    block_expiretime = int(config[PROCESS]["block_expiretime"])
+    block_locktime = int(CONFIG[PROCESS]["block_locktime"])
+    block_expiretime = int(CONFIG[PROCESS]["block_expiretime"])
+    LOGGER.warn("using locktime: {}, expiretime: {}".format(block_locktime, block_expiretime))
 
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
-    logger.debug("Latest: {}", format(latest))
+    LOGGER.warn("Latest: {}", format(latest))
 
-    new_poolblocks = db.get_poolblocks_by_state('new')
-    for (pb_hash, pb_height, pb_nonce, pb_actual_difficulty, pb_net_difficulty,
-         pb_timestamp, pb_found_by, pb_state) in new_poolblocks:
-        if pb_height < latest - block_expiretime:
+    new_poolblocks = Pool_blocks.get_all_new()
+    for pb in new_poolblocks:
+        if pb.height < (latest - block_expiretime):
             # Dont re-process very old blocks - protection against duplicate payouts.
-            logger.debug("Processed expired pool block at height: {}".format(pb_height))
-            db.set_poolblock_state("expired", int(pb_height))
+            LOGGER.warn("Processed expired pool block at height: {}".format(pb.height))
+            pb.state = "expired"
             continue
-        response = requests.get(blocks_url + str(pb_height)).json()
+        # XXX TODO: More robust request handling
+        response = requests.get(blocks_url + str(pb.height)).json()
         # print("Response: {}".format(response))
-        if int(response["header"]["nonce"]) != int(pb_nonce):
-            logger.debug("Processed orphan pool block at height: {}".format(pb_height))
-            db.set_poolblock_state("orphan", int(pb_height))
+        if int(response["header"]["nonce"]) != int(pb.nonce):
+            LOGGER.warn("Processed orphan pool block at height: {}".format(pb.height))
+            pb.state = "orphan"
         else:
-            if pb_height < (latest - block_locktime):
-                logger.debug("Unlocking pool block at height: {}".format(pb_height))
-                db.set_poolblock_state("unlocked", int(pb_height))
+            if pb.height < (latest - block_locktime):
+                LOGGER.warn("Unlocking pool block at height: {}".format(pb.height))
+                pb.state = "unlocked"
         sys.stdout.flush()
 
-    db.set_last_run(PROCESS, str(time.time()))
-    db.close()
-    logger.warn("=== Completed {}".format(PROCESS))
+    # db.set_last_run(PROCESS, str(time.time()))
+    database.db.getSession().commit()
+    LOGGER.warn("=== Completed {}".format(PROCESS))
     sys.stdout.flush()
 
 

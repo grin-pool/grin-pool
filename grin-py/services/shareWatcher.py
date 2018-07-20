@@ -25,16 +25,17 @@ import threading
 import re
 import glob
 import time
-import db_api
 import lib
-
+from grinbase.model.pool_shares import Pool_shares
+from grinbase.model.grin_shares import Grin_shares
+from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "shareWatcher"
 LOGGER = None
 CONFIG = None
 
 # Looking for share messages matching:  "Accepted share at height {} with nonce {} with difficulty {} from worker {}"
-def process_pool_logmessage(line, db):
+def process_pool_logmessage(line, database):
     global LOGGER
     # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
     if line.find('Got share at height') >= 0:
@@ -46,27 +47,23 @@ def process_pool_logmessage(line, db):
         s_nonce = match.group(3)
         s_difficulty = int(match.group(4))
         s_worker = match.group(5)
-        # Dont re-add shares that were already processed and deleted
-        # XXX TODO - use last_run date of processPayments
-        # Package the share in a tuple
-        sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
-        data_poolshare = (
-            s_height,
-            s_nonce,
-            s_difficulty,
-            sql_timestamp,
-            s_worker,
-        )
-        db.add_poolshares([data_poolshare], True)
-        LOGGER.warn("Added PoolShare: {}".format(data_poolshare))
+        # Create a new record
+        sql_timestamp = lib.to_sqltimestamp(s_timestamp)
+        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=sql_timestamp, found_by=s_worker, validated=False, is_valid=False, invalid_reason="None" )
+        duplicate = database.db.createDataObj_ignore_duplicates(new_pool_share)
+        database.db.getSession().commit()
+        if duplicate:
+            LOGGER.warn("Duplicate PoolShare: {}".format(new_pool_share))
+        else:
+            LOGGER.warn("Added PoolShare: {}".format(new_pool_share))
         sys.stdout.flush()
 
 
 def process_pool_log():
     global LOGGER
     global CONFIG
-    # Get a handle to the DB API
-    db = db_api.db_api()
+    # Connect to DB
+    database = lib.get_db()
 
     POOL_LOG = CONFIG["stratum"]["log_dir"] + "/" + CONFIG["stratum"]["log_filename"]
 
@@ -78,9 +75,9 @@ def process_pool_log():
         with open(logfile) as f:
             for line in f:
                 try:
-                    process_pool_logmessage(line, db)
-                except:
-                    LOGGER.error("Failed to process log message: ",format(sys.exc_info()[0]))
+                    process_pool_logmessage(line, database)
+                except Exception as e:
+                    LOGGER.error("Failed to process log message: {}".format(e))
         f.close()
 
     # Read future log messages
@@ -93,14 +90,14 @@ def process_pool_log():
     while True:
         line = poollog.stdout.readline().decode('utf-8')
         try:
-            process_pool_logmessage(line, db)
-        except:
-            LOGGER.warn("Failed to process log message: ".format(sys.exc_info()[0]))
+            process_pool_logmessage(line, database)
+        except Exception as e:
+            LOGGER.error("Failed to process log message: {}".format(e))
 
 
 # Looking for share messages
 # Add them to the grin_shares table
-def process_grin_logmessage(line, db):
+def process_grin_logmessage(line, database):
     global LOGGER
     # Looking for: "Jun 07 02:07:48.470 INFO (Server ID: StratumServer) Got share for block: hash 1a4480ad, height 99845, nonce 14139347905838955360, difficulty 9/1, submitted by 192.168.2.100:13415"
     if "Got share for block:" in line:
@@ -114,45 +111,39 @@ def process_grin_logmessage(line, db):
         s_share_difficulty = int(match.group(5))
         s_network_difficulty = int(match.group(6))
         s_worker = match.group(7)
-        # Package the share in a tuple
-        sql_timestamp = db_api.to_sqltimestamp(s_timestamp)
+
+        sql_timestamp = lib.to_sqltimestamp(s_timestamp)
         if s_share_difficulty >= s_network_difficulty:
-            is_solution = True
+            share_is_solution = True
         else:
-            is_solution = False
-        data_grinshare = (
-            s_hash,
-            s_height,
-            s_nonce,
-            s_share_difficulty,
-            s_network_difficulty,
-            sql_timestamp,
-            s_worker,
-            is_solution,
-        )
-        db.add_grinshares([data_grinshare], True)
-        LOGGER.warn("Added GrinShare: {}".format(data_grinshare))
+            share_is_solution = False
+
+        # Create a new record
+        new_grin_share = Grin_shares(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=sql_timestamp, found_by=s_worker, is_solution=share_is_solution)
+        duplicate = database.db.createDataObj_ignore_duplicates(new_grin_share)
+        database.db.getSession().commit()
+        if duplicate:
+            LOGGER.warn("Duplicate GrinShare: {}".format(new_grin_share))
+        else:
+            LOGGER.warn("Added GrinShare: {}".format(new_grin_share))
+
         # If this is a full solution found by us, also add it as a pool block
         if s_share_difficulty >= s_network_difficulty:
-            data_poolblock = (
-                s_hash,
-                s_height,
-                s_nonce,
-                s_share_difficulty,
-                s_network_difficulty,
-                sql_timestamp,
-                s_worker,
-            )
-            db.add_poolblocks([data_poolblock], True)
-            LOGGER.warn("Added Pool Block: {}".format(data_poolblock))
+            new_pool_block = Pool_blocks(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=sql_timestamp, found_by=s_worker, state="new")
+            duplicate = database.db.createDataObj_ignore_duplicates(new_pool_block)
+            database.db.getSession().commit()
+            if duplicate:
+                LOGGER.warn("Duplicate Pool Block: {}".format(new_pool_block))
+            else:
+                LOGGER.warn("Added Pool Block: {}".format(new_pool_block))
         sys.stdout.flush()
 
 
 def process_grin_log():
     global LOGGER
     global CONFIG
-    # Get a handle to the DB API
-    db = db_api.db_api()
+    # Connect to DB
+    database = lib.get_db()
 
     GRIN_LOG = CONFIG["grin_node"]["log_dir"] + "/" + CONFIG["grin_node"]["log_filename"]
 
@@ -163,7 +154,7 @@ def process_grin_log():
     for logfile in logfiles:
         with open(logfile) as f:
             for line in f:
-                process_grin_logmessage(line, db)
+                process_grin_logmessage(line, database)
         f.close()
 
     # Read future log messages
@@ -176,14 +167,13 @@ def process_grin_log():
     while True:
         line = grinlog.stdout.readline().decode('utf-8')
         try:
-            process_grin_logmessage(line, db)
-        except:
-            LOGGER.warn("Failed to process log message: ".format(sys.exc_info()[0]))
+            process_grin_logmessage(line, database)
+        except Exception as e:
+            LOGGER.error("Failed to process log message: {}".format(e))
 
 
 
 def main():
-    global PROCESS
     global LOGGER
     global CONFIG
     CONFIG = lib.get_config()
@@ -202,3 +192,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

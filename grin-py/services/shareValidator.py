@@ -27,48 +27,54 @@
 #        Check nonce and timestamp against grin_share for added sanity
 
 import sys
-import requests
-import json
 import time
-import db_api
+from datetime import datetime
 import lib
+from grinbase.model.pool_shares import Pool_shares
+from grinbase.model.grin_shares import Grin_shares
+
 
 PROCESS = "shareValidator"
+LOGGER = None
+CONFIG = None
 
 def main():
-    db = db_api.db_api()
-    logger = lib.get_logger(PROCESS)
-    logger.warn("=== Starting {}".format(PROCESS))
+    global LOGGER
+    global CONFIG
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
 
-    new_poolshares = db.get_unvalidated_poolshares()
+    # Connect to DB
+    database = lib.get_db()
+
+    new_poolshares = Pool_shares.getUnvalidated()
     for pool_share in new_poolshares:
-        invalid_reason = "NULL"
-        ok = True
-        (ps_height, ps_nonce, ps_worker_difficulty, ps_timestamp, ps_found_by,
-         ps_validated, ps_is_valid, ps_invalid_reason) = pool_share
-        grin_share = db.get_grin_share_by_nonce(ps_nonce)
+        grin_share = Grin_shares.get_by_nonce(pool_share.nonce)
         if grin_share == None:
-            ok = False
-            invalid_reason = "no grin_share"
-            # continue # Check again later
+            # No matching validated grin share was found
+            # XXX TODO: Only invalidate if its old enough
+            pool_share.validated = True
+            pool_share.is_valid = False
+            pool_share.invalid_reason = "no grin_share"
         else:
-            (gs_hash, gs_height, gs_nonce, gs_actual_difficulty,
-             gs_net_difficulty, gs_timestamp, gs_found_by,
-             gs_is_solution) = grin_share
-            if ps_nonce != gs_nonce:
-                ok = False
-                invalid_reason = "nonce mismatch"
-            if ps_worker_difficulty > gs_actual_difficulty:
-                ok = False
-                invalid_reason = "low difficulty"
+            if pool_share.nonce != grin_share.nonce:
+                pool_share.validated = True
+                pool_share.is_valid = False
+                pool_share.invalid_reason = "nonce mismatch"
+            if pool_share.worker_difficulty > grin_share.actual_difficulty:
+                pool_share.validated = True
+                pool_share.is_valid = False
+                pool_share.invalid_reason = "low difficulty"
         # Update record
-        logger.warn("Share {}, {} is {} because {}".format(ps_height, ps_nonce, ok,
-                                                     invalid_reason))
-        db.set_poolshare_validation(ok, invalid_reason, ps_nonce)
+        pool_share.validated = True
+        pool_share.is_valid = True
+        pool_share.invalid_reason = "None"
+        LOGGER.warn("Share {}, {} is {} because {}".format(pool_share.height, pool_share.nonce, pool_share.is_valid, pool_share.invalid_reason))
+        database.db.getSession().commit()
 
-    db.set_last_run(PROCESS, str(time.time()))
-    db.close()
-    logger.warn("=== Completed {}".format(PROCESS))
+    # db.set_last_run(PROCESS, str(time.time()))
+    LOGGER.warn("=== Completed {}".format(PROCESS))
 
 
 if __name__ == "__main__":

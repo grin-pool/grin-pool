@@ -3,6 +3,7 @@ import traceback
 
 from sqlalchemy import *
 from sqlalchemy.orm import scoped_session
+from sqlalchemy.exc import IntegrityError
 
 import grinbase
 from grinbase.model import initialize_sql
@@ -57,7 +58,6 @@ class database_details:
             self.session[threading.get_ident()].rollback()
             raise
 
-
     def createDataObj(self, obj):
         try:
             self.session[threading.get_ident()].add(obj)
@@ -81,4 +81,14 @@ class database_details:
             traceback.print_exc()
             self.session[threading.get_ident()].rollback()
             raise
+
+    def createDataObj_ignore_duplicates(self, obj):
+        try:
+            self.session[threading.get_ident()].add(obj)
+            self.session[threading.get_ident()].commit()
+            self.session[threading.get_ident()].flush()
+            return False
+        except IntegrityError as e:
+            self.session[threading.get_ident()].rollback()
+            return True
 
