@@ -22,25 +22,31 @@ import time
 import configparser
 import logging
 import threading
+from datetime import datetime
+
+
+from grinbase.constants.MysqlConstants import MysqlConstants
+from grinbase.dbaccess import database
+from grinbase.dbaccess.database import database_details
 
 LOGGER = None
 CONFIG = None
 
 def get_config():
+    global CONFIG
     rlock = threading.RLock()
     with rlock:
-        global CONFIG
         if CONFIG == None:
             c = configparser.ConfigParser()
-            c.read('/services/config.ini')
+            c.read('config.ini')
             CONFIG = c
         return CONFIG
 
 # Log to both stdout and the log file
 def get_logger(program):
+    global LOGGER
     rlock = threading.RLock()
     with rlock:
-        global LOGGER
         if LOGGER == None:
             config = get_config()
             log_dir = config[program]["log_dir"]
@@ -60,3 +66,30 @@ def get_logger(program):
             l.addHandler(consoleHandler)
             LOGGER = l
         return LOGGER
+
+
+def get_db_constraints():
+    config = get_config()
+    db_host = config["db"]["address"] + ":" + config["db"]["port"]
+    db_user = config["db"]["user"]
+    db_password = config["db"]["password"]
+    db_name = config["db"]["db_name"]
+    mysqlcontsraints = MysqlConstants(db_host, db_user, db_password, db_name)
+    return mysqlcontsraints
+
+def get_db():
+    rlock = threading.RLock()
+    with rlock:
+        if database.db is None:
+            mysqlcontsraints = get_db_constraints()
+            database.db = database_details(MYSQL_CONSTANTS=mysqlcontsraints)
+            database.db.initialize()
+    database.db.initializeSession()
+    return database
+
+def to_sqltimestamp(s_timestamp):
+    year = str(datetime.today().year)
+    tm = datetime.strptime(s_timestamp, '%b %d %H:%M:%S.%f')
+    sql_timestamp = year + "-" + tm.strftime("%m-%d %H:%M:%S")
+    return sql_timestamp
+

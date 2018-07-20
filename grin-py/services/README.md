@@ -46,15 +46,6 @@ poolblockUnlocker.py validates against (grin node or blocks record) for orphan c
 Orphans are marked, or blocks are unlocked.
 ```
 
-### payments
-```
-A record for each payment to be made
-paymentMaker.py gets unlocked blocks from the pool_blocks table,
-    For each unlocked pool_block:
-	gets valid worker shares for that block,
-	creates / adds to the pool_utxo record for each worker whoc ontributed shares
-```
-
 ### pool_utxo <--- these are our user records.  
 ```
 A record of each pending payout (one per unique miner payout address)

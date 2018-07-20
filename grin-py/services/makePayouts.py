@@ -19,9 +19,6 @@ import time
 import subprocess
 from datetime import datetime
 import lib
-from grinbase.constants.MysqlConstants import MysqlConstants
-from grinbase.dbaccess import database
-from grinbase.dbaccess.database import database_details
 from grinbase.model.pool_utxo import Pool_utxo
 
 PROCESS = "makePayouts"
@@ -70,16 +67,8 @@ def main():
     LOGGER = lib.get_logger(PROCESS)
     LOGGER.warn("=== Starting {}".format(PROCESS))
 
-    # DB connection details
-    db_host = CONFIG["db"]["address"] + ":" + CONFIG["db"]["port"]
-    db_user = CONFIG["db"]["user"]
-    db_password = CONFIG["db"]["password"]
-    db_name = CONFIG["db"]["db_name"]
-    mysqlcontsraints = MysqlConstants(db_host, db_user, db_password, db_name)
-
     # Connect to DB
-    database.db = database_details(MYSQL_CONSTANTS=mysqlcontsraints)
-    database.db.initialize()
+    database = lib.get_db()
 
     wallet_dir = CONFIG[PROCESS]["wallet_dir"]
     minimum_payout = int(CONFIG[PROCESS]["minimum_payout"])

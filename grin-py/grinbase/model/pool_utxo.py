@@ -1,4 +1,5 @@
 import datetime
+import uuid
 
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float
 from sqlalchemy.orm import relationship
@@ -33,16 +34,10 @@ class Pool_utxo(Base):
         self.last_try = now()
         self.last_success = now()
 
-    # Add to the current amount
-    def addAmount(self, amount):
-        try:
-            self.amount += amount
-            database.db.getSession().commmit()
-        except Exception as e:
-            print("An error occured ", e)
-            print(e.args)
-            database.db.getSession().rollback()
-            raise
+    # Get worker UUID from login string
+    @classmethod
+    def loginToUUID(cls, login):
+        return str(uuid.uuid3(uuid.NAMESPACE_URL, str(login)))
 
     # Get a list of all records in the table
     @classmethod
@@ -58,3 +53,14 @@ class Pool_utxo(Base):
     @classmethod
     def get_locked_by_id(cls, uid):
         return database.db.getSession().query(Pool_utxo).with_for_update().filter_by(id=uid).first()
+
+    # Add creadit to a worker, create a new record if none exists
+    @classmethod
+    def credit_worker(cls, worker, amount):
+        uid = Pool_utxo.loginToUUID(worker)
+        worker_utxo = Pool_utxo.get_locked_by_id(uid)
+        if worker_utxo is None:
+            worker_utxo = Pool_utxo(id=uid, amount=0, address=worker, failure_count=0, last_try=now(), last_success=now())
+        worker_utxo.amount += amount
+        return worker_utxo
+    

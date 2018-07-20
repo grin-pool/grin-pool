@@ -21,62 +21,69 @@ import sys
 import requests
 import json
 import time
-import db_api
 import lib
 
-PROCESS = "blockValidator"
+from grinbase.model.blocks import Blocks
 
+PROCESS = "blockValidator"
+LOGGER = None
+CONFIG = None
 
 def main():
-    db = db_api.db_api()
-    config = lib.get_config()
-    logger = lib.get_logger(PROCESS)
-    logger.warn("=== Starting {}".format(PROCESS))
+    global LOGGER
+    global CONFIG
 
-    grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
+    
+    # Connect to DB
+    database = lib.get_db()
+
+    grin_api_url = "http://" + CONFIG["grin_node"]["address"] + ":" + CONFIG["grin_node"]["api_port"]
     status_url = grin_api_url + "/v1/status"
     blocks_url = grin_api_url + "/v1/blocks/"
-    validation_depth = int(config[PROCESS]["validation_depth"])
+    validation_depth = int(CONFIG[PROCESS]["validation_depth"])
 
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
     last = latest - validation_depth  # start a reasonable distance back
-    logger.warn("Starting from block #{}".format(last))
+    LOGGER.warn("Starting from block #{}".format(last))
     #    last = 0
     for i in range(last, latest):
         url = blocks_url + str(i)
         response = requests.get(url).json()
         # print("{}: {}".format(response["header"]["height"], response["header"]["hash"]))
-        data_block = (response["header"]["hash"],
-                      response["header"]["version"],
-                      response["header"]["height"],
-                      response["header"]["previous"],
-                      response["header"]["timestamp"][:-1],
-                      response["header"]["output_root"],
-                      response["header"]["range_proof_root"],
-                      response["header"]["kernel_root"],
-                      response["header"]["nonce"],
-                      response["header"]["total_difficulty"],
-                      response["header"]["total_kernel_offset"])
-
         try:
-            rec = db.get_blocks_by_height([i])
-            if len(rec) > 0:
-                r = rec[0]
+            rec = Blocks.get_by_height([i])
+            if rec is not None:
                 #print("Got block {} at height {}".format(r[0], r[2]))
-                if r[0] != response["header"]["hash"]:
-                    logger.warn("Found an orphan - height: {}, hash: {} vs {}".format(r[2], r[0], response["header"]["hash"]))
-                    db.set_block_state("orphan", int(i))
+                if rec.hash != response["header"]["hash"]:
+                    LOGGER.warn("Found an orphan - height: {}, hash: {} vs {}".format(rec.height, rec.hash, response["header"]["hash"]))
+                    rec.state = "orphan"
+                    db.set_block_state("orphan")
             else:
-                logger.warn("Adding missing block - height: {}".format(response["header"]["height"]))
+                LOGGER.warn("Adding missing block - height: {}".format(response["header"]["height"]))
                 # XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
-                db.add_blocks([data_block], True)
-        except:
-            # XXX TODO: Something
-            pass
+                missing_block = Blocks(hash=response["header"]["hash"],
+                                       version=response["header"]["version"],
+                                       height = response["header"]["height"],
+                                       previous = response["header"]["previous"],
+                                       timestamp = response["header"]["timestamp"][:-1],
+                                       output_root = response["header"]["output_root"],
+                                       range_proof_root = response["header"]["range_proof_root"],
+                                       kernel_root = response["header"]["kernel_root"],
+                                       nonce = response["header"]["nonce"],
+                                       total_difficulty = response["header"]["total_difficulty"],
+                                       total_kernel_offset = response["header"]["total_kernel_offset"] )
+                database.db.createDataObj(missing_block)
+        except Exception as e:
+            # XXX TODO: Something more ?
+            LOGGER.error("Something went wrong: {}".format(e))
         sys.stdout.flush()
-    db.set_last_run(PROCESS, str(time.time()))
-    db.close()
+    # db.set_last_run(PROCESS, str(time.time()))
+    # db.close()
+    database.db.getSession().commit()
 
 
 if __name__ == "__main__":

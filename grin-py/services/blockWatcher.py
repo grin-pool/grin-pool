@@ -23,27 +23,31 @@ import sys
 import requests
 import json
 from time import sleep
-import db_api
 import lib
+from grinbase.model.blocks import Blocks
 
 PROCESS = "blockWatcher"
+LOGGER = None
+CONFIG = None
 
 def get_current_height(url):
     response = requests.get(url)
     latest = response.json()["tip"]["height"]
+    # XXX TODO:  Validate somehow?
     return latest
 
 
 def main():
-    db = db_api.db_api()
-    config = lib.get_config()
-    logger = lib.get_logger(PROCESS)
-    logger.warn("=== Starting {}".format(PROCESS))
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
+    # Connect to DB
+    database = lib.get_db()
 
-    grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
+    grin_api_url = "http://" + CONFIG["grin_node"]["address"] + ":" + CONFIG["grin_node"]["api_port"]
     status_url = grin_api_url + "/v1/status"
     blocks_url = grin_api_url + "/v1/blocks/"
-    check_interval = float(config[PROCESS]["check_interval"])
+    check_interval = float(CONFIG[PROCESS]["check_interval"])
 
     last = get_current_height(status_url)
     while True:
@@ -52,26 +56,28 @@ def main():
             last = latest
             url = blocks_url + str(i)
             response = requests.get(url).json()
-            logger.warn("New Block: {} at {}".format(response["header"]["hash"],
+            LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
                                               response["header"]["height"]))
-            data_block = (response["header"]["hash"],
-                          response["header"]["version"],
-                          response["header"]["height"],
-                          response["header"]["previous"],
-                          response["header"]["timestamp"][:-1],
-                          response["header"]["output_root"],
-                          response["header"]["range_proof_root"],
-                          response["header"]["kernel_root"],
-                          response["header"]["nonce"],
-                          response["header"]["total_difficulty"],
-                          response["header"]["total_kernel_offset"])
             try:
-                db.add_blocks([data_block])
-            except:
-                pass
+                new_block = Blocks(hash = response["header"]["hash"],
+                                   version = response["header"]["version"],
+                                   height = response["header"]["height"],
+                                   previous = response["header"]["previous"],
+                                   timestamp = response["header"]["timestamp"][:-1],
+                                   output_root = response["header"]["output_root"],
+                                   range_proof_root = response["header"]["range_proof_root"],
+                                   kernel_root = response["header"]["kernel_root"],
+                                   nonce = response["header"]["nonce"],
+                                   total_difficulty = response["header"]["total_difficulty"],
+                                   total_kernel_offset = response["header"]["total_kernel_offset"],
+                                   state = "new")
+                database.db.createDataObj(new_block)
+                database.db.getSession().commit()
+            except Exception as e:
+                LOGGER.error("Something went wrong: {}".format(e))
         sys.stdout.flush()
         sleep(check_interval)
-    logger.warn("=== Completed {}".format(PROCESS))
+    LOGGER.warn("=== Completed {}".format(PROCESS))
 
 
 if __name__ == "__main__":

@@ -19,71 +19,78 @@
 #paymentMaker.py gets unlocked blocks from the pool_blocks table,
 #    For each unlocked pool_block:
 #        gets valid worker shares for that block,
-#        generates a payment record for each worker
-#        deletes share records ?
+#        Caclulate this workers share of the rewards
+#        Add to the pool_utxo
 
 # XXX TODO: Single db transaction
 
 import sys
-import db_api
 import time
 import lib
+from grinbase.model.pool_blocks import Pool_blocks
+from grinbase.model.pool_shares import Pool_shares
+from grinbase.model.grin_shares import Grin_shares
+from grinbase.model.pool_utxo import Pool_utxo
 
-PROCESS = "paymentMaker"
 REWARD = 60.0  # XXX TODO: use the actual reward of each block
 
+PROCESS = "paymentMaker"
+LOGGER = None
 
 def main():
-    db = db_api.db_api()
-    logger = lib.get_logger(PROCESS)
-    logger.warn("=== Starting {}".format(PROCESS))
+    global LOGGER
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
+
+    # Connect to DB
+    database = lib.get_db()
 
     latest_block = 0
 
     # XXX All in one db transaction....
     # Get unlocked blocks from the db
-    unlocked_blocks = db.get_poolblocks_by_state("unlocked")
+    unlocked_blocks = Pool_blocks.get_all_unlocked()
+    database.db.getSession().commit()
     for pb in unlocked_blocks:
-        logger.warn("Processing unlocked block: {}".format(pb))
-        # XXX TODO: If there are no shares for this block dont process it
-        (pb_hash, pb_height, pb_nonce, pb_actual_difficulty, pb_net_difficulty,
-         pb_timestamp, pb_found_by, pb_state) = pb
-        if pb_height > latest_block:
-            latest_block = pb_height
-    # Get valid pool_shares for that block from the db
-        pool_shares = db.get_valid_poolshares_by_height(pb_height)
-        # Calculate Payment info:
-        worker_shares = {}
-        for ps in pool_shares:
-            logger.warn("Processing pool_shares: {}".format(ps))
-            (ps_height, ps_nonce, ps_difficulty, ps_timestamp, ps_found_by,
-             ps_validated, ps_is_valid, ps_invalid_reason) = ps
-            gs = db.get_grin_share_by_nonce(ps_nonce)
-            if gs == None:
-                # XXX NOTE: no payout for shares not accepted by grin node
-                continue
-            (gs_hash, gs_height, gs_nonce, gs_actual_difficulty,
-             gs_net_difficulty, gs_timestamp, gs_found_by, gs_state) = gs
-            if ps_found_by in worker_shares:
-                worker_shares[ps_found_by] += gs_actual_difficulty
-            else:
-                worker_shares[ps_found_by] = gs_actual_difficulty
-        if len(worker_shares) > 0:
-            # Calcualte reward/difficulty: XXX TODO: Enhance
-            #  What algorithm to use?  Maybe: https://slushpool.com/help/manual/rewards
-            r_per_d = REWARD / sum(worker_shares.values())
-            for worker in worker_shares.keys():
-                # Calculate reward per share
-                worker_rewards = worker_shares[worker] * r_per_d
-                # Add or create worker rewards
-                # XXX TODO: Batch these
-                db.create_or_add_utxo(worker, worker_rewards)
-                logger.warn("Credit to user: {} = {}".format(worker, worker_rewards))
-        # Mark the pool_block state="paid" (maybe "processed" would be more accurate?)
-        db.set_poolblock_state("paid", int(pb_height))
-    db.set_last_run(PROCESS, str(time.time()))
-    db.close()
-    logger.warn("=== Completed {}".format(PROCESS))
+        try:
+            LOGGER.warn("Processing unlocked block: {}".format(pb))
+            if pb.height > latest_block:
+                latest_block = pb.height
+            # Get valid pool_shares for that block from the db
+            pool_shares = Pool_shares.get_valid_by_height(pb.height)
+            # Calculate Payment info:
+            worker_shares = {}
+            for ps in pool_shares:
+                LOGGER.warn("Processing pool_shares: {}".format(ps))
+                # Need to get actual_difficulty
+                gs = Grin_shares.get_by_nonce(ps.nonce)
+                if gs == None:
+                    # XXX NOTE: no payout for shares not accepted by grin node
+                    continue
+                if ps.found_by in worker_shares:
+                    worker_shares[ps.found_by] += gs.actual_difficulty
+                else:
+                    worker_shares[ps.found_by] = gs.actual_difficulty
+            if len(worker_shares) > 0:
+                # Calcualte reward/difficulty: XXX TODO: Enhance
+                #  What algorithm to use?  Maybe: https://slushpool.com/help/manual/rewards
+                r_per_d = REWARD / sum(worker_shares.values())
+                for worker in worker_shares.keys():
+                    # Calculate reward per share
+                    worker_rewards = worker_shares[worker] * r_per_d
+                    # Add or create worker rewards
+                    worker_utxo = Pool_utxo.credit_worker(worker, worker_rewards)
+                    LOGGER.warn("Credit to user: {} = {}".format(worker, worker_rewards))
+            # Mark the pool_block state="paid" (maybe "processed" would be more accurate?)
+            pb.state = "paid"
+            database.db.getSession().commit()
+        except Exception as e:
+            database.db.getSession().rollback()
+            LOGGER.error("Something went wrong: {}".format(e))
+
+    #database.db.getSession().commit()
+    # db.set_last_run(PROCESS, str(time.time()))
+    LOGGER.warn("=== Completed {}".format(PROCESS))
     sys.stdout.flush()
 
 
