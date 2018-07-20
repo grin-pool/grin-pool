@@ -28,6 +28,5 @@ import sys
 import subprocess
 import re
 import glob
-import db_api
 
 xxx XXX THIS IS NOT WRITTEN YET
