@@ -68,5 +68,5 @@ class Pool_shares(Base):
     # Get all shares found by user in the past n minutes
     @classmethod
     def get_all_by_user_and_minutes(cls, user, minutes):
-        since_timestamp = now() - minutes
+        since_timestamp = 0 # now() - minutes
         return list(database.db.getSession().query(Pool_shares).filter_by(found_by=user).filter_by(timestamp>since_timestamp))

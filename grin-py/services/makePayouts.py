@@ -100,6 +100,7 @@ def main():
                 locked_utxo.failure_count = 0
                 locked_utxo.last_try = timestamp
                 locked_utxo.last_success = timestamp
+                locked_utxo.total_amount += original_balance
                 # Commit changes
                 database.db.getSession().commit() 
             else:

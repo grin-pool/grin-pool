@@ -56,6 +56,10 @@ def main():
         for i in range(last + 1, latest + 1):
             last = latest
             url = blocks_url + str(i)
+            r = requests.get(url)
+            if not r.ok:
+                LOGGER.error("Failed to get block info for block {}".format(last))
+                continue
             response = requests.get(url).json()
             LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
                                               response["header"]["height"]))

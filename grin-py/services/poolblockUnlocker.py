@@ -57,19 +57,22 @@ def main():
     for pb in new_poolblocks:
         if pb.height < (latest - block_expiretime):
             # Dont re-process very old blocks - protection against duplicate payouts.
-            LOGGER.warn("Processed expired pool block at height: {}".format(pb.height))
+            LOGGER.error("Processed expired pool block at height: {}".format(pb.height))
             pb.state = "expired"
             continue
         # XXX TODO: More robust request handling
-        response = requests.get(blocks_url + str(pb.height)).json()
-        # print("Response: {}".format(response))
+        r = requests.get(blocks_url + str(pb.height))
+        if not r.ok:
+            LOGGER.error("Failed to get block {} from {}".format(pb.height, blocks_url))
+            continue
+        response = r.json()
         if int(response["header"]["nonce"]) != int(pb.nonce):
             LOGGER.warn("Processed orphan pool block at height: {}".format(pb.height))
             pb.state = "orphan"
-        else:
-            if pb.height < (latest - block_locktime):
-                LOGGER.warn("Unlocking pool block at height: {}".format(pb.height))
-                pb.state = "unlocked"
+            continue
+        if pb.height < (latest - block_locktime):
+            LOGGER.warn("Unlocking pool block at height: {}".format(pb.height))
+            pb.state = "unlocked"
         sys.stdout.flush()
 
     # db.set_last_run(PROCESS, str(time.time()))
