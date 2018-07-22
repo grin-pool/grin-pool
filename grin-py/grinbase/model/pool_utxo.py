@@ -17,22 +17,26 @@ class Pool_utxo(Base):
     failure_count = Column(Integer)
     last_try = Column(String(32))
     last_success = Column(String(32))
+    total_amount = Column(Float)
 
     def __repr__(self):
-        return "{} {} {} {} {} {}".format(self.id,
+        return "{} {} {} {} {} {} {}".format(
+            self.id,
             self.address,
             self.amount,
             self.failure_count,
             self.last_try,
-            self.last_success)
+            self.last_success,
+            self.total_amount)
 
-    def __init__(self, id, address, amount):
+    def __init__(self, id, address):
         self.id = id
         self.address = address
-        self.amount = amount
+        self.amount = 0
         self.failure_count = 0
-        self.last_try = now()
-        self.last_success = now()
+        self.last_try = ""
+        self.last_success = ""
+        self.total_amount = 0
 
     # Get worker UUID from login string
     @classmethod
@@ -60,7 +64,8 @@ class Pool_utxo(Base):
         uid = Pool_utxo.loginToUUID(worker)
         worker_utxo = Pool_utxo.get_locked_by_id(uid)
         if worker_utxo is None:
-            worker_utxo = Pool_utxo(id=uid, amount=0, address=worker, failure_count=0, last_try=now(), last_success=now())
+            worker_utxo = Pool_utxo(id=uid, address=worker)
+            database.db.createDataObj(worker_utxo)
         worker_utxo.amount += amount
         return worker_utxo
     

@@ -68,3 +68,23 @@ class Blocks(Base):
     @classmethod
     def get_by_nonce(cls, nonce):
         return database.db.getSession().query(Blocks).filter_by(nonce=nonce).first()
+
+    # Get the last N block records and return as a list
+    @classmethod
+    def get_last_n(cls, n):
+        highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
+        return list(database.db.getSession.query(Blocks).filter(Block.height >= highest-n))
+
+
+
+# def main():
+#     PROCESS = "GrinPoolBaseModelBlockTest"
+#     from grinlib import lib
+#     config = lib.get_config()
+#     logger = lib.get_logger(PROCESS)
+#     logger.error("test")
+#     database = lib.get_db()
+# 
+# 
+# if __name__ == "__main__":
+#     main()
