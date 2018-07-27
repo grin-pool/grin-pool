@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
 import datetime
+import operator
 
-from sqlalchemy import Column, Integer, String, BigInteger, SmallInteger, Boolean
+from sqlalchemy import Column, Integer, String, BigInteger, SmallInteger, Boolean, DateTime, func, asc
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -16,7 +17,7 @@ class Blocks(Base):
     version = Column(SmallInteger)
     height = Column(BigInteger, primary_key=True, nullable=False)
     previous = Column(String(64))
-    timestamp = Column(String(32))
+    timestamp = Column(DateTime)
     output_root = Column(String(64))
     range_proof_root = Column(String(64))
     kernel_root = Column(String(64))
@@ -73,7 +74,8 @@ class Blocks(Base):
     @classmethod
     def get_last_n(cls, n):
         highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
-        return list(database.db.getSession.query(Blocks).filter(Block.height >= highest-n))
+        latest = list(database.db.getSession().query(Blocks).filter(Blocks.height >= highest-n).order_by(asc(Blocks.height)))
+        return latest
 
 
 

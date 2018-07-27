@@ -48,6 +48,8 @@ def main():
     response = requests.get(status_url)
     latest = int(response.json()["tip"]["height"])
     last = latest - validation_depth  # start a reasonable distance back
+    if last < 0:
+        last = 1
     LOGGER.warn("Starting from block #{}".format(last))
     #    last = 0
     for i in range(last, latest):

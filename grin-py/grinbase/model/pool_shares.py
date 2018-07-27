@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, Boolean
+from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -16,7 +16,7 @@ class Pool_shares(Base):
     height = Column(BigInteger, nullable=False)
     nonce = Column(String(20), primary_key=True, nullable=False)
     worker_difficulty = Column(Integer)
-    timestamp = Column(String(32))
+    timestamp = Column(DateTime)
     found_by = Column(String(1024))
     validated = Column(Boolean)
     is_valid = Column(Boolean)
