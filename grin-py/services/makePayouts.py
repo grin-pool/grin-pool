@@ -18,6 +18,7 @@ import os
 import time
 import subprocess
 from datetime import datetime
+from random import randint
 
 from grinlib import lib
 from grinbase.model.pool_utxo import Pool_utxo
@@ -80,6 +81,10 @@ def main():
     # XXX TODO: to filter and sort by order we want to make payment attempts
     for utxo in utxos:
         try:
+            # Try less often for wallets that dont answer
+            if utxo.amount < utxo.failure_count:
+                if randint(0, 11) != 0:
+                    continue
             LOGGER.warn("Trying to pay: {} {} {}".format(utxo.id, utxo.address, utxo.amount))
             # Lock just this current record for update
             locked_utxo = Pool_utxo.get_locked_by_id(utxo.id)
@@ -87,7 +92,7 @@ def main():
             original_balance = locked_utxo.amount
             locked_utxo.amount = 0
             # Savepoint changes - if we crash after sending coins but before commit we roll back to here.
-            #   The pool audit service finds lost payouts and restores user balance
+            #   The pool audit service (coming soon) finds lost payouts and restores user balance
             database.db.getSession().begin_nested();
             # Attempt to make the payment
             timestamp = "{:%B %d, %Y %H:%M:%S.%f}".format(datetime.now())
