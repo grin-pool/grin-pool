@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, Boolean
+from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -17,7 +17,7 @@ class Grin_shares(Base):
     nonce = Column(String(20), primary_key=True, nullable=False)
     actual_difficulty = Column(Integer)
     net_difficulty = Column(Integer)
-    timestamp = Column(String(32))
+    timestamp = Column(DateTime)
     found_by = Column(String(1024))
     is_solution = Column(Boolean)
 

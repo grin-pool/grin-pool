@@ -15,8 +15,8 @@ class Pool_utxo(Base):
     address = Column(String(1024), nullable=False)
     amount = Column(Float)
     failure_count = Column(Integer)
-    last_try = Column(String(32))
-    last_success = Column(String(32))
+    last_try = Column(DateTime)
+    last_success = Column(DateTime)
     total_amount = Column(Float)
 
     def __repr__(self):
