@@ -1,18 +1,18 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: sharewatcher
+  name: poolsharewatcher
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        run: shareWatcher
+        run: poolshareWatcher
     spec:
       containers:
       - name: grin-pool
         image: grinpool/services:latest
-        command: ["/usr/local/bin/shareWatcher.py"]
+        command: ["/usr/local/bin/poolshareWatcher.py"]
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -20,16 +20,11 @@ spec:
               name: mysql-pass
               key: password
         volumeMounts: # directory inside container
-        - mountPath: /server
-          name: grinlogdir
         - mountPath: /stratum
           name: stratumdir
         - mountPath: /services
           name: poolservicesdir
       volumes: # directory location on host
-      - name: grinlogdir
-        hostPath:
-          path: /data/grin
       - name: stratumdir
         hostPath:
           path: /data/stratum
