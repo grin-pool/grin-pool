@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Watches both the pool and grin logs and adds the records from each to separate tables:
-#   pool log -> pool_shares: height, nonce, *user_address*, *expected_difficulty*
+# Watches the grin logs and adds records for grin shares and accepted pool blocks:
 #   grin log -> grin_shares: height, nonce, *share_difficulty*
-# Adds shares to *grin_shares* and *pool_shares* tables
+# Adds shares to *grin_shares*
 # Adds pool solved blocks to *pool_blocks* table
 
 import sys
@@ -27,74 +26,12 @@ import glob
 import time
 
 from grinlib import lib
-from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.grin_shares import Grin_shares
 from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "shareWatcher"
 LOGGER = None
 CONFIG = None
-
-# Looking for share messages matching:  "Accepted share at height {} with nonce {} with difficulty {} from worker {}"
-def process_pool_logmessage(line, database):
-    global LOGGER
-    # Looking for: "Jun 05 15:15:43.658 WARN Grin Pool - Got share at height 98029 with nonce 13100465979295287452 with difficulty 1 from worker http://192.168.1.102:13415"
-    if line.find('Got share at height') >= 0:
-        match = re.search(
-            r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$',
-            line)
-        s_timestamp = match.group(1)
-        s_height = int(match.group(2))
-        s_nonce = match.group(3)
-        s_difficulty = int(match.group(4))
-        s_worker = match.group(5)
-        # Create a new record
-        sql_timestamp = lib.to_sqltimestamp(s_timestamp)
-        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=sql_timestamp, found_by=s_worker, validated=False, is_valid=False, invalid_reason="None" )
-        duplicate = database.db.createDataObj_ignore_duplicates(new_pool_share)
-        database.db.getSession().commit()
-        if duplicate:
-            LOGGER.warn("Duplicate PoolShare: {}".format(new_pool_share))
-        else:
-            LOGGER.warn("Added PoolShare: {}".format(new_pool_share))
-        sys.stdout.flush()
-
-
-def process_pool_log():
-    global LOGGER
-    global CONFIG
-    # Connect to DB
-    database = lib.get_db()
-
-    POOL_LOG = CONFIG["stratum"]["log_dir"] + "/" + CONFIG["stratum"]["log_filename"]
-
-    # (re)Process all logs
-    logfiles = glob.glob(POOL_LOG + '*')
-    LOGGER.warn("Processing existing logs: {}".format(logfiles))
-    sys.stdout.flush()
-    for logfile in logfiles:
-        with open(logfile) as f:
-            for line in f:
-                try:
-                    process_pool_logmessage(line, database)
-                except Exception as e:
-                    LOGGER.error("Failed to process log message: {}".format(e))
-        f.close()
-
-    # Read future log messages
-    LOGGER.warn("Processing new logs: {}".format(POOL_LOG))
-    sys.stdout.flush()
-    poollog = subprocess.Popen(
-        ['tail', '-F', POOL_LOG],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
-    while True:
-        line = poollog.stdout.readline().decode('utf-8')
-        try:
-            process_pool_logmessage(line, database)
-        except Exception as e:
-            LOGGER.error("Failed to process log message: {}".format(e))
-
 
 # Looking for share messages
 # Add them to the grin_shares table
@@ -155,7 +92,10 @@ def process_grin_log():
     for logfile in logfiles:
         with open(logfile) as f:
             for line in f:
-                process_grin_logmessage(line, database)
+                try:
+                    process_grin_logmessage(line, database)
+                except Exception as e:
+                    LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
         f.close()
 
     # Read future log messages
@@ -170,7 +110,7 @@ def process_grin_log():
         try:
             process_grin_logmessage(line, database)
         except Exception as e:
-            LOGGER.error("Failed to process log message: {}".format(e))
+            LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
 
 
 
@@ -181,14 +121,7 @@ def main():
     LOGGER = lib.get_logger(PROCESS)
     # XXX TODO:  Kubernetes does not always get the volume mounted before the processes start
     # maybe need a loop waiting on it
-    # XXX TODO:  Need to handle the case where one thread dies but the other lives - probably
-    # want to to exit with error status if both threads are not healthy
-    t_pool = threading.Thread(name='PoolShareWatcher', target=process_pool_log)
-    t_grin = threading.Thread(name='GrinShareWatcher', target=process_grin_log)
-    t_pool.start()
-    t_grin.start()
-    t_pool.join()
-    t_grin.join()
+    process_grin_log()
 
 
 if __name__ == "__main__":
