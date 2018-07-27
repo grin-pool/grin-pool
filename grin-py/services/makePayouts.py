@@ -95,7 +95,8 @@ def main():
             #   The pool audit service (coming soon) finds lost payouts and restores user balance
             database.db.getSession().begin_nested();
             # Attempt to make the payment
-            timestamp = "{:%B %d, %Y %H:%M:%S.%f}".format(datetime.now())
+            #timestamp = "{:%B %d, %Y %H:%M:%S.%f}".format(datetime.now())
+            timestamp = datetime.now()
             status =  makePayout(locked_utxo.address, original_balance)
             LOGGER.warn("Payout status: {}".format(status))
             if status == 0:
