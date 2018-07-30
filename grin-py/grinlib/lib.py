@@ -29,6 +29,9 @@ from grinbase.constants.MysqlConstants import MysqlConstants
 from grinbase.dbaccess import database
 from grinbase.dbaccess.database import database_details
 
+from grinbase.model.blocks import Blocks
+
+
 LOGGER = None
 CONFIG = None
 
@@ -49,8 +52,12 @@ def get_logger(program):
     with rlock:
         if LOGGER == None:
             config = get_config()
-            log_dir = config[program]["log_dir"]
-            log_level = config[program]["log_level"]
+            try:
+                log_dir = config[program]["log_dir"]
+                log_level = config[program]["log_level"]
+            except:
+                log_dir = "./"
+                log_level = "WARNING"
 
             logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
             l = logging.getLogger()
@@ -87,9 +94,27 @@ def get_db():
     database.db.initializeSession()
     return database
 
-def to_sqltimestamp(s_timestamp):
-    year = str(datetime.today().year)
-    tm = datetime.strptime(s_timestamp, '%b %d %H:%M:%S.%f')
-    sql_timestamp = year + "-" + tm.strftime("%m-%d %H:%M:%S")
-    return sql_timestamp
+def get_grin_api_url():
+    config = get_config()
+    grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
+    return grin_api_url
 
+
+# Network chain height
+def get_current_height():
+    config = get_config()
+    grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
+    status_url = grin_api_url + "/v1/status"
+    response = requests.get(status_url)
+    latest = response.json()["tip"]["height"]
+    # XXX TODO:  Validate somehow?
+    return latest
+
+# Network graph rate
+def calculate_graph_rate(difficulty, ts1, ts2, n):
+    # gps = 42 * (diff/scale) / 60
+    # XXX TODO:  Assumes cuckoo 30 for all blocks
+    scale = 29.0
+    avg_time_between_blocks = (ts2 - ts1).total_seconds() / n
+    gps = 42.0 * (difficulty/scale) / avg_time_between_blocks
+    return gps

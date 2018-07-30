@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -50,4 +50,24 @@ class Grin_shares(Base):
     # Get a single record by nonce
     @classmethod
     def get_by_nonce(cls, nonce):
-        return database.db.getSession().query(Grin_shares).filter_by(nonce=nonce).first()
+        return database.db.getSession().query(Grin_shares).filter(Grin_shares.nonce==nonce).first()
+
+    # XXX
+
+    # Get all shares found by user in the past n minutes
+    @classmethod
+    def get_all_by_user_and_minutes(cls, user, minutes):
+        since_timestamp = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
+        return list(database.db.getSession().query(Grin_shares).filter(and_(Grin_shares.found_by == user, Grin_shares.timestamp >= since_timestamp)))
+
+    # Get stats records falling within requested range
+    @classmethod
+    def get_range_by_time(cls, ts_start, ts_end):
+        records = list(database.db.getSession().query(Grin_shares).filter(and_(Grin_shares.timestamp >= ts_start, Grin_shares.timestamp <= ts_end)).order_by(asc(Grin_shares.height)))
+        return records
+
+    # Get stats records falling within requested range
+    @classmethod
+    def get_range_by_user_and_time(cls, user, ts_start, ts_end):
+        records = list(database.db.getSession().query(Grin_shares).filter(and_(Grin_shares.timestamp >= ts_start, Grin_shares.timestamp <= ts_end, Grin_shares.found_by == user)).order_by(asc(Grin_shares.height)))
+        return records

@@ -23,6 +23,7 @@ import json
 import time
 
 from grinlib import lib
+from grinlib import network
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockValidator"
@@ -40,24 +41,18 @@ def main():
     # Connect to DB
     database = lib.get_db()
 
-    grin_api_url = "http://" + CONFIG["grin_node"]["address"] + ":" + CONFIG["grin_node"]["api_port"]
-    status_url = grin_api_url + "/v1/status"
-    blocks_url = grin_api_url + "/v1/blocks/"
     validation_depth = int(CONFIG[PROCESS]["validation_depth"])
-
-    response = requests.get(status_url)
-    latest = int(response.json()["tip"]["height"])
+    latest = network.get_current_height()
     last = latest - validation_depth  # start a reasonable distance back
-    if last < 0:
+    if last < 1:
         last = 1
     LOGGER.warn("Starting from block #{}".format(last))
-    #    last = 0
+
     for i in range(last, latest):
-        url = blocks_url + str(i)
-        response = requests.get(url).json()
+        response = network.get_block_by_height(i)
         # print("{}: {}".format(response["header"]["height"], response["header"]["hash"]))
         try:
-            rec = Blocks.get_by_height([i])
+            rec = Blocks.get_by_height(i)
             if rec is not None:
                 if rec.hash != response["header"]["hash"] and rec.state != "orphan":
                     LOGGER.warn("Found an orphan - height: {}, hash: {} vs {}".format(rec.height, rec.hash, response["header"]["hash"]))
@@ -65,7 +60,6 @@ def main():
                     database.db.getSession().commit()
             else:
                 LOGGER.warn("Adding missing block - height: {}".format(response["header"]["height"]))
-                # XXX TODO:  Probably want to mark it as "missing" so we know it was filled in after the fact?
                 missing_block = Blocks(hash=response["header"]["hash"],
                                        version=response["header"]["version"],
                                        height = response["header"]["height"],
@@ -85,6 +79,8 @@ def main():
         sys.stdout.flush()
     # db.set_last_run(PROCESS, str(time.time()))
     database.db.getSession().commit()
+    LOGGER.warn("=== Completed {}".format(PROCESS))
+
 
 
 if __name__ == "__main__":

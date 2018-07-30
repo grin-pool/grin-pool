@@ -50,14 +50,14 @@ def process_grin_logmessage(line, database):
         s_network_difficulty = int(match.group(6))
         s_worker = match.group(7)
 
-        sql_timestamp = lib.to_sqltimestamp(s_timestamp)
+        #sql_timestamp = lib.to_sqltimestamp(s_timestamp)
         if s_share_difficulty >= s_network_difficulty:
             share_is_solution = True
         else:
             share_is_solution = False
 
         # Create a new record
-        new_grin_share = Grin_shares(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=sql_timestamp, found_by=s_worker, is_solution=share_is_solution)
+        new_grin_share = Grin_shares(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=share_is_solution)
         duplicate = database.db.createDataObj_ignore_duplicates(new_grin_share)
         database.db.getSession().commit()
         if duplicate:
@@ -67,7 +67,7 @@ def process_grin_logmessage(line, database):
 
         # If this is a full solution found by us, also add it as a pool block
         if s_share_difficulty >= s_network_difficulty:
-            new_pool_block = Pool_blocks(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=sql_timestamp, found_by=s_worker, state="new")
+            new_pool_block = Pool_blocks(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, state="new")
             duplicate = database.db.createDataObj_ignore_duplicates(new_pool_block)
             database.db.getSession().commit()
             if duplicate:
@@ -96,6 +96,7 @@ def process_grin_log():
                     process_grin_logmessage(line, database)
                 except Exception as e:
                     LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
+                    database.db.getSession().rollback()
         f.close()
 
     # Read future log messages
