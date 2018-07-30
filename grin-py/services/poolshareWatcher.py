@@ -44,8 +44,8 @@ def process_pool_logmessage(line, database):
         s_difficulty = int(match.group(4))
         s_worker = match.group(5)
         # Create a new record
-        sql_timestamp = lib.to_sqltimestamp(s_timestamp)
-        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=sql_timestamp, found_by=s_worker, validated=False, is_valid=False, invalid_reason="None" )
+        # sql_timestamp = lib.to_sqltimestamp(s_timestamp)
+        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=s_timestamp, found_by=s_worker, validated=False, is_valid=False, invalid_reason="None" )
         duplicate = database.db.createDataObj_ignore_duplicates(new_pool_share)
         database.db.getSession().commit()
         if duplicate:

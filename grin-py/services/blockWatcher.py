@@ -25,18 +25,12 @@ import json
 from time import sleep
 
 from grinlib import lib
+from grinlib import network
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockWatcher"
 LOGGER = None
 CONFIG = None
-
-def get_current_height(url):
-    response = requests.get(url)
-    latest = response.json()["tip"]["height"]
-    # XXX TODO:  Validate somehow?
-    return latest
-
 
 def main():
     CONFIG = lib.get_config()
@@ -45,22 +39,17 @@ def main():
     # Connect to DB
     database = lib.get_db()
 
-    grin_api_url = "http://" + CONFIG["grin_node"]["address"] + ":" + CONFIG["grin_node"]["api_port"]
-    status_url = grin_api_url + "/v1/status"
-    blocks_url = grin_api_url + "/v1/blocks/"
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
-    last = get_current_height(status_url)
+    last = network.get_current_height()
     while True:
-        latest = get_current_height(status_url)
+        latest = network.get_current_height()
         for i in range(last + 1, latest + 1):
             last = latest
-            url = blocks_url + str(i)
-            r = requests.get(url)
-            if not r.ok:
+            response = network.get_block_by_height(i)
+            if response == None:
                 LOGGER.error("Failed to get block info for block {}".format(last))
                 continue
-            response = requests.get(url).json()
             LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
                                               response["header"]["height"]))
             try:

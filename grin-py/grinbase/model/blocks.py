@@ -3,7 +3,7 @@
 import datetime
 import operator
 
-from sqlalchemy import Column, Integer, String, BigInteger, SmallInteger, Boolean, DateTime, func, asc
+from sqlalchemy import Column, Integer, String, BigInteger, SmallInteger, Boolean, DateTime, func, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -63,12 +63,12 @@ class Blocks(Base):
     # Get a single record by height
     @classmethod
     def get_by_height(cls, height):
-        return database.db.getSession().query(Blocks).filter_by(height=height).first()
+        return database.db.getSession().query(Blocks).filter(Blocks.height==height).first()
 
     # Get a single record by nonce
     @classmethod
     def get_by_nonce(cls, nonce):
-        return database.db.getSession().query(Blocks).filter_by(nonce=nonce).first()
+        return database.db.getSession().query(Blocks).filter(Blocks.nonce==nonce).first()
 
     # Get the last N block records and return as a list
     @classmethod
@@ -76,6 +76,25 @@ class Blocks(Base):
         highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
         latest = list(database.db.getSession().query(Blocks).filter(Blocks.height >= highest-n).order_by(asc(Blocks.height)))
         return latest
+
+    # Get the latest block record
+    @classmethod
+    def get_latest(cls):
+        highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
+        return database.db.getSession().query(Blocks).filter(Blocks.height==highest).first()
+
+    # Get stats records falling within requested range
+    @classmethod
+    def get_range_by_time(cls, ts_start, ts_end):
+        records = list(database.db.getSession().query(Blocks).filter(and_(Blocks.timestamp >= ts_start, Blocks.timestamp <= ts_end)).order_by(asc(Blocks.height)))
+        return records
+
+    # Get stats records falling within requested range
+    @classmethod
+    def get_range_by_height(cls, h_start, h_end):
+        records = list(database.db.getSession().query(Blocks).filter(and_(Blocks.height >= h_start, Blocks.height <= h_end)).order_by(asc(Blocks.height)))
+        return records
+
 
 
 

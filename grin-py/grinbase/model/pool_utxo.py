@@ -56,7 +56,7 @@ class Pool_utxo(Base):
     # Get a single record by id locked for update
     @classmethod
     def get_locked_by_id(cls, uid):
-        return database.db.getSession().query(Pool_utxo).with_for_update().filter_by(id=uid).first()
+        return database.db.getSession().query(Pool_utxo).with_for_update().filter(Pool_utxo.id==uid).first()
 
     # Add creadit to a worker, create a new record if none exists
     @classmethod
