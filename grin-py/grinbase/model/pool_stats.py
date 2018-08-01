@@ -12,8 +12,8 @@ from grinbase.model import Base
 
 class Pool_stats(Base):
     __tablename__ = 'pool_stats'
-    timestamp = Column(DateTime, primary_key=True, nullable=False)
-    height = Column(BigInteger, primary_key=True, nullable=False, unique=True)
+    timestamp = Column(DateTime, primary_key=True, nullable=False, index=True)
+    height = Column(BigInteger, primary_key=True, nullable=False, unique=True, index=True)
     gps = Column(Float)
     active_miners = Column(Integer)
     shares_processed = Column(Integer) # this block only
@@ -43,31 +43,55 @@ class Pool_stats(Base):
         self.total_grin_paid = total_grin_paid
         self.total_blocks_found = total_blocks_found
 
+    def to_json(self, fields=None):
+        obj = { 
+                'timestamp': self.timestamp.timestamp(),
+                'height': self.height,
+                'gps': self.gps,
+                'active_miners': self.active_miners,
+                'shares_processed': self.shares_processed,
+                'total_shares_processed': self.total_shares_processed,
+                'total_grin_paid': self.total_grin_paid,
+                'total_blocks_found': self.total_blocks_found }
+        # Filter by field(s)
+        if fields != None:
+            for k in list(obj.keys()):
+                if k not in fields:
+                    del obj[k]
+        return obj
+
     # Get a list of all records in the table
+    # XXX Please dont call this except in testing
     @classmethod
     def getAll(cls):
         return list(database.db.getSession().query(Pool_stats))
 
     # Get the latest record
     @classmethod
-    def get_latest(cls):
+    def get_latest(cls, n=None):
         highest = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
-        return database.db.getSession().query(Pool_stats).filter(Pool_stats.height==highest).first()
+        if n == None:
+            return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == highest).first()
+        else:
+            return list(database.db.getSession().query(Pool_stats).filter(Pool_stats.height >= highest-n).order_by(asc(Pool_stats.height)))
 
-    # Get a single record by height
+    # Get record(s) by height
     @classmethod
-    def get_by_height(cls, height):
-        return database.db.getSession().query(Pool_stats).filter(Pool_stats.height==height).first()
+    def get_by_height(cls, height, range=None):
+        if range == None:
+            return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == height).first()
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_stats).filter(and_(Pool_stats.height >= h_start, Pool_stats.height <= h_end)).order_by(asc(Pool_stats.height)))
 
-    # Get the last N stats records and return as a list
+    # Get stats by timestamp
     @classmethod
-    def get_last_n(cls, n):
-        highest = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
-        latest = list(database.db.getSession().query(Pool_stats).filter(Pool_stats.height >= highest-n).order_by(asc(Pool_stats.height)))
-        return latest
-
-    # Get stats records falling within requested range
-    @classmethod
-    def get_range(cls, ts_start, ts_end):
-        records = list(database.db.getSession().query(Pool_stats).filter(and_(Pool_stats.timestamp >= ts_start, Pool_stats.timestamp <= ts_end)).order_by(asc(Pool_stats.height)))
-        return records
+    def get_by_time(cls, ts, range):
+        if range == None:
+            # XXX TODO: Test this
+            return database.db.getSession().query(Pool_stats).filter(Pool_stats.timestamp <= ts).first()
+        else:
+            ts_start = ts-range
+            ts_end = ts
+            return list(database.db.getSession().query(Pool_stats).filter(and_(Pool_stats.timestamp >= ts_start, Pool_stats.timestamp <= ts_end)).order_by(asc(Pool_stats.height)))

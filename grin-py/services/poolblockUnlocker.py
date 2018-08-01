@@ -22,7 +22,7 @@ import json
 import time
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "poolblockUnlocker"
@@ -46,7 +46,7 @@ def main():
     block_expiretime = int(CONFIG[PROCESS]["block_expiretime"])
     LOGGER.warn("using locktime: {}, expiretime: {}".format(block_locktime, block_expiretime))
 
-    latest = network.get_current_height()
+    latest = grin.get_current_height()
     LOGGER.warn("Latest: {}".format(latest))
 
     new_poolblocks = Pool_blocks.get_all_new()
@@ -56,7 +56,7 @@ def main():
             LOGGER.error("Processed expired pool block at height: {}".format(pb.height))
             pb.state = "expired"
             continue
-        response = network.get_block_by_height(pb.height)
+        response = grin.get_block_by_height(pb.height)
         if response == None:
             # Unknown.  Leave as "new" for now and attempt to validate next run
             LOGGER.error("Failed to get block {}".format(pb.height))

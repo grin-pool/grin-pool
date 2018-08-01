@@ -15,9 +15,9 @@ class Blocks(Base):
     __tablename__ = 'blocks'
     hash = Column(String(64))
     version = Column(SmallInteger)
-    height = Column(BigInteger, primary_key=True, nullable=False)
+    height = Column(BigInteger, primary_key=True, nullable=False, index=True)
     previous = Column(String(64))
-    timestamp = Column(DateTime)
+    timestamp = Column(DateTime, nullable=False, index=True)
     output_root = Column(String(64))
     range_proof_root = Column(String(64))
     kernel_root = Column(String(64))
@@ -55,46 +55,67 @@ class Blocks(Base):
             self.total_kernel_offset = total_kernel_offset
             self.state = state
 
+    def to_json(self, fields=None):
+        obj = { 'hash': self.hash,
+                'version': self.version,
+                'height': self.height,
+                'previous': self.previous,
+                'timestamp': self.timestamp.timestamp(),
+                'output_root': self.output_root,
+                'range_proof_root': self.range_proof_root,
+                'kernel_root': self.kernel_root,
+                'nonce': self.nonce,
+                'total_difficulty': self.total_difficulty,
+                'total_kernel_offset': self.total_kernel_offset,
+                'state': self.state
+              }
+        # Filter by field(s)
+        if fields != None:
+            for k in list(obj.keys()):
+                if k not in fields:
+                    del obj[k]
+        return obj
+
     # Get a list of all records in the table
+    # XXX Please dont call this except in testing
     @classmethod
     def getAll(cls):
         return list(database.db.getSession().query(Blocks))
 
-    # Get a single record by height
-    @classmethod
-    def get_by_height(cls, height):
-        return database.db.getSession().query(Blocks).filter(Blocks.height==height).first()
-
     # Get a single record by nonce
     @classmethod
     def get_by_nonce(cls, nonce):
-        return database.db.getSession().query(Blocks).filter(Blocks.nonce==nonce).first()
-
-    # Get the last N block records and return as a list
-    @classmethod
-    def get_last_n(cls, n):
-        highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
-        latest = list(database.db.getSession().query(Blocks).filter(Blocks.height >= highest-n).order_by(asc(Blocks.height)))
-        return latest
+        return database.db.getSession().query(Blocks).filter(Blocks.nonce == nonce).first()
 
     # Get the latest block record
     @classmethod
-    def get_latest(cls):
+    def get_latest(cls, n=None):
         highest = database.db.getSession().query(func.max(Blocks.height)).scalar()
-        return database.db.getSession().query(Blocks).filter(Blocks.height==highest).first()
+        if n == None:
+            return database.db.getSession().query(Blocks).filter(Blocks.height == highest).first()
+        else:
+            return list(database.db.getSession().query(Blocks).filter(Blocks.height >= highest-n).order_by(asc(Blocks.height)))
+
+    # Get record(s) by height and range
+    @classmethod
+    def get_by_height(cls, height, range=None):
+        if range == None:
+            return database.db.getSession().query(Blocks).filter(Blocks.height == height).first()
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Blocks).filter(and_(Blocks.height >= h_start, Blocks.height <= h_end)).order_by(asc(Blocks.height)))
 
     # Get stats records falling within requested range
     @classmethod
-    def get_range_by_time(cls, ts_start, ts_end):
-        records = list(database.db.getSession().query(Blocks).filter(and_(Blocks.timestamp >= ts_start, Blocks.timestamp <= ts_end)).order_by(asc(Blocks.height)))
-        return records
-
-    # Get stats records falling within requested range
-    @classmethod
-    def get_range_by_height(cls, h_start, h_end):
-        records = list(database.db.getSession().query(Blocks).filter(and_(Blocks.height >= h_start, Blocks.height <= h_end)).order_by(asc(Blocks.height)))
-        return records
-
+    def get_by_time(cls, ts, range=None):
+        if range == None:
+            # XXX TODO: Test this
+            return database.db.getSession().query(Blocks).filter(Blocks.timestamp <= ts).first()
+        else:
+            ts_start = ts-range
+            ts_end = ts
+            return list(database.db.getSession().query(Blocks).filter(and_(Blocks.timestamp >= ts_start, Blocks.timestamp <= ts_end)).order_by(asc(Blocks.height)))
 
 
 

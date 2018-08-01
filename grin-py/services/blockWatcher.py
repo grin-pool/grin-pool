@@ -25,7 +25,7 @@ import json
 from time import sleep
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockWatcher"
@@ -41,12 +41,12 @@ def main():
 
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
-    last = network.get_current_height()
+    last = grin.get_current_height()
     while True:
-        latest = network.get_current_height()
+        latest = grin.get_current_height()
         for i in range(last + 1, latest + 1):
             last = latest
-            response = network.get_block_by_height(i)
+            response = grin.get_block_by_height(i)
             if response == None:
                 LOGGER.error("Failed to get block info for block {}".format(last))
                 continue

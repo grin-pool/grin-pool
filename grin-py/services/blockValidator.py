@@ -23,7 +23,7 @@ import json
 import time
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.blocks import Blocks
 
 PROCESS = "blockValidator"
@@ -42,14 +42,14 @@ def main():
     database = lib.get_db()
 
     validation_depth = int(CONFIG[PROCESS]["validation_depth"])
-    latest = network.get_current_height()
+    latest = grin.get_current_height()
     last = latest - validation_depth  # start a reasonable distance back
     if last < 1:
         last = 1
     LOGGER.warn("Starting from block #{}".format(last))
 
     for i in range(last, latest):
-        response = network.get_block_by_height(i)
+        response = grin.get_block_by_height(i)
         # print("{}: {}".format(response["header"]["height"], response["header"]["hash"]))
         try:
             rec = Blocks.get_by_height(i)

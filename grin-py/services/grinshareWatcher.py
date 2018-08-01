@@ -23,7 +23,7 @@ import subprocess
 import threading
 import re
 import glob
-import time
+import datetime
 
 from grinlib import lib
 from grinbase.model.grin_shares import Grin_shares
@@ -42,7 +42,7 @@ def process_grin_logmessage(line, database):
         match = re.search(
             r'^(.+) INFO .+ Got share for block: hash (.+), height (\d+), nonce (\d+), difficulty (\d+)/(\d+), submitted by (.+)$',
             line)
-        s_timestamp = match.group(1)
+        s_timestamp = datetime.datetime.strptime(str(datetime.datetime.now().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
         s_hash = match.group(2)
         s_height = int(match.group(3))
         s_nonce = match.group(4)

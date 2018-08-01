@@ -21,7 +21,7 @@ from datetime import datetime
 from random import randint
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.pool_utxo import Pool_utxo
 
 PROCESS = "makePayouts"
@@ -39,7 +39,7 @@ CONFIG = None
 def makePayout(address, amount):
     global LOGGER
     global CONFIG
-    grin_api_url = network.get_api_url()
+    grin_api_url = grin.get_api_url()
     os.chdir(CONFIG[PROCESS]["wallet_dir"])
     send_cmd = [
         "/usr/local/bin/grin",

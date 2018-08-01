@@ -14,11 +14,11 @@ from grinbase.model import Base
 class Pool_blocks(Base):
     __tablename__ = 'pool_blocks'
     hash = Column(String(64))
-    height = Column(BigInteger, primary_key=True, nullable=False)
+    height = Column(BigInteger, primary_key=True, nullable=False, index=True)
     nonce = Column(String(20), nullable=False)
     actual_difficulty = Column(Integer)
     net_difficulty = Column(Integer)
-    timestamp = Column(DateTime)
+    timestamp = Column(DateTime, nullable=False, index=True)
     found_by = Column(String(1024))
     state = Column(String(20))
 
@@ -43,44 +43,78 @@ class Pool_blocks(Base):
         self.found_by = found_by
         self.state = state
 
-    # Get number of records
+    def to_json(self, fields=None):
+        obj = { 'hash': self.hash,
+                'height': self.height,
+                'nonce': self.nonce,
+                'actual_difficulty': self.actual_difficulty,
+                'net_difficulty': self.net_difficulty,
+                'timestamp': self.timestamp.timestamp(),
+                'found_by': self.found_by,
+                'state': self.state
+              }
+        # Filter by field(s)
+        if fields != None:
+            for k in list(obj.keys()):
+                if k not in fields:
+                    del obj[k]
+        return obj
+
+    # Get number of records up to height
     @classmethod
-    def count(cls):
-        return database.db.getSession().query(func.count(Pool_blocks.height)).scalar()
+    def count(cls, height=None):
+        if height == None:
+            return database.db.getSession().query(func.count(Pool_blocks.height)).scalar()
+        else:
+            return database.db.getSession().query(Pool_blocks.height <= height).query(func.count(Pool_blocks.height)).scalar()
 
     # Get a list of all records in the table
+    # XXX Please dont call this except in testing
     @classmethod
     def getAll(cls):
         return list(database.db.getSession().query(Pool_blocks))
 
-    # Get a single record by height
-    @classmethod
-    def get_by_height(cls, height):
-        return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height==height).first()
-
     # Get a single record by nonce
     @classmethod
     def get_by_nonce(cls, nonce):
-        return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.nonce==nonce).first()
+        return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.nonce == nonce).first()
 
     # Get all new pool blocks
     @classmethod
     def get_all_new(cls):
-        return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.state=="new"))
+        return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.state == "new"))
 
     # Get all unlocked pool blocks
     @classmethod
     def get_all_unlocked(cls):
-        return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.state=="unlocked"))
+        return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.state == "unlocked"))
 
     # Get the latest pool block record
     @classmethod
-    def get_latest(cls):
+    def get_latest(cls, n=None):
         highest = database.db.getSession().query(func.max(Pool_blocks.height)).scalar()
-        return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height==highest).first()
+        if n == None:
+            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == highest).first()
+        else:
+            return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height >= highest-n).order_by(asc(Pool_blocks.height)))
 
-    # Get stats records falling within requested range
+    # Get record(s) by height
     @classmethod
-    def get_range_by_time(cls, ts_start, ts_end):
-        records = list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.timestamp >= ts_start, Pool_blocks.timestamp <= ts_end)).order_by(asc(Pool_blocks.height)))
-        return records
+    def get_by_height(cls, height, range=None):
+        if range == None:
+            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == height).first()
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height >= h_start, Pool_blocks.height <= h_end)).order_by(asc(Pool_blocks.height)))
+
+    # Get records falling within requested time range
+    @classmethod
+    def get_by_time(cls, ts, range):
+        if range == None:
+            # XXX TODO: Test this
+            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.timestamp <= ts).first()
+        else:
+            ts_start = ts-range
+            ts_end = ts
+            return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.timestamp >= ts_start, Pool_blocks.timestamp <= ts_end)).order_by(asc(Pool_blocks.height)))

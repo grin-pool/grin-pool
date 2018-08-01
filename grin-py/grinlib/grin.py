@@ -24,6 +24,7 @@ import json
 
 from grinlib import lib
 from grinbase.model.blocks import Blocks
+from grinbase.model.grin_stats import Grin_stats
 
 def get_api_url():
     config = lib.get_config()
@@ -73,35 +74,11 @@ def get_network_difficulty(height):
     latest_blocks = Blocks.get_range_by_height(height-1, height)
     return latest_blocks[1].total_difficulty - latest_blocks[0].total_difficulty
 
-# get_stats() Response is:
-# { 
-#    network_stats:{
-#        height: Integer,
-#        latest_hash: String,
-#        latest_timestamp: String
-#        latest_difficulty: Integer,
-#        graph_rate: Integer,
-#    }
-# }
-def get_stats():
+
+def get_stats(height):
     ##
-    # Get current Network Info as seen by our grin node
-    stats_json = {}
-    last_n = 10 # Look at N blocks to calculate avg time between
-    # Get the blocks from the DB
-    latest_blocks = Blocks.get_last_n(last_n)
-    # Latest block height
-    stats_json["height"] = latest_blocks[-1].height
-    # Latest block hash
-    stats_json["latest_hash"] = latest_blocks[-1].hash
-    # Latest block timestamp
-    stats_json["latest_timestamp"] = latest_blocks[-1].timestamp.strftime('%s')
-    # Latest block network difficulty
-    latest_difficulty = latest_blocks[-1].total_difficulty - latest_blocks[-2].total_difficulty
-    stats_json["latest_difficulty"] = latest_difficulty
-    # Network graph rate
-    stats_json["graph_rate"] = lib.calculate_graph_rate(latest_difficulty, latest_blocks[0].timestamp, latest_blocks[-1].timestamp, last_n)
-    return stats_json
+    # Get requested grin network stats as seen by our grin node
+    return Grin_stats.get_by_height(height)
 
 def get_blocks_found_data(num_blocks):
     ##
