@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: poolapi
+  labels:
+    run: poolapi
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 13423
+    nodePort: 32423
+    protocol: TCP
+    name: poolapi
+  selector:
+    run: poolapi
+  externalIPs:
+  - 192.168.2.224
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: poolapi
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: poolapi
+    spec:
+      containers:
+      - name: poolapi
+        image: grinpool/services:latest
+        command: ["sleep", "9999"]
+#        command: ["/usr/local/bin/api/api.py"]
+        ports:
+        - containerPort: 13423
+        volumeMounts: # directory inside container
+        - mountPath: /services
+          name: poolservicesdir
+      volumes: # directory location on host
+      - name: poolservicesdir
+        hostPath:
+          path: /data/services
+
+#      imagePullSecrets:
+#      - name: regsecret

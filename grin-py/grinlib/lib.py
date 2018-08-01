@@ -118,3 +118,15 @@ def calculate_graph_rate(difficulty, ts1, ts2, n):
     avg_time_between_blocks = (ts2 - ts1).total_seconds() / n
     gps = 42.0 * (difficulty/scale) / avg_time_between_blocks
     return gps
+
+# API 'fields' string to python list
+def fields_to_list(fields):
+    if fields != None:
+        # Split the fields elements into an array
+        fields = fields.translate({ord(c): None for c in '[]'})
+        fields = fields.split(',')
+    return fields
+
+# Python datetime.datetime into a unix epoch
+def to_epoch(dt):
+    return dt.timestamp()

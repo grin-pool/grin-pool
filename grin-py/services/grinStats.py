@@ -21,7 +21,7 @@ import json
 from time import sleep
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.blocks import Blocks
 from grinbase.model.grin_stats import Grin_stats
 
@@ -52,7 +52,7 @@ def main():
 
     # Generate status records - one per grin block
     while True:
-        latest = network.get_current_height()
+        latest = grin.get_current_height()
         while latest > last_height:
             try:
                 # Get the most recent blocks from which to generate the stats

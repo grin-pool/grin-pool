@@ -24,7 +24,7 @@ from time import sleep
 from grinbase.dbaccess import database
 
 from grinlib import lib
-from grinlib import network
+from grinlib import grin
 from grinbase.model.blocks import Blocks
 from grinbase.model.pool_stats import Pool_stats
 from grinbase.model.pool_shares import Pool_shares
@@ -60,7 +60,7 @@ def main():
 
     # Generate status records - one per grin block
     while True:
-        latest = network.get_current_height()
+        latest = grin.get_current_height()
         # LOGGER.warn("Latest Network Block Height = {}".format(latest))
         while latest > last_height:
             try:
@@ -85,7 +85,7 @@ def main():
                 gps = 0
                 if len(latest_pool_shares) > 0:
                     # LOGGER.warn("Working with shares: height={} - height={}, count={}".format(latest_pool_shares[0].height, latest_pool_shares[-1].height, len(latest_pool_shares)))
-                    gps = network.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, len(latest_pool_shares))
+                    gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, len(latest_pool_shares))
                 active_miners = 1 # XXX TODO
                 shares_processed = Pool_shares.get_count_by_height(current_height)
                 total_shares_processed = Pool_shares.count() # XXX TODO - only count up to last_height

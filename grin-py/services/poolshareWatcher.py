@@ -21,7 +21,7 @@ import subprocess
 import threading
 import re
 import glob
-import time
+import datetime
 
 from grinlib import lib
 from grinbase.model.pool_shares import Pool_shares
@@ -38,7 +38,7 @@ def process_pool_logmessage(line, database):
         match = re.search(
             r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$',
             line)
-        s_timestamp = match.group(1)
+        s_timestamp = datetime.datetime.strptime(str(datetime.datetime.now().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
         s_height = int(match.group(2))
         s_nonce = match.group(3)
         s_difficulty = int(match.group(4))

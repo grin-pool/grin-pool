@@ -38,7 +38,9 @@ RUN pip3 install wheel && \
     pip3 install mysql-connector && \
     pip3 install configparser && \
     pip3 install sqlalchemy && \
-    pip3 install pymysql
+    pip3 install pymysql && \
+    pip3 install Flask && \
+    pip3 install flask-restful
 
 RUN cd /usr/bin && ln -s python3 python
 
@@ -49,5 +51,6 @@ WORKDIR /services
 COPY grinbase/ /usr/local/bin/grinbase/
 COPY grinlib/ /usr/local/bin/grinlib/
 COPY services/*.py /usr/local/bin/
+COPY api/ /usr/local/bin/api/
 
 CMD ["/bin/sh"]
