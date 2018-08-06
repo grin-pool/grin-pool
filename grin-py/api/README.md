@@ -268,17 +268,23 @@
 ## Examples:
 
 Q: How do I get the grin network current graph rate?
+
 A: ```curl grin-pool.us:13423/grin/stat/gps```
+
 Ex: ```{ "gps": 9.73408 }```
 
 Q: How do I get timestamp of the last grin block found?
+
 A: ```curl grin-pool.us:13423/grin/block/timestamp```
+
 Ex: ```{ "timestamp": 1533279887.0 }```
 
 Q: How do I get data needed to graph the grin network graph rate over the past 60 blocks?
+
 A: ```curl grin-pool.us:13423/grin/stats/0,60/gps```
 
 Q: How do I get the pools current graph rate?
+
 A: ```curl grin-pool.us:13423/pool/stat/gps```
 
 Xxx add more
