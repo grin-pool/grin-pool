@@ -57,7 +57,7 @@ def main():
             try:
                 # Get the most recent blocks from which to generate the stats
                 previous = Grin_stats.get_by_height(last_height)
-                recent_blocks = Blocks.get_range_by_height(last_height-avg_over_range, last_height)
+                recent_blocks = Blocks.get_by_height(last_height, avg_over_range)
                 if len(recent_blocks) < 3:
                     # We dont have at least 3 of these blocks in the DB
                     last_height = last_height+1

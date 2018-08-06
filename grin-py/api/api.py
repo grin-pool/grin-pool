@@ -15,30 +15,35 @@
 
 import json
 
-from flask import Flask
+from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 
 from grinbase.model.grin_stats import Grin_stats
 from grinbase.model.blocks import Blocks
 from grinbase.model.pool_stats import Pool_stats
 from grinbase.model.pool_blocks import Pool_blocks
+from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.worker_stats import Worker_stats
 
 from grinlib import lib
+from grinlib import grin
 
 
 app = Flask(__name__)
 api = Api(app)
 
 
-##
+#################
 # -- Grin Network
 
+##
 # Stats
 class GrinAPI_stats(Resource):
-    def get(self, height, range=None, fields=None):
+    def get(self, height=0, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
+        if height == 0:
+            height = grin.get_current_height()
         if range == None:
             stat = Grin_stats.get_by_height(height)
             return stat.to_json(fields)
@@ -49,16 +54,21 @@ class GrinAPI_stats(Resource):
             return stats
 
 api.add_resource(GrinAPI_stats,
+        '/grin/stat',
+        '/grin/stat/<string:fields>',
         '/grin/stat/<int:height>',
         '/grin/stat/<int:height>/<string:fields>',
         '/grin/stats/<int:height>,<int:range>',
         '/grin/stats/<int:height>,<int:range>/<string:fields>')
 
+##
 # Blocks
 class GrinAPI_blocks(Resource):
-    def get(self, height, range=None, fields=None):
+    def get(self, height=0, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
+        if height == 0:
+            height = grin.get_current_height()
         if range == None:
             block = Blocks.get_by_height(height)
             return block.to_json(fields)
@@ -69,6 +79,8 @@ class GrinAPI_blocks(Resource):
             return blocks
 
 api.add_resource(GrinAPI_blocks,
+        '/grin/block',
+        '/grin/block/<string:fields>',
         '/grin/block/<int:height>',
         '/grin/block/<int:height>/<string:fields>',
         '/grin/blocks/<int:height>,<int:range>',
@@ -76,14 +88,17 @@ api.add_resource(GrinAPI_blocks,
 
 
 
-##
+#########
 # -- Pool
 
+##
 # Stats
 class PoolAPI_stats(Resource):
-    def get(self, height, range=None, fields=None):
+    def get(self, height=0, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
+        if height == 0:
+            height = grin.get_current_height()
         if range == None:
             stat = Pool_stats.get_by_height(height)
             return stat.to_json(fields)
@@ -94,16 +109,21 @@ class PoolAPI_stats(Resource):
             return stats
 
 api.add_resource(PoolAPI_stats,
+        '/pool/stat',
+        '/pool/stat/<string:fields>',
         '/pool/stat/<int:height>',
         '/pool/stat/<int:height>/<string:fields>',
         '/pool/stats/<int:height>,<int:range>',
         '/pool/stats/<int:height>,<int:range>/<string:fields>')
 
+##
 # Blocks
 class PoolAPI_blocks(Resource):
-    def get(self, height, range=None, fields=None):
+    def get(self, height=0, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
+        if height == 0:
+            height = Pool_blocks.get_latest().height
         if range == None:
             block = Pool_blocks.get_by_height(height)
             if block == None:
@@ -117,6 +137,8 @@ class PoolAPI_blocks(Resource):
             return blocks
 
 api.add_resource(PoolAPI_blocks,
+        '/pool/block',
+        '/pool/block/<string:fields>',
         '/pool/block/<int:height>',
         '/pool/block/<int:height>/<string:fields>',
         '/pool/blocks/<int:height>,<int:range>',
@@ -124,39 +146,76 @@ api.add_resource(PoolAPI_blocks,
 
 
 
-##
+######################
 # -- Grin-Pool Workers
 
+##
 # Stats
 class WorkerAPI_stats(Resource):
-    def get(self, id, height, range=None, fields=None):
+    def get(self, id=None, height=0, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
-        if range == None:
-            stat = Pool_workers.get_by_height(height)
-            return stat.to_json(fields)
-        else:
-            stats = []
-            for stat in Pool_workers.get_by_height(height, range):
+        if height == 0:
+            height = grin.get_current_height()
+        stats = []
+        if id == None:
+            for stat in Worker_stats.get_by_height(height, range):
                 stats.append(stat.to_json(fields))
-            return stats
+        else:
+            for stat in Worker_stats.get_by_height_and_id(id, height, range):
+                stats.append(stat.to_json(fields))
+        return stats
 
 api.add_resource(WorkerAPI_stats,
-        '/worker/stat/<string:id>/<int:height>',
-        '/worker/stat/<string:id>/<int:height>/<string:fields>',
-        '/worker/stats/<string:id>/<int:s_height>,<int:e_height>',
-        '/worker/stats/<string:id>/<int:s_height>,<int:e_height>/<string:fields>')
+        # All active workers
+        '/worker/stats/<int:height>',
+        '/worker/stats/<int:height>/<string:fields>',
+        '/worker/stats/<int:height>,<int:range>',
+        '/worker/stats/<int:height>,<int:range>/<string:fields>',
+        # One specific worker
+        '/worker/stats/<string:id>/<int:height>',
+        '/worker/stats/<string:id>/<int:height>/<string:fields>',
+        '/worker/stats/<string:id>/<int:height>,<int:range>',
+        '/worker/stats/<string:id>/<int:height>,<int:range>/<string:fields>')
 
-# Shares
+##
+# Share
+class WorkerAPI_share_count(Resource):
+    def get(self, id=None, height=0, range=None):
+        database = lib.get_db()
+        print("id={} , height={}, range = {}".format(id,height,range))
+        if range == 0:
+            range = grin.get_current_height()
+        if height == 0:
+            height = grin.get_current_height()
+        return Pool_shares.count(height, range, id)
+
+api.add_resource(WorkerAPI_share_count,
+        '/worker/shares/count',
+        '/worker/shares/<int:height>/count',
+        '/worker/shares/<int:height>,<int:range>/count',
+        '/worker/shares/<string:id>/count',
+        '/worker/shares/<string:id>/<int:height>/count',
+        '/worker/shares/<string:id>/<int:height>,<int:range>/count')
+
 class WorkerAPI_shares(Resource):
-    def get(self, id, height, range=None, fields=None):
+    def get(self, id=None, height=0, range=None, fields=None):
+        database = lib.get_db()
+        print("id={} , height={}, range = {}, fields = {}".format(id,height,range,fields))
+        if height == 0:
+            height = grin.get_current_height()
         if fields != None:
             fields = fields.split(',')
-        return {'worker_shares':{'start': height, 'range': range, 'fields':fields}}
+        shares = []
+        for share in Pool_shares.get_by_height(height, range):
+            shares.append(share.to_json(fields))
+        return shares
 
 api.add_resource(WorkerAPI_shares,
-        '/worker/share/<string:id>/<int:height>',
-        '/worker/share/<string:id>/<int:height>/<string:fields>',
+        '/worker/shares/<string:id>',
+        '/worker/shares/<string:id>/<string:fields>',
+        '/worker/shares/<string:id>/<int:height>',
+        '/worker/shares/<string:id>/<int:height>/<string:fields>',
         '/worker/shares/<string:id>/<int:height>,<int:range>',
         '/worker/shares/<string:id>/<int:height>,<int:range>/<string:fields>')
 
