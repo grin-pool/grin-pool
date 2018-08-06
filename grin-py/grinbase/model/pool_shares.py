@@ -43,13 +43,41 @@ class Pool_shares(Base):
         self.is_valid = is_valid
         self.invalid_reason = invalid_reason
 
-    # Get number of records
+    def to_json(self, fields=None):
+        obj = { 'height': self.height,
+                'nonce': self.nonce,
+                'worker_difficulty': self.worker_difficulty,
+                'timestamp': self.timestamp.timestamp(),
+                'found_by': self.found_by,
+                'validated': self.validated,
+                'is_valid': self.is_valid,
+                'invalid_reason': self.invalid_reason,
+              }
+        # Filter by field(s)
+        if fields != None:
+            for k in list(obj.keys()):
+                if k not in fields:
+                    del obj[k]
+        return obj
+
+    # Get number of records up to height
     @classmethod
-    def count(cls):
-        q = database.db.getSession().query(func.count(Pool_shares.nonce)).scalar()
-        cnt = int(q)
+    def count(cls, height, range=None, id=None):
+        if range == None:
+            if id == None:
+                return database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height).count()
+            else:
+                return database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height).filter(Pool_shares.found_by == "http://"+id).count()
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            if id == None:
+                return database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).count()
+            else:
+                return database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).filter(Pool_shares.found_by == "http://"+id).count()
 
     # Get a list of all records in the table
+    # XXX Please dont call this except in testing
     @classmethod
     def getAll(cls):
         return list(database.db.getSession().query(Pool_shares))
@@ -64,10 +92,26 @@ class Pool_shares(Base):
     def get_by_nonce(cls, nonce):
         return database.db.getSession().query(Pool_shares).filter(Pool_shares.nonce == nonce).first()
 
+    # Get all pool shares by height
+    @classmethod
+    def get_by_height(cls, height, range=None):
+        if range == None:
+            return list(database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height))
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).order_by(Pool_shares.height))
+            
+
     # Get all valid pool shares by height
     @classmethod
-    def get_valid_by_height(cls, height):
-        return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height == height, Pool_shares.is_valid == True)).filter(Pool_shares.validated == True))
+    def get_valid_by_height(cls, height, range=None):
+        if range == None:
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height == height, Pool_shares.is_valid == True)).filter(Pool_shares.validated == True))
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).filter(Pool_shares.validated == True).filter(Pool_shares.is_valid == True).order_by(Pool_shares.height))
 
     # Get count of pool shares by height
     @classmethod
