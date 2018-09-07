@@ -25,7 +25,7 @@ Please contribute! -> Web UI is needed
 
 ## How to try it:
 Currently mining on **testnet3**
-* Supports Linux and Windows miners: [https://github.com/mimblewimble/grin-miner](mimblewimble/grin-miner) and [https://github.com/mozkomor/GrinGoldMiner](mozkomor/GrinGoldMiner)
+* Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
 * Configure your miner to connect to:  grin-pool.us:3333
 * Use your grin wallet URL as your login, no password necessary
 * Start your miner and watch your wallet fill with grin
