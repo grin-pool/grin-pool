@@ -23,6 +23,7 @@ from random import randint
 from grinlib import lib
 from grinlib import grin
 from grinbase.model.pool_utxo import Pool_utxo
+from grinbase.model.pool_payment import Pool_payment
 
 PROCESS = "makePayouts"
 LOGGER = None
@@ -86,6 +87,7 @@ def main():
             if utxo.amount < utxo.failure_count:
                 if randint(0, 11) != 0:
                     continue
+            # XXX TODO: Test a low-timeout connection before locking the utxo table and the wallet
             LOGGER.warn("Trying to pay: {} {} {}".format(utxo.id, utxo.address, utxo.amount))
             # Lock just this current record for update
             locked_utxo = Pool_utxo.get_locked_by_id(utxo.id)
@@ -96,12 +98,14 @@ def main():
             #   The pool audit service (coming soon) finds lost payouts and restores user balance
             database.db.getSession().begin_nested();
             # Attempt to make the payment
-            #timestamp = "{:%B %d, %Y %H:%M:%S.%f}".format(datetime.now())
-            timestamp = datetime.now()
+            timestamp = datetime.utcnow()
             status =  makePayout(locked_utxo.address, original_balance)
             LOGGER.warn("Payout status: {}".format(status))
             if status == 0:
-                LOGGER.warn("Made payout for {} {} {}".format(locked_utxo.id, locked_utxo.address, original_balance))
+                LOGGER.warn("Made payout for {} {} {} at {}".format(locked_utxo.id, locked_utxo.address, original_balance, timestamp))
+                # Create a payment record
+                payment_record = Pool_payment(locked_utxo.id, timestamp, locked_utxo.address, original_balance, 0, locked_utxo.failure_count, "schedule" )
+                database.db.getSession().add(payment_record)
                 # Update timestamp of last payout, number of failed payout attempts
                 locked_utxo.amount = 0
                 locked_utxo.failure_count = 0

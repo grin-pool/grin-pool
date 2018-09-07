@@ -20,9 +20,13 @@
 # This keeps a record of each block *as we see it* (before any chain reorgs).
 
 import sys
+import traceback
 import requests
 import json
 from time import sleep
+
+import pymysql
+import sqlalchemy
 
 from grinlib import lib
 from grinlib import grin
@@ -33,27 +37,34 @@ LOGGER = None
 CONFIG = None
 
 def main():
+    global CONFIG
+    global LOGGER
     CONFIG = lib.get_config()
     LOGGER = lib.get_logger(PROCESS)
     LOGGER.warn("=== Starting {}".format(PROCESS))
     # Connect to DB
     database = lib.get_db()
 
+    # Get Config
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
-    last = grin.get_current_height()
+    # Find the height of the latest block record
+    last_height = -1
+    latest_block = Blocks.get_latest()
+    if latest_block is not None:
+        last_height = latest_block.height
+    height = last_height + 1
+    LOGGER.warn("Starting at block height: {}".format(height))
+
     while True:
-        latest = grin.get_current_height()
-        for i in range(last + 1, latest + 1):
-            last = latest
-            response = grin.get_block_by_height(i)
-            if response == None:
-                LOGGER.error("Failed to get block info for block {}".format(last))
-                continue
-            LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
-                                              response["header"]["height"]))
-            try:
-                new_block = Blocks(hash = response["header"]["hash"],
+        try:
+            latest = grin.blocking_get_current_height()
+            while latest >= height:
+                response = grin.blocking_get_block_by_height(height)
+                LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
+                                                         response["header"]["height"]))
+                try:
+                    new_block = Blocks(hash = response["header"]["hash"],
                                    version = response["header"]["version"],
                                    height = response["header"]["height"],
                                    previous = response["header"]["previous"],
@@ -62,14 +73,24 @@ def main():
                                    range_proof_root = response["header"]["range_proof_root"],
                                    kernel_root = response["header"]["kernel_root"],
                                    nonce = response["header"]["nonce"],
+                                   cuckoo_size = response["header"]["cuckoo_size"],
                                    total_difficulty = response["header"]["total_difficulty"],
+                                   num_inputs = len(response["inputs"]),
+                                   num_outputs = len(response["outputs"]),
+                                   num_kernels = len(response["kernels"]),
+                                   fee = sum(k["fee"] for k in response["kernels"]),
+                                   lock_height = response["kernels"][0]["lock_height"] if(len(response["kernels"])>0) else 0,
                                    total_kernel_offset = response["header"]["total_kernel_offset"],
                                    state = "new")
-                database.db.createDataObj(new_block)
-            except Exception as e:
-                LOGGER.error("Something went wrong: {}".format(e))
-        sys.stdout.flush()
-        sleep(check_interval)
+                    database.db.createDataObj(new_block)
+                except (sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError):
+                    LOGGER.warn("Attempted to re-add block: {}".format(response["header"]["height"]))
+                height = height + 1
+            sys.stdout.flush()
+            sleep(check_interval)
+        except Exception as e:
+            LOGGER.error("Something went wrong: {}\n{}".format(e, traceback.format_exc().splitlines()))
+    # Should never get here, but....
     LOGGER.warn("=== Completed {}".format(PROCESS))
 
 

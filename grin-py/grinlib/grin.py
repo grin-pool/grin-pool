@@ -36,9 +36,11 @@ def get_current_height():
     config = lib.get_config()
     grin_api_url = get_api_url()
     status_url = grin_api_url + "/v1/status"
-    response = requests.get(status_url)
-    latest = response.json()["tip"]["height"]
-    # XXX TODO:  Validate somehow?
+    try:
+        response = requests.get(status_url)
+        latest = response.json()["tip"]["height"]
+    except:
+        return None
     return latest
 
 def get_block_by_height(height):
@@ -48,10 +50,28 @@ def get_block_by_height(height):
     try:
         response = requests.get(blocks_url)
         block = response.json()
-        return block
     except:
         return None
+    return block
     
+# Same as get_current_height except wait raither than returning None
+def blocking_get_current_height():
+    response = None
+    while response is None:
+        response = get_current_height()
+        if response is None:
+            time.sleep(1)
+    return int(response)
+
+# Same as get_block_by_height except wait raither than returning None
+def blocking_get_block_by_height(i):
+    response = None
+    while response is None:
+        response = get_block_by_height(i)
+        if response is None:
+            time.sleep(1)
+    return response
+
 
 # Network graph rate
 #  difficulty = block or share difficulty
@@ -91,40 +111,6 @@ def get_blocks_found_data(num_blocks):
       blockdata["height"] =  block.height
       blocks_found_data.append(blockdata)
     return blocks_found_data
-
-def get_graph_rate_data(num_blocks):
-    ##
-    # Returns data needed to create a *graph rate* chart over the past num_blocks history
-    graph_rate_data = []
-    latest_blocks = Blocks.get_last_n(num_blocks)
-    for i in range(0, num_blocks-5):
-      # rolling 5-block window
-      ratedata = {}
-      ts1 = latest_blocks[i].timestamp
-      ts2 = latest_blocks[i+5].timestamp
-      difficulty = latest_blocks[i+5].total_difficulty - latest_blocks[i+4].total_difficulty
-      gps = calculate_graph_rate(difficulty, ts1, ts2, 5)
-      ratedata["height"] = latest_blocks[i+5].height
-      ratedata["gps"] = gps
-      ratedata["timestamp"] = ts2.strftime('%s')
-      graph_rate_data.append(ratedata)
-    return graph_rate_data
-
-def get_difficulty_data(num_blocks):
-    ##
-    # Returns data needed to create a *difficulty* chart over the past num_blocks history
-    graph_difficulty_data = []
-    latest_blocks = Blocks.get_last_n(num_blocks)
-    for i in range(0, num_blocks-1):
-      difficultydata = {}
-      difficulty = latest_blocks[i+1].total_difficulty - latest_blocks[i].total_difficulty
-      difficultydata["height"] = latest_blocks[i].height
-      difficultydata["difficulty"] = difficulty
-      difficultydata["time"] = latest_blocks[i].timestamp.strftime('%s')
-      graph_difficulty_data.append(difficultydata)
-    return graph_difficulty_data
-
-
 
 def main():
     config = lib.get_config()

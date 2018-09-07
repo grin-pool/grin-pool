@@ -2,7 +2,7 @@ import datetime
 import uuid
 import json
 
-from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, asc, and_
+from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, Boolean, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -13,37 +13,33 @@ from grinbase.model import Base
 
 class Grin_stats(Base):
     __tablename__ = 'grin_stats'
-    timestamp = Column(DateTime, primary_key=True, nullable=False, index=True)
-    height = Column(BigInteger, primary_key=True, nullable=False, unique=True, index=True)
+    height = Column(BigInteger, index=True, primary_key=True, autoincrement=False)
+    timestamp = Column(DateTime, nullable=False, index=True)
     gps = Column(Float)
     difficulty = Column(Integer)
     total_utxoset_size = Column(BigInteger)
-    total_transactions = Column(BigInteger)
     
     def __repr__(self):
-        return "{} {} {} {} {} {}".format(
+        return "{} {} {} {} {}".format(
             self.timestamp.timestamp(),
             self.height,
             self.gps,
             self.difficulty,
-            self.total_utxoset_size,
-            self.total_transactions)
+            self.total_utxoset_size)
 
-    def __init__(self, timestamp, height, gps, difficulty, total_utxoset_size, total_transactions):
-        self.timestamp = datetime.datetime.utcnow()
+    def __init__(self, timestamp, height, gps, difficulty, total_utxoset_size):
+        self.timestamp = timestamp
         self.height = height
         self.gps = gps
         self.difficulty = difficulty
         self.total_utxoset_size = total_utxoset_size
-        self.total_transactions = total_transactions
 
     def to_json(self, fields=None):
         obj = { 'timestamp': self.timestamp.timestamp(),
                  'height': self.height,
                  'gps': self.gps,
                  'difficulty': self.difficulty,
-                 'total_utxoset_size': self.total_utxoset_size,
-                 'total_transactions': self.total_transactions
+                 'total_utxoset_size': self.total_utxoset_size
               }
         # Filter by field(s)
         if fields != None:

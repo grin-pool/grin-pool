@@ -56,7 +56,7 @@ class database_details:
             print(e.args)
             traceback.print_exc()
             self.session[threading.get_ident()].rollback()
-            raise
+            raise e
 
     def createDataObj(self, obj):
         try:
@@ -68,7 +68,7 @@ class database_details:
             print(e.args)
             traceback.print_exc()
             self.session[threading.get_ident()].rollback()
-            raise
+            raise e
 
     def createFromList(self, list):
         try:
@@ -80,7 +80,7 @@ class database_details:
             print(e.args)
             traceback.print_exc()
             self.session[threading.get_ident()].rollback()
-            raise
+            raise e
 
     def createDataObj_ignore_duplicates(self, obj):
         try:

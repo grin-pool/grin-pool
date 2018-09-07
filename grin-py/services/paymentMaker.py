@@ -33,7 +33,7 @@ from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.grin_shares import Grin_shares
 from grinbase.model.pool_utxo import Pool_utxo
 
-REWARD = 60.0  # XXX TODO: use the actual reward of each block
+REWARD = 60.0  # XXX TODO: use the actual reward + fees of each block
 
 PROCESS = "paymentMaker"
 LOGGER = None

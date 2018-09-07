@@ -58,12 +58,7 @@ def process_grin_logmessage(line, database):
 
         # Create a new record
         new_grin_share = Grin_shares(hash=s_hash, height=s_height, nonce=s_nonce, actual_difficulty=s_share_difficulty, net_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=share_is_solution)
-        duplicate = database.db.createDataObj_ignore_duplicates(new_grin_share)
-        database.db.getSession().commit()
-        if duplicate:
-            LOGGER.warn("Duplicate GrinShare: {}".format(new_grin_share))
-        else:
-            LOGGER.warn("Added GrinShare: {}".format(new_grin_share))
+        LOGGER.warn("New GrinShare: {}".format(new_grin_share))
 
         # If this is a full solution found by us, also add it as a pool block
         if s_share_difficulty >= s_network_difficulty:
@@ -76,6 +71,8 @@ def process_grin_logmessage(line, database):
                 LOGGER.warn("Added Pool Block: {}".format(new_pool_block))
         sys.stdout.flush()
 
+        return new_grin_share
+
 
 def process_grin_log():
     global LOGGER
@@ -86,18 +83,18 @@ def process_grin_log():
     GRIN_LOG = CONFIG["grin_node"]["log_dir"] + "/" + CONFIG["grin_node"]["log_filename"]
 
     # (re)Process all logs
-    logfiles = glob.glob(GRIN_LOG + '*')
-    LOGGER.warn("Processing existing logs: {}".format(logfiles))
-    sys.stdout.flush()
-    for logfile in logfiles:
-        with open(logfile) as f:
-            for line in f:
-                try:
-                    process_grin_logmessage(line, database)
-                except Exception as e:
-                    LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
-                    database.db.getSession().rollback()
-        f.close()
+#    logfiles = glob.glob(GRIN_LOG + '*')
+#    LOGGER.warn("Processing existing logs: {}".format(logfiles))
+#    sys.stdout.flush()
+#    for logfile in logfiles:
+#        with open(logfile) as f:
+#            for line in f:
+#                try:
+#                    process_grin_logmessage(line, database)
+#                except Exception as e:
+#                    LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
+#                    database.db.getSession().rollback()
+#        f.close()
 
     # Read future log messages
     LOGGER.warn("Processing new logs: {}".format(GRIN_LOG))
@@ -106,10 +103,21 @@ def process_grin_log():
         ['tail', '-F', GRIN_LOG],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
+    height = 0
+    shares = []
     while True:
         line = grinlog.stdout.readline().decode('utf-8')
         try:
-            process_grin_logmessage(line, database)
+            share = process_grin_logmessage(line, database)
+            if share is not None:
+                # print("share height: {}, height: {}".format(share.height, height))
+                if share.height != height:
+                    LOGGER.warn("Commit GrinShares: {}".format(len(shares)))
+                    database.db.createFromList(shares)
+                    database.db.getSession().commit()
+                    shares = []
+                    height = share.height
+                shares.append(share)
         except Exception as e:
             LOGGER.error("Failed to process grin log message: {} {}".format(line, e))
 

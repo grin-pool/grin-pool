@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, asc, and_
+from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, Boolean, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -12,18 +12,19 @@ from grinbase.model import Base
 
 class Pool_stats(Base):
     __tablename__ = 'pool_stats'
-    timestamp = Column(DateTime, primary_key=True, nullable=False, index=True)
-    height = Column(BigInteger, primary_key=True, nullable=False, unique=True, index=True)
+    height = Column(BigInteger, primary_key=True, nullable=False, unique=True, index=True, autoincrement=False)
+    timestamp = Column(DateTime, nullable=False, index=True)
     gps = Column(Float)
     active_miners = Column(Integer)
     shares_processed = Column(Integer) # this block only
-    total_blocks_found = Column(Integer)
+    total_blocks_found = Column(Integer) 
     total_shares_processed = Column(BigInteger) 
     total_grin_paid = Column(Float)
+    dirty = Column(Boolean, index=True)
     
     
     def __repr__(self):
-        return "{} {} {} {} {} {} {} {}".format(
+        return "{} {} {} {} {} {} {} {} {}".format(
             self.timestamp,
             self.height,
             self.gps,
@@ -31,9 +32,10 @@ class Pool_stats(Base):
             self.shares_processed,
             self.total_shares_processed, 
             self.total_grin_paid, 
-            self.total_blocks_found)
+            self.total_blocks_found,
+            self.dirty)
 
-    def __init__(self, timestamp, height, gps, active_miners, shares_processed, total_shares_processed, total_grin_paid, total_blocks_found):
+    def __init__(self, timestamp, height, gps, active_miners, shares_processed, total_shares_processed, total_grin_paid, total_blocks_found, dirty=False):
         self.timestamp = timestamp
         self.height = height
         self.gps = gps
@@ -42,6 +44,7 @@ class Pool_stats(Base):
         self.total_shares_processed = total_shares_processed
         self.total_grin_paid = total_grin_paid
         self.total_blocks_found = total_blocks_found
+        self.dirty = dirty
 
     def to_json(self, fields=None):
         obj = { 
@@ -52,7 +55,8 @@ class Pool_stats(Base):
                 'shares_processed': self.shares_processed,
                 'total_shares_processed': self.total_shares_processed,
                 'total_grin_paid': self.total_grin_paid,
-                'total_blocks_found': self.total_blocks_found }
+                'total_blocks_found': self.total_blocks_found,
+                'dirty': self.dirty }
         # Filter by field(s)
         if fields != None:
             for k in list(obj.keys()):
@@ -66,19 +70,18 @@ class Pool_stats(Base):
     def getAll(cls):
         return list(database.db.getSession().query(Pool_stats))
 
-#    # Get the latest record
-#    @classmethod
-#    def get_latest(cls, n=None):
-#        highest = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
-#        if n == None:
-#            return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == highest).first()
-#        else:
-#            return list(database.db.getSession().query(Pool_stats).filter(Pool_stats.height >= highest-n).order_by(asc(Pool_stats.height)))
+    # Get the latest record
+    @classmethod
+    def get_latest(cls):
+        last_height = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
+        if last_height == None:
+            return None
+        return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == last_height).first()
 
     # Get record(s) by height
     @classmethod
     def get_by_height(cls, height, range=None):
-        if height == -1:
+        if height == 0:
             height = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
         if range == None:
             return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == height).first()
@@ -97,3 +100,20 @@ class Pool_stats(Base):
             ts_start = ts-range
             ts_end = ts
             return list(database.db.getSession().query(Pool_stats).filter(and_(Pool_stats.timestamp >= ts_start, Pool_stats.timestamp <= ts_end)).order_by(asc(Pool_stats.height)))
+
+
+    # Get the earliest dirty stat
+    @classmethod
+    def get_first_dirty(cls, from_height=0):
+        return database.db.getSession().query(Pool_stats).filter(and_(Pool_stats.dirty == True, Pool_stats.height >= from_height)).order_by(asc(Pool_stats.height)).first()
+
+    # Mark a record dirty by height
+    @classmethod
+    def mark_dirty(cls, height):
+        rec = Pool_stats.get_by_height(height)
+        if rec is None:
+            return False
+        rec.dirty = True
+        database.db.getSession().commit()
+        return True
+

@@ -12,12 +12,12 @@ from grinbase.model import Base
 
 class Grin_shares(Base):
     __tablename__ = 'grin_shares'
-    hash = Column(String(64))
-    height = Column(BigInteger, nullable=False)
     nonce = Column(String(20), primary_key=True, nullable=False)
+    hash = Column(String(64))
+    height = Column(BigInteger, nullable=False, index=True)
     actual_difficulty = Column(Integer)
     net_difficulty = Column(Integer)
-    timestamp = Column(DateTime)
+    timestamp = Column(DateTime, index=True)
     found_by = Column(String(1024))
     is_solution = Column(Boolean)
 

@@ -46,7 +46,7 @@ def main():
     block_expiretime = int(CONFIG[PROCESS]["block_expiretime"])
     LOGGER.warn("using locktime: {}, expiretime: {}".format(block_locktime, block_expiretime))
 
-    latest = grin.get_current_height()
+    latest = grin.blocking_get_current_height()
     LOGGER.warn("Latest: {}".format(latest))
 
     new_poolblocks = Pool_blocks.get_all_new()

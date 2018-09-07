@@ -25,6 +25,7 @@ import datetime
 
 from grinlib import lib
 from grinbase.model.pool_shares import Pool_shares
+from grinbase.model.pool_stats import Pool_stats
 
 PROCESS = "shareWatcher"
 LOGGER = None
@@ -45,14 +46,11 @@ def process_pool_logmessage(line, database):
         s_worker = match.group(5)
         # Create a new record
         # sql_timestamp = lib.to_sqltimestamp(s_timestamp)
-        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=s_timestamp, found_by=s_worker, validated=False, is_valid=False, invalid_reason="None" )
-        duplicate = database.db.createDataObj_ignore_duplicates(new_pool_share)
-        database.db.getSession().commit()
-        if duplicate:
-            LOGGER.warn("Duplicate PoolShare: {}".format(new_pool_share))
-        else:
-            LOGGER.warn("Added PoolShare: {}".format(new_pool_share))
-        sys.stdout.flush()
+        new_pool_share = Pool_shares(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=s_timestamp, found_by=s_worker, validated=False, is_valid=True, invalid_reason="None" )
+        LOGGER.warn("New PoolShare: {}".format(new_pool_share))
+        return new_pool_share
+    else:
+        return None
 
 
 def process_pool_log():
@@ -64,17 +62,17 @@ def process_pool_log():
     POOL_LOG = CONFIG["stratum"]["log_dir"] + "/" + CONFIG["stratum"]["log_filename"]
 
     # (re)Process all logs
-    logfiles = glob.glob(POOL_LOG + '*')
-    LOGGER.warn("Processing existing logs: {}".format(logfiles))
-    sys.stdout.flush()
-    for logfile in logfiles:
-        with open(logfile) as f:
-            for line in f:
-                try:
-                    process_pool_logmessage(line, database)
-                except Exception as e:
-                    LOGGER.error("Failed to process pool log message: {} {}".format(line, e))
-        f.close()
+#    logfiles = glob.glob(POOL_LOG + '*')
+#    LOGGER.warn("Processing existing logs: {}".format(logfiles))
+#    sys.stdout.flush()
+#    for logfile in logfiles:
+#        with open(logfile) as f:
+#            for line in f:
+#                try:
+#                    process_pool_logmessage(line, database)
+#                except Exception as e:
+#                    LOGGER.error("Failed to process pool log message: {} {}".format(line, e))
+#        f.close()
 
     # Read future log messages
     LOGGER.warn("Processing new logs: {}".format(POOL_LOG))
@@ -83,10 +81,22 @@ def process_pool_log():
         ['tail', '-F', POOL_LOG],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
+    height = 0
+    shares = []
     while True:
         line = poollog.stdout.readline().decode('utf-8')
         try:
-            process_pool_logmessage(line, database)
+            share = process_pool_logmessage(line, database)
+            if share is not None:
+                # print("share height: {}, height: {}".format(share.height, height))
+                if share.height != height:
+                    LOGGER.warn("Commit PoolShares: {}".format(len(shares)))
+                    database.db.createFromList(shares)
+                    database.db.getSession().commit()
+                    shares = []
+                    height = share.height
+                shares.append(share)
+                    
         except Exception as e:
             LOGGER.error("Failed to process pool log message: {} {}".format(line, e))
 

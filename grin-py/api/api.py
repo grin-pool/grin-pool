@@ -24,6 +24,7 @@ from grinbase.model.pool_stats import Pool_stats
 from grinbase.model.pool_blocks import Pool_blocks
 from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.worker_stats import Worker_stats
+from grinbase.model.pool_utxo import Pool_utxo
 
 from grinlib import lib
 from grinlib import grin
@@ -46,6 +47,8 @@ class GrinAPI_stats(Resource):
             height = grin.get_current_height()
         if range == None:
             stat = Grin_stats.get_by_height(height)
+            if stat is None:
+                return None
             return stat.to_json(fields)
         else:
             stats = []
@@ -71,6 +74,8 @@ class GrinAPI_blocks(Resource):
             height = grin.get_current_height()
         if range == None:
             block = Blocks.get_by_height(height)
+            if block is None:
+                return None
             return block.to_json(fields)
         else:
             blocks = []
@@ -101,6 +106,8 @@ class PoolAPI_stats(Resource):
             height = grin.get_current_height()
         if range == None:
             stat = Pool_stats.get_by_height(height)
+            if stat is None:
+                return None
             return stat.to_json(fields)
         else:
             stats = []
@@ -126,8 +133,8 @@ class PoolAPI_blocks(Resource):
             height = Pool_blocks.get_latest().height
         if range == None:
             block = Pool_blocks.get_by_height(height)
-            if block == None:
-                return {}
+            if block is None:
+                return None
             else:
                 return block.to_json(fields)
         else:
@@ -161,10 +168,17 @@ class WorkerAPI_stats(Resource):
         if id == None:
             for stat in Worker_stats.get_by_height(height, range):
                 stats.append(stat.to_json(fields))
+            return stats
         else:
-            for stat in Worker_stats.get_by_height_and_id(id, height, range):
-                stats.append(stat.to_json(fields))
-        return stats
+            if range == None:
+                res = Worker_stats.get_by_height_and_id(id, height)
+                if res is None:
+                    return res
+                return res.to_json(fields)
+            else:
+                for stat in Worker_stats.get_by_height_and_id(id, height, range):
+                    stats.append(stat.to_json(fields))
+                return stats
 
 api.add_resource(WorkerAPI_stats,
         # All active workers
@@ -173,8 +187,8 @@ api.add_resource(WorkerAPI_stats,
         '/worker/stats/<int:height>,<int:range>',
         '/worker/stats/<int:height>,<int:range>/<string:fields>',
         # One specific worker
-        '/worker/stats/<string:id>/<int:height>',
-        '/worker/stats/<string:id>/<int:height>/<string:fields>',
+        '/worker/stat/<string:id>/<int:height>',
+        '/worker/stat/<string:id>/<int:height>/<string:fields>',
         '/worker/stats/<string:id>/<int:height>,<int:range>',
         '/worker/stats/<string:id>/<int:height>,<int:range>/<string:fields>')
 
@@ -203,13 +217,19 @@ class WorkerAPI_shares(Resource):
         database = lib.get_db()
         print("id={} , height={}, range = {}, fields = {}".format(id,height,range,fields))
         if height == 0:
-            height = grin.get_current_height()
+            height = grin.get_current_height() + 1
         if fields != None:
             fields = fields.split(',')
         shares = []
-        for share in Pool_shares.get_by_height(height, range):
-            shares.append(share.to_json(fields))
-        return shares
+        if id is None:
+            for share in Pool_shares.get_by_height(height, range):
+                shares.append(share.to_json(fields))
+            return shares
+        else:
+            for share in Pool_shares.get_by_user_and_height(id, height, range):
+                shares.append(share.to_json(fields))
+            return shares
+            
 
 api.add_resource(WorkerAPI_shares,
         '/worker/shares/<string:id>',
@@ -220,7 +240,24 @@ api.add_resource(WorkerAPI_shares,
         '/worker/shares/<string:id>/<int:height>,<int:range>/<string:fields>')
 
 
+######################
+# -- Worker Payments
 
-# Start the API server
+##
+# pool_utxo
+class WorkerAPI_payments(Resource):
+    def get(self, id=None, fields=None):
+        database = lib.get_db()
+        fields = lib.fields_to_list(fields)
+        utxo = Pool_utxo.get_by_address(id)
+        return utxo.to_json(fields)
+
+
+api.add_resource(WorkerAPI_payments,
+        '/worker/payment/<string:id>')
+
+
+# Start the API server 
+# XXX TODO:  Use a real webserver
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=13423)
