@@ -10,7 +10,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Pool Stratum Proxy: Rust
 * Pool data processing jobs: Python3
 * Pool API: Python3/Flask
-* Pool Web UI: Python3/Flask/Jinja2/PyGal (?)
+* Pool Web UI: Python3/Flask/Jinja2/D3.js (?)
 * Database: MariaDB
 * Build CI/CD: Docker (+ travis or jenkins?)
 * Orchestration: Kubernetes or systemd+cron
@@ -32,4 +32,5 @@ Currently mining on **testnet3**
 
 ## Pizza and "beer" fund:
 ![BTC](https://ipfs.io/ipfs/QmZQxz5LdbCuyc8LcnUiCyTLzmWmHs644mAD7A91bmTzej) 1GhSkikbxdeiDMSQFPnzrE6WuRg3UUsy4t
+
 ![XMR](https://ipfs.io/ipfs/QmTLh1DUXhNNuB4CkaTtv3VJftXaDEY7V8hYyYGVvYzMB8) 43i7q6hVrMdgY21RH7nMghSPA6s5jjGXDeEmLjL3pNFfD1XBYqf6hJpWVabfGJ5ydJKdaBjKdFvMe1kaKRj5w7Ao7q7mK8v
