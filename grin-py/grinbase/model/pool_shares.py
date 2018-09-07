@@ -8,16 +8,18 @@ from sqlalchemy.orm import relationship
 from grinbase.dbaccess import database
 from grinbase.model import Base
 
+#from grinlib import lib
+
 # This table contains a record for each worker share accepted by the pool
 # Note: Not all of these are valid shares, check for a matching grin_share to validate
 
 class Pool_shares(Base):
     __tablename__ = 'pool_shares'
-    height = Column(BigInteger, nullable=False)
+    height = Column(BigInteger, nullable=False, index=True)
     nonce = Column(String(20), primary_key=True, nullable=False)
     worker_difficulty = Column(Integer)
-    timestamp = Column(DateTime)
-    found_by = Column(String(1024))
+    timestamp = Column(DateTime, index=True)
+    found_by = Column(String(1024), index=True)
     validated = Column(Boolean)
     is_valid = Column(Boolean)
     invalid_reason = Column(String(1024))
@@ -63,18 +65,19 @@ class Pool_shares(Base):
     # Get number of records up to height
     @classmethod
     def count(cls, height, range=None, id=None):
+        # id = lib.normalizeId(id)
         if range == None:
             if id == None:
                 return database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height).count()
             else:
-                return database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height).filter(Pool_shares.found_by == "http://"+id).count()
+                return database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height).filter(getattr(Pool_shares, "found_by").like("%"+id)).count()
         else:
             h_start = height-(range-1)
             h_end = height
             if id == None:
                 return database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).count()
             else:
-                return database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).filter(Pool_shares.found_by == "http://"+id).count()
+                return database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).filter(getattr(Pool_shares, "found_by").like("%"+id)).count()
 
     # Get a list of all records in the table
     # XXX Please dont call this except in testing
@@ -84,8 +87,12 @@ class Pool_shares(Base):
 
     # Get a list of all UNvalidated shares
     @classmethod
-    def getUnvalidated(cls):
-        return list(database.db.getSession().query(Pool_shares).filter(Pool_shares.validated == False))
+    def getUnvalidated(cls, height=0, range=None):
+        if range is None:
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.validated == False, Pool_shares.height >= height)))
+        else:
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.validated == False, Pool_shares.height <= height, Pool_shares.height >= height-range)))
+ 
 
     # Get a single record by nonce
     @classmethod
@@ -96,11 +103,21 @@ class Pool_shares(Base):
     @classmethod
     def get_by_height(cls, height, range=None):
         if range == None:
-            return list(database.db.getSession().query(Pool_shares).filter(Pool_shares.height == height))
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height == height,  Pool_shares.is_valid == True)))
         else:
             h_start = height-(range-1)
             h_end = height
-            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end)).order_by(Pool_shares.height))
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end, Pool_shares.is_valid == True)).order_by(Pool_shares.height))
+            
+    # Get all pool shares by height and user
+    @classmethod
+    def get_by_user_and_height(cls, user, height, range=None):
+        if range == None:
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height == height, getattr(Pool_shares, "found_by").like("%"+user))))
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.height >= h_start, Pool_shares.height <= h_end, getattr(Pool_shares, "found_by").like("%"+user))).order_by(Pool_shares.height))
             
 
     # Get all valid pool shares by height
@@ -123,8 +140,9 @@ class Pool_shares(Base):
     @classmethod
     def get_all_by_user_and_minutes(cls, user, minutes):
         since_timestamp = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
-        return list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.found_by == user, Pool_shares.timestamp >= since_timestamp)))
+        return list(database.db.getSession().query(Pool_shares).filter(and_(getattr(Pool_shares, "found_by").like("%"+user), Pool_shares.timestamp >= since_timestamp)))
 
+    # XXX DONT NEED THIS because we have get_by_height() above?
     # Get stats records falling within requested range
     @classmethod
     def get_range_by_height(cls, h_start, h_end):
@@ -140,6 +158,6 @@ class Pool_shares(Base):
     # Get stats records falling within requested range
     @classmethod
     def get_range_by_user_and_time(cls, user, ts_start, ts_end):
-        records = list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.timestamp >= ts_start, Pool_shares.timestamp <= ts_end, Pool_shares.found_by == user)).order_by(asc(Pool_shares.height)))
+        records = list(database.db.getSession().query(Pool_shares).filter(and_(Pool_shares.timestamp >= ts_start, Pool_shares.timestamp <= ts_end, getattr(Pool_shares, "found_by").like("%"+user))).order_by(asc(Pool_shares.height)))
         return records
 

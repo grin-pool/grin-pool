@@ -13,8 +13,8 @@ from grinbase.model import Base
 
 class Pool_blocks(Base):
     __tablename__ = 'pool_blocks'
-    hash = Column(String(64))
     height = Column(BigInteger, primary_key=True, nullable=False, index=True)
+    hash = Column(String(64))
     nonce = Column(String(20), nullable=False)
     actual_difficulty = Column(Integer)
     net_difficulty = Column(Integer)
@@ -66,7 +66,7 @@ class Pool_blocks(Base):
         if height == None:
             return database.db.getSession().query(func.count(Pool_blocks.height)).scalar()
         else:
-            return database.db.getSession().query(Pool_blocks.height <= height).query(func.count(Pool_blocks.height)).scalar()
+            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height <= height).statement.with_only_columns([func.count()]).order_by(None).scalar()
 
     # Get a list of all records in the table
     # XXX Please dont call this except in testing

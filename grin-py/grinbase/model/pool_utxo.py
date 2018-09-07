@@ -34,9 +34,26 @@ class Pool_utxo(Base):
         self.address = address
         self.amount = 0
         self.failure_count = 0
-        self.last_try = ""
-        self.last_success = ""
+        self.last_try = datetime.datetime.utcfromtimestamp(0)
+        self.last_success = datetime.datetime.utcfromtimestamp(0)
         self.total_amount = 0
+
+    def to_json(self, fields=None):
+        obj = {
+                'id': self.id,
+                'address': self.address,
+                'amount': self.amount,
+                'failure_count': self.failure_count,
+                'last_try': self.last_try.timestamp(),
+                'last_success': self.last_success.timestamp(),
+                'total_amount': self.total_amount
+        }
+        # Filter by field(s)
+        if fields != None:
+            for k in list(obj.keys()):
+                if k not in fields:
+                    del obj[k]
+        return obj
 
     # Get worker UUID from login string
     @classmethod
@@ -52,6 +69,17 @@ class Pool_utxo(Base):
     @classmethod
     def getPayable(cls, minPayout):
         return list(database.db.getSession().query(Pool_utxo).filter(Pool_utxo.amount >= minPayout))
+
+    # Get by address
+    @classmethod
+    def get_by_address(cls, address):
+        full_addr = "http://" + address
+        return database.db.getSession().query(Pool_utxo).filter(Pool_utxo.address==full_addr).first()
+
+    # Get by id (no lock)
+    @classmethod
+    def get_by_id(cls, uid):
+        return database.db.getSession().query(Pool_utxo).filter(Pool_utxo.id==uid).first()
 
     # Get a single record by id locked for update
     @classmethod

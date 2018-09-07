@@ -22,12 +22,17 @@ from time import sleep
 
 from grinlib import lib
 from grinlib import grin
+from grinlib import grinstats
+
 from grinbase.model.blocks import Blocks
 from grinbase.model.grin_stats import Grin_stats
 
 PROCESS = "grinStats"
 LOGGER = None
 CONFIG = None
+
+# XXX TODO: Move to config
+BATCHSZ = 100
 
 def main():
     CONFIG = lib.get_config()
@@ -42,48 +47,32 @@ def main():
     # Find the height of the latest stats record
     last_height = 0
     latest_stat = Grin_stats.get_latest()
+
     if latest_stat == None:
-        # Special case for new pool startup
-        seed_stat = Grin_stats(height=0, timestamp=0, gps=0, difficulty=0, total_utxoset_size=0, total_transactions=0)
-        database.db.createDataObj(seed_stat)
+        # Special case for new pool startup - Need 3 stats records to bootstrap
+        LOGGER.warn("Initializing Grin_stats")
+        grinstats.initialize()
+        last_height = 2
     else:
         last_height = latest_stat.height
-    LOGGER.warn("Starting at block height: {}".format(last_height))
+    height = last_height + 1
+    LOGGER.warn("grinStats service starting at block height: {}".format(height))
 
-    # Generate status records - one per grin block
+    # Generate grin stats records - one per grin block
     while True:
-        latest = grin.get_current_height()
-        while latest > last_height:
+        latest = grin.blocking_get_current_height()
+        while latest >= height:
             try:
-                # Get the most recent blocks from which to generate the stats
-                previous = Grin_stats.get_by_height(last_height)
-                recent_blocks = Blocks.get_by_height(last_height, avg_over_range)
-                if len(recent_blocks) < 3:
-                    # We dont have at least 3 of these blocks in the DB
-                    last_height = last_height+1
-                    continue
-                height = last_height + 1# recent_blocks[-1].height
-                timestamp = recent_blocks[-1].timestamp
-                difficulty = recent_blocks[-1].total_difficulty - recent_blocks[-2].total_difficulty
-                gps = lib.calculate_graph_rate(difficulty, recent_blocks[0].timestamp, recent_blocks[-1].timestamp, avg_over_range)
-                total_utxoset_size = 0
-                total_transactions = 0
-                if previous is not None:
-                    total_utxoset_size = previous.total_utxoset_size + 1 # XXX TODO: Track this
-                    total_transactions = previous.total_transactions + 2 # XXX TODO: Track this
-                new_stats = Grin_stats(
-                                   height = height,
-                                   timestamp = timestamp,
-                                   gps = gps,
-                                   difficulty = difficulty,
-                                   total_utxoset_size = total_utxoset_size,
-                                   total_transactions = total_transactions,
-                )
-                LOGGER.warn("Added GrinStats for block: {} - {} {} {} {}".format(height, gps, difficulty, total_utxoset_size, total_transactions))
-                database.db.createDataObj(new_stats)
-                last_height = last_height + 1
-            except Exception as e:
+                new_stats = grinstats.calculate(height, avg_over_range)
+                # Batch new stats when possible, but commit at reasonable intervals
+                database.db.getSession().add(new_stats)
+                if( (height % BATCHSZ == 0) or (height >= (latest-3)) ):
+                    database.db.getSession().commit()
+                LOGGER.warn("Added Grin_stats for block: {} - gps:{} diff:{} utxosz:{}".format(new_stats.height, new_stats.gps, new_stats.difficulty, new_stats.total_utxoset_size))
+                height = height + 1
+            except AssertionError as e:
                 LOGGER.error("Something went wrong: {}".format(e))
+                sleep(check_interval)
         sys.stdout.flush()
         sleep(check_interval)
     LOGGER.warn("=== Completed {}".format(PROCESS))
