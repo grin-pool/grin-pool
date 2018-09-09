@@ -22,6 +22,7 @@ import time
 import configparser
 import logging
 import threading
+import subprocess
 from datetime import datetime
 
 
@@ -130,3 +131,19 @@ def fields_to_list(fields):
 # Python datetime.datetime into a unix epoch
 def to_epoch(dt):
     return dt.timestamp()
+
+# Itr for tailing a log file
+class PopenItr:
+    def __init__(self, command):
+        self.cmd = command
+        self.proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=False)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = self.proc.stdout.readline().decode('utf-8')
+        if line == '' and self.proc.poll() is not None:
+            raise StopIteration
+        return line
+

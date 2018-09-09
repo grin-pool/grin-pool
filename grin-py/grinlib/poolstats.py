@@ -28,9 +28,8 @@ from grinlib import grin
 from grinbase.model.blocks import Blocks
 from grinbase.model.grin_stats import Grin_stats
 from grinbase.model.pool_stats import Pool_stats
-from grinbase.model.pool_shares import Pool_shares
 from grinbase.model.pool_blocks import Pool_blocks
-from grinbase.model.worker_stats import Worker_stats
+from grinbase.model.worker_shares import Worker_shares
 
 # XXX TODO: Move to config
 POOL_MIN_DIFF = 29
@@ -41,22 +40,31 @@ POOL_MIN_DIFF = 29
 def calculate(height, avg_range):
     # Get the most recent pool data from which to generate the stats
     previous_stats_record = Pool_stats.get_by_height(height-1)
-    assert previous_stats_record is not None, "No provious stats record found"
+    assert previous_stats_record is not None, "No previous stats record found"
     avg_over_first_grin_block = Blocks.get_by_height( max(height-avg_range, 1) )
     assert avg_over_first_grin_block is not None, "Missing grin block: {}".format(max(height-avg_range, 1))
     grin_block = Blocks.get_by_height(height)
     assert grin_block is not None, "Missing grin block: {}".format(height)
-    latest_pool_shares = Pool_shares.get_by_height(height, avg_range)
-    print("XXX: Num pool shares for block {} = {}".format(height, len(latest_pool_shares)))
+    latest_worker_shares = Worker_shares.get_by_height(height)
+    assert len(latest_worker_shares) > 0, "No worker shares found"
+    avg_over_worker_shares = Worker_shares.get_by_height(height, avg_range)
     # Calculate the stats data
     timestamp = grin_block.timestamp
+    difficulty = POOL_MIN_DIFF # XXX TODO - enchance to support multiple difficulties
     gps = 0
-    if len(latest_pool_shares) > 0:
-        difficulty = max(POOL_MIN_DIFF, latest_pool_shares[0].worker_difficulty) # XXX TODO - enchance to support multiple difficulties
-        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, len(latest_pool_shares))
-        print("XXX: difficulty={}, {}-{}, len={}".format(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, len(latest_pool_shares)))
-    active_miners = len(set([s.found_by for s in latest_pool_shares]))
-    shares_processed = Pool_shares.get_count_by_height(height)
+    active_miners = 0
+    shares_processed = 0
+    num_shares_in_range = 0
+    if len(avg_over_worker_shares) > 0:
+        num_shares_in_range = sum([shares.valid for shares in avg_over_worker_shares])
+        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
+        print("XXX: difficulty={}, {}-{}, len={}".format(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range))
+    if latest_worker_shares is not None:
+        active_miners = len(latest_worker_shares) # XXX NO, FIX THIS
+        num_valid = sum([shares.valid for shares in latest_worker_shares])
+        num_invalid = sum([shares.invalid for shares in latest_worker_shares])
+        shares_processed = num_valid + num_invalid
+
     total_shares_processed = previous_stats_record.total_shares_processed + shares_processed
     total_grin_paid = previous_stats_record.total_grin_paid # XXX TODO
     total_blocks_found = previous_stats_record.total_blocks_found
@@ -80,7 +88,7 @@ def calculate(height, avg_range):
 def recalculate(start_height, avg_range):
     database = lib.get_db()
     height = start_height
-    while height <= grin.blocking_get_current_height():
+    while height < grin.blocking_get_current_height():
         old_stats = Pool_stats.get_by_height(height)
         new_stats = calculate(height, avg_range)
         if old_stats is None:

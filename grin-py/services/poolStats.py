@@ -30,8 +30,8 @@ from grinlib import poolstats
 
 from grinbase.model.blocks import Blocks
 from grinbase.model.pool_stats import Pool_stats
-from grinbase.model.pool_shares import Pool_shares
-from grinbase.model.pool_blocks import Pool_blocks
+#from grinbase.model.worker_shares import Worker_shares
+#from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "poolStats"
 LOGGER = None
@@ -66,13 +66,14 @@ def main():
 
     # Generate pool stats records - one per grin block
     while True:
-        latest = grin.blocking_get_current_height()
-        while latest >= height:
+        # latest = grin.blocking_get_current_height()
+        latest = Blocks.get_latest().height
+        while latest > height:
             try:
                 new_stats = poolstats.calculate(height, avg_over_range)
                 # Batch new stats when possible, but commit at reasonable intervals
                 database.db.getSession().add(new_stats)
-                if( (height % BATCHSZ == 0) or (height >= (latest-3)) ):
+                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
                     database.db.getSession().commit()
                 LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
                 height = height + 1

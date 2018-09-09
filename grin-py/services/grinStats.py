@@ -66,7 +66,7 @@ def main():
                 new_stats = grinstats.calculate(height, avg_over_range)
                 # Batch new stats when possible, but commit at reasonable intervals
                 database.db.getSession().add(new_stats)
-                if( (height % BATCHSZ == 0) or (height >= (latest-3)) ):
+                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
                     database.db.getSession().commit()
                 LOGGER.warn("Added Grin_stats for block: {} - gps:{} diff:{} utxosz:{}".format(new_stats.height, new_stats.gps, new_stats.difficulty, new_stats.total_utxoset_size))
                 height = height + 1

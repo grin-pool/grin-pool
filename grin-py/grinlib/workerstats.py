@@ -29,7 +29,7 @@ from grinlib import grin
 from grinbase.model.blocks import Blocks
 from grinbase.model.grin_stats import Grin_stats
 from grinbase.model.pool_stats import Pool_stats
-from grinbase.model.pool_shares import Pool_shares
+from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.worker_stats import Worker_stats
 
 # XXX TODO: Move to config
@@ -41,13 +41,15 @@ BATCHSZ = 100
 # Raises AssertionError
 def calculate(height, avg_range):
     avg_over_first_grin_block = Blocks.get_by_height( max(height-avg_range, 1) )
-    assert(avg_over_first_grin_block is not None)
-    current_grin_block = Blocks.get_by_height(height)
-    assert(current_grin_block is not None)
-    # Get all worker share data for the current range of blocks
-    latest_pool_shares = Pool_shares.get_by_height(height, avg_range)
+    assert avg_over_first_grin_block is not None, "Missing grin block: {}".format(max(height-avg_range, 1))
+    grin_block = Blocks.get_by_height(height)
+    assert grin_block is not None, "Missing grin block: {}".format(height)
+    # Get all workers share records for the current range of blocks
+    latest_worker_shares = Worker_shares.get_by_height(height)
+    assert len(latest_worker_shares) != 0, "Missing worker shares record for height {}".format(height)
+    avg_over_worker_shares = Worker_shares.get_by_height(height, avg_range)
     # Create a worker_stats for each user who submitted a share in this range
-    workers = list(set([share.found_by for share in latest_pool_shares]))
+    workers = list(set([share.worker for share in latest_worker_shares]))
     new_stats = []
     for worker in workers:
         # Get this workers most recent worker_stats record (for running totals)
@@ -56,17 +58,21 @@ def calculate(height, avg_range):
             # A new worker
             last_stat = Worker_stats(None, datetime.datetime.now(), height-1, worker, 0, 0, 0, 0, 0, 0)
             new_stats.append(last_stat)
-        # Calculate the stats data
-        latest_worker_shares = [share for share in latest_pool_shares if share.found_by == worker]
-        worker_shares_this_block = [share for share in latest_worker_shares if share.height == height]
-        difficulty = POOL_MIN_DIFF # latest_worker_shares[0].worker_difficulty # XXX TODO - enchance to support multiple difficulties
-        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, current_grin_block.timestamp, len(latest_worker_shares))
-        shares_processed = len(worker_shares_this_block)
+        # Calculate this workers stats data
+        timestamp = grin_block.timestamp
+        difficulty = POOL_MIN_DIFF # XXX TODO - enchance to support multiple difficulties
+        num_shares_in_range = sum([shares.valid for shares in avg_over_worker_shares if shares.worker == worker])
+        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
+        num_valid_this_block = [shares.valid for shares in latest_worker_shares if shares.worker == worker][0]
+        num_invalid_this_block = [shares.invalid for shares in latest_worker_shares if shares.worker == worker][0]
+        shares_processed = num_valid_this_block + num_invalid_this_block
+#        latest_worker_shares = [share for share in latest_pool_shares if share.found_by == worker]
+        #shares_processed = len(worker_shares_this_block)
         total_shares_processed = last_stat.total_shares_processed + shares_processed
         stats = Worker_stats(
                 id = None,
-                timestamp = current_grin_block.timestamp,
-                height = current_grin_block.height,
+                height = height,
+                timestamp = timestamp,
                 worker = worker,
                 gps = gps,
                 shares_processed = shares_processed,
