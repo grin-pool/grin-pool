@@ -24,9 +24,9 @@ import sys
 grinlog = open('/data/grin/grin.log', 'a')
 poollog = open('/data/stratum/grin-pool.log', 'a')
 
-nonce = 18330770149711721109
+nonce = 18330770149714411119
 current = 0
-LOAD = 5000
+LOAD = 750000
 
 
 def get_height():

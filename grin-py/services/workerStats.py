@@ -31,8 +31,8 @@ from grinlib import workerstats
 
 from grinbase.model.blocks import Blocks
 from grinbase.model.worker_stats import Worker_stats
-from grinbase.model.pool_shares import Pool_shares
-from grinbase.model.pool_blocks import Pool_blocks
+from grinbase.model.pool_stats import Pool_stats
+
 
 PROCESS = "workerStats"
 LOGGER = None
@@ -65,15 +65,22 @@ def main():
 
     # Generate worker stats records - one per grin block for each active worker
     while True:
-        latest = grin.blocking_get_current_height()
-        #LOGGER.debug("Latest Network Block Height = {}".format(latest))
-        while latest >= height:
+        # latest = grin.blocking_get_current_height()
+        latest = Blocks.get_latest().height
+        LOGGER.warn("Latest Network Block Height = {}".format(latest))
+        while latest > height:
             try:
                 new_stats = workerstats.calculate(height, avg_over_range)
+                LOGGER.warn("{} new stats for height {}".format(len(new_stats), height))
+                # mark any existing pool_stats dirty
+                pool_stats = Pool_stats.get_by_height(height)
+                if pool_stats is not None:
+                    LOGGER.warn("Marked existing pool_stats dirty for height: {}".format(height))
+                    pool_stats.dirty = True
+                database.db.getSession().bulk_save_objects(new_stats)
+                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                    database.db.getSession().commit()
                 for stats in new_stats:
-                    database.db.getSession().add(stats)
-                    if( (height % BATCHSZ == 0) or (height >= (latest-3)) ):
-                        database.db.getSession().commit()
                     LOGGER.warn("Added Worker_stats for block: {}, Worker: {} - {} {} {} {} {} {}".format(stats.height, stats.worker, stats.gps, stats.shares_processed, stats.total_shares_processed, stats.grin_paid, stats.total_grin_paid, stats.balance))
                 height = height + 1
             except Exception as e:
