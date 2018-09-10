@@ -12,6 +12,8 @@ from grinbase.model import Base
 
 # This table contains worker share information per block
 
+# XXX TODO?  Consider removeing id and using height+worker as a primary unique key
+
 class Worker_shares(Base):
     __tablename__ = 'worker_shares'
     id = Column(BigInteger, primary_key=True)

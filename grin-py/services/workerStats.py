@@ -67,7 +67,7 @@ def main():
     while True:
         # latest = grin.blocking_get_current_height()
         latest = Blocks.get_latest().height
-        LOGGER.warn("Latest Network Block Height = {}".format(latest))
+        #LOGGER.warn("Latest Network Block Height = {}".format(latest))
         while latest > height:
             try:
                 new_stats = workerstats.calculate(height, avg_over_range)
