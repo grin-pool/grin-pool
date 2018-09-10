@@ -1,56 +1,45 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: grin
+  name: grinwallet
   labels:
-    run: grin
+    run: grinwallet
 spec:
   type: LoadBalancer
   ports:
-  - port: 13413
-    nodePort: 32413
+  - port: 13415
+    nodePort: 32415
     protocol: TCP
-    name: grinapi
-  - port: 13414
-    nodePort: 32414
-    protocol: TCP
-    name: grinptop
-  - port: 13416
-    nodePort: 32416
-    protocol: TCP
-    name: grinstratum
+    name: grinwallet
   selector:
-    run: grin
+    run: grinwallet
   externalIPs:
-  - 192.168.2.251
+  - 192.168.2.224
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: grin
+  name: grinwallet
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        run: grin
+        run: grinwallet
     spec:
       containers:
-      - name: grin
+      - name: grinwallet
         image: grinpool/grin:latest
 #        command: ["sleep", "9999"]
-        command: ["/run.sh"]
+        command: ["/run-wallet.sh"]
         ports:
-        - containerPort: 13413
-        - containerPort: 13414
         - containerPort: 13415
-        - containerPort: 13416
         volumeMounts: # directory inside container
-        - mountPath: /server
-          name: grinblockchain
+        - mountPath: /wallet
+          name: grinwallet
 #      imagePullSecrets:
 #      - name: regsecret
       volumes: # directory location on host
-      - name: grinblockchain
+      - name: grinwallet
         hostPath:
-          path: /data/grin
+          path: /data/wallet

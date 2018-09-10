@@ -27,6 +27,8 @@
 #        Check nonce and timestamp against grin_share for added sanity
 
 
+XXXX DO NOT USE THIS RIGHT NOW
+
 # XXX TODO:  All shares with height=0 are invalid
 
 import sys

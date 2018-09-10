@@ -13,6 +13,7 @@ spec:
       - name: grin-pool
         image: grinpool/services:latest
         command: ["/usr/local/bin/workerStats.py"]
+#        command: ["sleep", "99999"]
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
