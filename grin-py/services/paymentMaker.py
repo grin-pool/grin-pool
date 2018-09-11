@@ -18,19 +18,19 @@
 
 #paymentMaker.py gets unlocked blocks from the pool_blocks table,
 #    For each unlocked pool_block:
-#        gets valid worker shares for that block,
+#        gets worker stats for the past X blocks,
 #        Caclulate this workers share of the rewards
 #        Add to the pool_utxo
 
 # XXX TODO: Single db transaction
+
 
 import sys
 import time
 
 from grinlib import lib
 from grinbase.model.pool_blocks import Pool_blocks
-from grinbase.model.pool_shares import Pool_shares
-from grinbase.model.grin_shares import Grin_shares
+from grinbase.model.worker_stats import Worker_stats
 from grinbase.model.pool_utxo import Pool_utxo
 
 REWARD = 60.0  # XXX TODO: use the actual reward + fees of each block
@@ -57,31 +57,20 @@ def main():
             LOGGER.warn("Processing unlocked block: {}".format(pb))
             if pb.height > latest_block:
                 latest_block = pb.height
-            # Get valid pool_shares for that block from the db
-            pool_shares = Pool_shares.get_valid_by_height(pb.height)
+            # Get Worker_stats of this block to calculate reward for each worker
+            worker_stats = Worker_stats.get_by_height(pb.height)
             # Calculate Payment info:
-            worker_shares = {}
-            for ps in pool_shares:
-                LOGGER.warn("Processing pool_shares: {}".format(ps))
-                # Need to get actual_difficulty
-                gs = Grin_shares.get_by_nonce(ps.nonce)
-                if gs == None:
-                    # XXX NOTE: no payout for shares not accepted by grin node
-                    continue
-                if ps.found_by in worker_shares:
-                    worker_shares[ps.found_by] += gs.actual_difficulty
-                else:
-                    worker_shares[ps.found_by] = gs.actual_difficulty
-            if len(worker_shares) > 0:
-                # Calcualte reward/difficulty: XXX TODO: Enhance
+            if len(worker_stats) > 0:
+                # Calcualte reward/share:
+                # XXX TODO: Enhance
                 #  What algorithm to use?  Maybe: https://slushpool.com/help/manual/rewards
-                r_per_d = REWARD / sum(worker_shares.values())
-                for worker in worker_shares.keys():
-                    # Calculate reward per share
-                    worker_rewards = worker_shares[worker] * r_per_d
+                r_per_g = REWARD / sum([st.gps for st in worker_stats])
+                for stat in worker_stats:
+                    # Calculate reward
+                    worker_rewards = stat.gps * r_per_g
                     # Add or create worker rewards
-                    worker_utxo = Pool_utxo.credit_worker(worker, worker_rewards)
-                    LOGGER.warn("Credit to user: {} = {}".format(worker, worker_rewards))
+                    worker_utxo = Pool_utxo.credit_worker(stat.worker, worker_rewards)
+                    LOGGER.warn("Credit to user: {} = {}".format(stat.worker, worker_rewards))
             # Mark the pool_block state="paid" (maybe "processed" would be more accurate?)
             pb.state = "paid"
             database.db.getSession().commit()
@@ -90,7 +79,6 @@ def main():
             LOGGER.error("Something went wrong: {}".format(e))
 
     #database.db.getSession().commit()
-    # db.set_last_run(PROCESS, str(time.time()))
     LOGGER.warn("=== Completed {}".format(PROCESS))
     sys.stdout.flush()
 
