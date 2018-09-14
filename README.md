@@ -13,6 +13,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Pool Web UI: Python3/Flask/Jinja2/D3.js (?)
 * Database: MariaDB
 * Build CI/CD: Docker (+ travis or jenkins?)
+* Deploy: Ansible
 * Orchestration: Kubernetes or systemd+cron
 
 #### To run: [kube/README.md](kube/README.md)
