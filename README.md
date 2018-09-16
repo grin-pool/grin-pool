@@ -3,6 +3,13 @@
 ## What it is:
 A [grin](https://github.com/mimblewimble/grin) mining pool
 
+## How to try it:
+* Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
+* Configure your miner to connect to: <B>mwgrinpool.com:3333</B>
+* Use your grin wallet URL as your stratum login, no password necessary
+* Point your browser at [MWGrinPool.com](http://mwgrinpool.com/)
+* Start your miner and watch your wallet fill with grin
+
 ### The architecture:
 * Stateless Microservices
 
@@ -16,20 +23,13 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Deploy: Ansible
 * Orchestration: Kubernetes or systemd+cron
 
-#### To run: [kube/README.md](kube/README.md)
+#### To run the pool yourself: [kube/README.md](kube/README.md)
 
 #### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
 ### Current Status:
-This project is under development, ~75% complete.
+This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
 Please contribute!
-
-## How to try it:
-Currently mining on **testnet3**
-* Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
-* Configure your miner to connect to:  mwgrinpool.com:3333
-* Use your grin wallet URL as your login, no password necessary
-* Start your miner and watch your wallet fill with grin
 
 ## Pizza and "beer" fund:
 ![BTC](https://ipfs.io/ipfs/QmZQxz5LdbCuyc8LcnUiCyTLzmWmHs644mAD7A91bmTzej) <sub>17Gmy9uhE6ziB1PzYT8MMY5A4va25dy3US</sub>
