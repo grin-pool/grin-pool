@@ -5,7 +5,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 
 ## How to try it:
 * Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
-* Configure your miner to connect to: <B>mwgrinpool.com:3333</B>
+* Configure your miner to connect to: <B>stratum.mwgrinpool.com:3333</B>
 * Use your grin wallet URL as your stratum login, no password necessary
 * Point your browser at [MWGrinPool.com](http://mwgrinpool.com/)
 * Start your miner and watch your wallet fill with grin
