@@ -48,7 +48,7 @@ pool_style_pygal = Style(
   transition='400ms ease-in',
   colors=('#fcef00', '#0f12c1', '#c10e0e', '#0dc110', '#8b0cc1'))
 
-API_URL = 'http://grin-pool.us:13423'
+API_URL = 'http://api.mwgrinpool.com:13423'
 
 def get_grin_graph(start='0', r='120'):
     url = API_URL + '/grin/stats/' + start +','+r+'/gps,height'
