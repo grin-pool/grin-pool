@@ -24,7 +24,7 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch xxxyy
+RUN touch xxxyyz
 RUN git fetch && \
     git pull && \
     cargo build --release
@@ -37,7 +37,7 @@ RUN target/release/grin server config && \
 # runtime stage
 FROM debian:9.4
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales procps
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
@@ -67,7 +67,7 @@ RUN sed -i 's/^db_root = .*$/db_root = "\/server\/.grin"/' /usr/src/grin/grin-se
 
 # Update grin-wallet config
 RUN sed -i 's/^api_listen_interface = .*$/api_listen_interface = "0.0.0.0"/' /usr/src/grin/grin-wallet.toml && \
-    sed -i 's/^check_node_api_http_addr = .*$/check_node_api_http_addr = "grin:13413"/' /usr/src/grin/grin-wallet.toml && \
+    sed -i 's/^check_node_api_http_addr = .*$/check_node_api_http_addr = "http:\/\/grin:13413"/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^data_file_dir = .*$/data_file_dir = "\/wallet\/wallet_data"/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^log_to_stdout = .*$/log_to_stdout = false/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^log_to_file = .*$/log_to_file = true/' /usr/src/grin/grin-wallet.toml && \

@@ -26,21 +26,14 @@ RUN set -ex && \
         vim \
         psmisc \
         mysql-client && \
+        libpango1.0-0 libpq-dev libcairo2 && \
     apt-get clean && \
     rm -rf /var/lib/apt && \
     sed -i '157 s/^##*//' /etc/locale.gen && \
     locale-gen
 
-RUN pip3 install wheel && \
-    pip3 install python-dateutil && \
-    pip3 install pytz && \
-    pip3 install requests && \
-    pip3 install mysql-connector && \
-    pip3 install configparser && \
-    pip3 install sqlalchemy && \
-    pip3 install pymysql && \
-    pip3 install Flask && \
-    pip3 install flask-restful
+COPY requirements.txt /
+RUN pip3 install -r /requirements.txt
 
 RUN cd /usr/bin && ln -s python3 python
 
@@ -52,5 +45,6 @@ COPY grinbase/ /usr/local/bin/grinbase/
 COPY grinlib/ /usr/local/bin/grinlib/
 COPY services/*.py /usr/local/bin/
 COPY api/ /usr/local/bin/api/
+COPY webui/ /usr/local/bin/webui
 
 CMD ["/bin/sh"]

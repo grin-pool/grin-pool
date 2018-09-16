@@ -27,7 +27,7 @@ spec:
           volumes: # directory location on host
           - name: grinwallet
             hostPath:
-              path: /data/grin
+              path: /data/wallet
           - name: poolservicesdir
             hostPath:
               path: /data/services
