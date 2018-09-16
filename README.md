@@ -21,13 +21,13 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 #### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
 ### Current Status:
-This project is under development, ~50% complete.
-Please contribute! -> Web UI is needed
+This project is under development, ~75% complete.
+Please contribute!
 
 ## How to try it:
 Currently mining on **testnet3**
 * Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
-* Configure your miner to connect to:  grin-pool.us:3333
+* Configure your miner to connect to:  mwgrinpool.com:3333
 * Use your grin wallet URL as your login, no password necessary
 * Start your miner and watch your wallet fill with grin
 
