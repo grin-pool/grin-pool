@@ -1,0 +1,23 @@
+.grinlogo {
+  display: inline-block;
+  align: left;
+  height: 45px;
+  position: relative;
+  padding-right: 60px;
+}
+
+table tr{
+   height: 45px;
+}
+
+table tr td{
+   border: 1px solid black;
+   padding:12px !important;
+}
+
+table tr th{
+   border: 1px solid black;
+   padding:12px !important;
+}
+
+body {background-color: #111111;}
