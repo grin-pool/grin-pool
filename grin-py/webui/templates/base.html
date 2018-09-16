@@ -1,0 +1,90 @@
+{% macro render_field(field) %}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}
+
+
+{% macro render_sitem(endpoint, display, cls='', iconcls='', active='') %}
+<li {% if request.endpoint == endpoint or active == endpoint %} class='nav-item active' {%else%} class="nav-item" {% endif %}>
+    <a class='{{cls}}' href="{{url_for(endpoint)}}"><i class="{{iconcls}}"></i> {{display}}</a>
+</li>
+{% endmacro %}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grin-Pool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.dataTables.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dataTables.fontAwesome.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/breadcrumb.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/graph.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chosen.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chosen-bootstrap.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+
+
+
+    <script src="{{ url_for('static', filename='js/jquery-3.2.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/popper-utils.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tooltip.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dataTables.bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0px;
+        }
+
+    </style>
+
+
+</head>
+<body>
+
+<div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="https://github.com/grin-pool/grin-pool">
+          &nbsp;&nbsp;&nbsp;
+          <img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo">
+          <span style="font-size:2.50rem;;">GrinPool <span>
+          <span style="font-size:1.0rem;">(beta)</span>
+          &nbsp;&nbsp;
+          <span style="font-size:2.25rem;">Grin Mining Pool</span>
+          &nbsp;
+          <span style="font-size:1.0rem;">on</span>
+          <span style="font-size:1.5rem;"> <i class="fa fa-github fa-xs" aria-hidden="true"></i> </span>
+        </a>
+    </nav>
+</div>
+
+{% block content %}
+
+{% endblock %}
+
+    <script src="{{ url_for('static', filename='js/chosen.jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/prism.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/init.js') }}"></script>
+
+</body>
+</html>
