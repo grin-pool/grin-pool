@@ -1,6 +1,14 @@
-SQLAlchemy
+wheel
+configparser
+python-dateutil
+requests
+mysql-connector
 pymysql
+sqlalchemy
 Flask
+flask-restful
 wtforms
 wtforms_components
 pytz
+pygal
+cairosvg

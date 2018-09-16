@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webui
+  labels:
+    run: webui
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 13424
+    nodePort: 32424
+    protocol: TCP
+    name: webui
+  selector:
+    run: webui
+  externalIPs:
+  - 192.168.2.224
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: webui
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: webui
+    spec:
+      containers:
+      - name: webui
+        image: grinpool/services:latest
+        command: ["sleep", "9999999"]
+#        command: ["/usr/local/bin/grinbase/scripts/testpygal.py"]
+#        command: ["/usr/local/bin/webui/__init__.py"]
+        ports:
+        - containerPort: 13424
+        volumeMounts: # directory inside container
+        - mountPath: /services
+          name: webuidir
+      volumes: # directory location on host
+      - name: webuidir
+        hostPath:
+          path: /data/services
+
+#      imagePullSecrets:
+#      - name: regsecret
