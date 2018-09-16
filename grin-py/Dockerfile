@@ -10,6 +10,7 @@ RUN set -ex && \
         software-properties-common \
         build-essential \
         python3 \
+        python3-dev \
         python3-pip \
         python3-setuptools \
         g++ \
@@ -25,8 +26,11 @@ RUN set -ex && \
         net-tools \
         vim \
         psmisc \
-        mysql-client && \
-        libpango1.0-0 libpq-dev libcairo2 && \
+        mysql-client \
+        libpango1.0-0 \
+        libpq-dev \
+        libcairo2 \
+        libffi-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt && \
     sed -i '157 s/^##*//' /etc/locale.gen && \

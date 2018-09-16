@@ -30,9 +30,9 @@ spec:
       containers:
       - name: webui
         image: grinpool/services:latest
-        command: ["sleep", "9999999"]
+#        command: ["sleep", "9999999"]
 #        command: ["/usr/local/bin/grinbase/scripts/testpygal.py"]
-#        command: ["/usr/local/bin/webui/__init__.py"]
+        command: ["/usr/local/bin/webui/__init__.py"]
         ports:
         - containerPort: 13424
         volumeMounts: # directory inside container
