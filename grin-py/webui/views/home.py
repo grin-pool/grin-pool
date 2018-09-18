@@ -18,7 +18,7 @@ from wtforms import Form, BooleanField, StringField, PasswordField, validators, 
 from flask import Flask, Blueprint, render_template, request, session, make_response
 
 
-home_profile = Blueprint('search_profile'
+home_profile = Blueprint('home_profile'
                            , __name__
                            , template_folder='templates'
                            , static_folder='static'
@@ -120,6 +120,10 @@ def obfuscate_name(name):
         obfname += '*'
     obfname += '**'
     return obfname
+
+@home_profile.route('/about')
+def about_template():
+    return home_template()
 
 @home_profile.route('/')
 def home_template():
