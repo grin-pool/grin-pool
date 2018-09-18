@@ -62,21 +62,49 @@
 </head>
 <body>
 
-<div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <a class="navbar-brand" href="https://github.com/grin-pool/grin-pool">
-          &nbsp;&nbsp;&nbsp;
-          <img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo">
-          <span style="font-size:2.50rem;;">GrinPool <span>
-          <span style="font-size:1.0rem;">(beta)</span>
-          &nbsp;&nbsp;
-          <span style="font-size:2.25rem;">Grin Mining Pool</span>
-          &nbsp;
-          <span style="font-size:1.0rem;">on</span>
-          <span style="font-size:1.5rem;"> <i class="fa fa-github fa-xs" aria-hidden="true"></i> </span>
-        </a>
-    </nav>
-</div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo"> GrinPool <sup><span style="font-size:0.65rem;"> (Beta)</span></sup></span></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarColor01">
+    <ul class="navbar-nav mr-auto">
+      <!--<li class="nav-item active">-->
+        <!--<a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>-->
+      <!--</li>-->
+      {{render_sitem('home_profile.home_template', 'Home', cls='nav-link', iconcls='fa fa-bell-o', active=active_page)}}
+      <li class="nav-item">
+        <a class="nav-link" href="https://github.com/grin-pool/grin-pool">Grin Mining Pool on <i class="fa fa-github fa-xs" aria-hidden="true"></i></a>
+      </li>
+      {{render_sitem('home_profile.about_template', 'About', cls='nav-link', iconcls='fa fa-bell-o', active=active_page)}}
+
+      <!--<li class="nav-item">-->
+        <!--<a class="nav-link" href="#">About</a>-->
+      <!--</li>-->
+    <!--</ul>-->
+    <!--<form class="form-inline my-2 my-lg-0">-->
+      <!--<input class="form-control mr-sm-2" placeholder="Search" type="text">-->
+      <!--<button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>-->
+    <!--</form>-->
+  </div>
+</nav>
+
+<!--<div>-->
+    <!--<nav class="navbar navbar-expand-lg navbar-dark bg-primary">-->
+        <!--<a class="navbar-brand" href="https://github.com/grin-pool/grin-pool">-->
+          <!--&nbsp;&nbsp;&nbsp;-->
+          <!--<img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo">-->
+          <!--<span style="font-size:2.50rem;;">GrinPool <span>-->
+          <!--<span style="font-size:1.0rem;">(beta)</span>-->
+          <!--&nbsp;&nbsp;-->
+          <!--<span style="font-size:2.25rem;">Grin Mining Pool</span>-->
+          <!--&nbsp;-->
+          <!--<span style="font-size:1.0rem;">on</span>-->
+          <!--<span style="font-size:1.5rem;"> <i class="fa fa-github fa-xs" aria-hidden="true"></i> </span>-->
+        <!--</a>-->
+    <!--</nav>-->
+<!--</div>-->
 
 {% block content %}
 
