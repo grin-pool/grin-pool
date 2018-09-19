@@ -46,7 +46,7 @@ def calculate(height, avg_range):
     assert grin_block is not None, "Missing grin block: {}".format(height)
     # Get all workers share records for the current range of blocks
     latest_worker_shares = Worker_shares.get_by_height(height)
-    assert len(latest_worker_shares) != 0, "Missing worker shares record for height {}".format(height)
+#    assert len(latest_worker_shares) != 0, "Missing worker shares record for height {}".format(height)
     avg_over_worker_shares = Worker_shares.get_by_height(height, avg_range)
     # Create a worker_stats for each user who submitted a share in this range
     workers = list(set([share.worker for share in latest_worker_shares]))

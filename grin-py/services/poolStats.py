@@ -66,10 +66,10 @@ def main():
 
     # Generate pool stats records - one per grin block
     while True:
-        # latest = grin.blocking_get_current_height()
-        latest = Blocks.get_latest().height
-        while latest > height:
-            try:
+        try:
+            # latest = grin.blocking_get_current_height()
+            latest = Blocks.get_latest().height
+            while latest > height:
                 new_stats = poolstats.calculate(height, avg_over_range)
                 # Batch new stats when possible, but commit at reasonable intervals
                 database.db.getSession().add(new_stats)
@@ -77,10 +77,10 @@ def main():
                     database.db.getSession().commit()
                 LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
                 height = height + 1
-            except AssertionError as e:
-                LOGGER.error("Something went wrong: {}".format(e))
-                sleep(check_interval)
-        sys.stdout.flush()
+                sys.stdout.flush()
+        except AssertionError as e:
+            LOGGER.error("Something went wrong: {}".format(e))
+            sleep(check_interval)
         sleep(check_interval)
     LOGGER.warn("=== Completed {}".format(PROCESS))
 
