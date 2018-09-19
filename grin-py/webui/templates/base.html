@@ -63,7 +63,7 @@
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo"> GrinPool <sup><span style="font-size:0.65rem;"> (Beta)</span></sup></span></a>
+  <a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}"  class="grinlogo">GrinPool<sup><span style="font-size:0.65rem;"> (Beta)</span></sup></span></a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -73,11 +73,11 @@
       <!--<li class="nav-item active">-->
         <!--<a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>-->
       <!--</li>-->
-      {{render_sitem('home_profile.home_template', 'Home', cls='nav-link', iconcls='fa fa-bell-o', active=active_page)}}
+      {{render_sitem('home_profile.home_template', 'Home', cls='nav-link', iconcls='fa fa-home', active=active_page)}}
+      {{render_sitem('home_profile.about_template', 'About', cls='nav-link', iconcls='fa fa-question', active=active_page)}}
       <li class="nav-item">
-        <a class="nav-link" href="https://github.com/grin-pool/grin-pool">Grin Mining Pool on <i class="fa fa-github fa-xs" aria-hidden="true"></i></a>
+        <a class="nav-link" href="https://github.com/grin-pool/grin-pool">Grin Mining Pool on <i class="fa fa-github fa-lg" aria-hidden="true"></i></a>
       </li>
-      {{render_sitem('home_profile.about_template', 'About', cls='nav-link', iconcls='fa fa-bell-o', active=active_page)}}
 
       <!--<li class="nav-item">-->
         <!--<a class="nav-link" href="#">About</a>-->

@@ -49,7 +49,7 @@ def teardn_request(response):
 
 
 if __name__ == '__main__':
-   app.run(host='127.0.0.1', port=13424, debug=False)
+   app.run(host='0.0.0.0', port=13424, debug=True)
 
 @app.errorhandler(401)
 def custom_401(error):

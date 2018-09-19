@@ -46,7 +46,7 @@ pool_style_pygal = Style(
   opacity='.6',
   opacity_hover='.9',
   transition='400ms ease-in',
-  colors=('#fcef00', '#0f12c1', '#c10e0e', '#0dc110', '#8b0cc1'))
+  colors=('#fcef00', '#0f12c1', '#c10e0e', '#0dc110', '#8b0cc1', '#00effc'))
 
 API_URL = 'http://api.mwgrinpool.com:13423'
 
@@ -55,24 +55,51 @@ def get_grin_graph(start='0', r='120'):
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
-    data = [float(i['gps']) for i in parsed]
+    gps_data = [float(i['gps']) for i in parsed]
+    height_data = [int(i['height']) for i in parsed]
     # create a bar chart
     title = 'Grin Network - g/s'
-    graph = pygal.Line(width=600, height=200, style=grin_style_pygal, interpolate='cubic', 
-                       explicit_size=True, title=title, fill=False, show_dots=False,
-                       stroke_style={'width': 2}, margin=0, show_legend=False)
-    graph.add('G/s', data)
+    graph = pygal.Line(width=500, # 3.75
+                       height=165,
+                       style=grin_style_pygal,
+                       interpolate='cubic', 
+                       explicit_size=True,
+                       title=title,
+                       fill=False,
+                       show_dots=False,
+                       stroke_style={'width': 2},
+                       margin=0,
+                       show_legend=False,
+                       x_label_rotation=1,
+                       x_labels_major_count=5,
+                       show_minor_x_labels=False)
+    graph.x_labels = height_data
+    graph.add('G/s', gps_data)
     return graph
 
 def get_pool_graph(start='0', r='120'):
     parsed = json.loads(urlopen(API_URL + '/pool/stats/' + start +','+r+'/gps,height').read().decode('utf-8'))
-    data = [float(i['gps']) for i in parsed]
+    gps_data = [float(i['gps']) for i in parsed]
+    height_data = [int(i['height']) for i in parsed]
     # create a bar chart
     title = 'GrinPool - g/s'
-    graph = pygal.Line(width=600, height=575, style=pool_style_pygal, interpolate='cubic', 
-                       explicit_size=True, title=title, fill=False, show_dots=False,
-                       stroke_style={'width': 2}, margin=0, show_legend=True, legend_at_bottom=True)
-    graph.add('GrinPool', data)
+    graph = pygal.Line(width=500, # 1.875
+                       height=330,
+                       explicit_size=True,
+                       style=pool_style_pygal,
+                       interpolate='cubic', 
+                       title=title,
+                       fill=False,
+                       show_dots=False,
+                       stroke_style={'width': 2},
+                       margin=0,
+                       show_legend=False,
+                       legend_at_bottom=True,
+                       x_label_rotation=1,
+                       x_labels_major_count=5,
+                       show_minor_x_labels=False)
+    graph.x_labels = height_data
+    graph.add('GrinPool', gps_data)
     return graph
 
 # Fix this by using a timestamp for x axis?
@@ -160,7 +187,7 @@ def home_template():
         last_found_ago = int(datetime.utcnow().timestamp()) - int(float(latest["timestamp"]))
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
        # print("pool: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
-        latest_stats = json.loads(requests.get(API_URL + "/pool/stats/0,3").content.decode('utf-8'))[-1]
+        latest_stats = json.loads(requests.get(API_URL + "/pool/stats/0,25").content.decode('utf-8'))[-1]
         active_miners = json.loads(requests.get(API_URL + "/worker/stats/{},25/worker".format(latest["height"])).content.decode('utf-8'))
         active_miners = list(set([d['worker'] for d in active_miners]))
     
@@ -203,6 +230,7 @@ def home_template():
         ok = True
       except Exception as e:
         print("FAILED - {}".format(e))
+        traceback.print_exc(file=sys.stdout)
         time.sleep(1)
         pass
       
