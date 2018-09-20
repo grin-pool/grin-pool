@@ -1,3 +1,10 @@
 ---
 
 admin_user: bdoyle
+
+docker_package_dependencies:
+  - "apt-transport-https"
+  - "ca-certificates"
+  - "software-properties-common"
+  - "gnupg2"
+  - "cron"
