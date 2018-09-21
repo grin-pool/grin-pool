@@ -46,7 +46,10 @@ def calculate(height, avg_range):
     grin_block = Blocks.get_by_height(height)
     assert grin_block is not None, "Missing grin block: {}".format(height)
     latest_worker_shares = Worker_shares.get_by_height(height)
-    assert len(latest_worker_shares) > 0, "No worker shares found"
+    # If no shares are found for this height, we have 2 options:
+    # 1) Assume the share data is *delayed* so dont create the stats record now
+    # assert len(latest_worker_shares) > 0, "No worker shares found"
+    # 2) If we want we can create the record without share data and then when shares are added later this record will be recalculated
     avg_over_worker_shares = Worker_shares.get_by_height(height, avg_range)
     # Calculate the stats data
     timestamp = grin_block.timestamp

@@ -28,6 +28,7 @@ import traceback
 from grinlib import lib
 from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.pool_blocks import Pool_blocks
+from grinbase.model.pool_stats import Pool_stats
 
 PROCESS = "shareWatcher"
 
@@ -91,7 +92,7 @@ class PoolShareItr:
                     match = re.search(self.poolShareRegex, msg)
                     if match and match.group(0):
                         # We found a pool share log message, parse it and return a pool share object
-                        s_timestamp = datetime.strptime(str(datetime.now().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
+                        s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
                         s_height = int(match.group(2))
                         s_nonce = match.group(3)
                         s_difficulty = int(match.group(4))
@@ -121,7 +122,7 @@ class GrinShareItr:
                     match = re.search(self.poolShareRegex, msg)
                     if match and match.group(0):
                         # We found a grin share log message, parse it and return a grin share object
-                        s_timestamp = datetime.strptime(str(datetime.now().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
+                        s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
                         s_hash = match.group(2)
                         s_height = int(match.group(3))
                         s_nonce = match.group(4)
@@ -181,7 +182,8 @@ class WorkerShares:
     #   Create a worker_shares record and write it to the db
     def commit(self, height):
         if height not in self.shares or len(self.shares[height]) == 0:
-            # Even if there are no shares, we still need to create a filler record at this height
+            self.LOGGER.warn("Processed 0 shares in block {} - Creatiing filler record".format(height))
+            # Even if there are no shares in the pool at all for this block, we still need to create a filler record at this height
             filler_shares_rec = Worker_shares(
                     height = height,
                     worker = "GrinPool",
@@ -205,11 +207,12 @@ class WorkerShares:
                 self.addPoolBlock(share)
 
         # Create a Worker_shares record for each user and commit to DB
-        # XXX TODO: Bulk Insert
+        # XXX TODO: Bulk Insert - will be needed when the pool has hundredes or thousands of workers
         for worker in byWorker:
             workerShares = byWorker[worker]
-            if len(workerShares) == 0:
-                continue
+# Not possible?
+#            if len(workerShares) == 0:
+#                continue
             self.LOGGER.warn("Processed {} shares in block {} for worker {}".format(len(workerShares), height, worker))
             valid_list = [share.is_valid for share in workerShares]
             # self.LOGGER.warn("xxx:  {}".format(valid_list))
@@ -223,6 +226,11 @@ class WorkerShares:
                     invalid = len(workerShares) - num_valid
                 )
             self.db.createDataObj_ignore_duplicates(new_shares_rec)
+            # We added new worker share data, so if a Pool_stats record already exists at this height, we mark it dirty so it gets recalulated
+            stats_rec = Pool_stats.get_by_height(height)
+            if stats_rec is not None:
+                stats_rec.dirty = True
+                database.db.getSession().commit()
             self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
 
     def clear(self, height=None):
@@ -278,6 +286,7 @@ class ShareWatcher:
                 self.shares.commit(height)
                 self.shares.clear(height)
                 height = height + 1
+                #LOGGER.getLogger(__name__).flush()
 
             except Exception as e:
                 LOGGER.error("Something went wrong: {}".format(e))

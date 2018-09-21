@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import uuid
 
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float
@@ -34,8 +34,8 @@ class Pool_utxo(Base):
         self.address = address
         self.amount = 0
         self.failure_count = 0
-        self.last_try = datetime.datetime.utcfromtimestamp(0)
-        self.last_success = datetime.datetime.utcfromtimestamp(0)
+        self.last_try = datetime.utcfromtimestamp(0)
+        self.last_success = datetime.utcfromtimestamp(0)
         self.total_amount = 0
 
     def to_json(self, fields=None):
