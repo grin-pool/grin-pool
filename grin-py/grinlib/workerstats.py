@@ -21,7 +21,7 @@ import sys
 import time
 import requests
 import json
-import datetime
+from datetime import datetime
 
 from grinlib import lib
 from grinlib import grin
@@ -56,7 +56,7 @@ def calculate(height, avg_range):
         last_stat = Worker_stats.get_latest_by_id(worker)
         if last_stat is None:
             # A new worker
-            last_stat = Worker_stats(None, datetime.datetime.now(), height-1, worker, 0, 0, 0, 0, 0, 0)
+            last_stat = Worker_stats(None, datetime.utcnow(), height-1, worker, 0, 0, 0, 0, 0, 0)
             new_stats.append(last_stat)
         # Calculate this workers stats data
         timestamp = grin_block.timestamp
