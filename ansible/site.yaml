@@ -1,0 +1,24 @@
+---
+# Copyright 2018 Blade M. Doyle
+# Licensed under the Apache License, Version 2.0
+#
+# Deploy GrinPool
+
+- name: Deploy ssh key
+  hosts: all
+  become: true
+  become_method: sudo
+  vars_files: 
+    - variables.yaml
+  roles:
+    - ssh_key
+
+- name: Deploy Docker
+  hosts: all
+  become: true
+  become_method: sudo
+  vars_files: 
+    - variables.yaml
+  roles:
+    - docker
+
