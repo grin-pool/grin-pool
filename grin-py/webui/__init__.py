@@ -7,7 +7,7 @@ from grinbase.constants.MysqlConstants import MysqlConstants
 from grinbase.dbaccess import database
 from grinbase.dbaccess.database import database_details
 from webui.views.home import home_profile
-from webui.views.about import views_profile
+from webui.views.about import about_profile
 
 app = Flask(__name__)
 app.secret_key = "E2CCDDE32C54C58152AEFA883F73214"
