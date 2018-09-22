@@ -21,7 +21,7 @@ about_profile = Blueprint('about_profile'
 def about_template():
   try:
 
-
+    pass;
 
   except Exception as e:
     print("FAILED - {}".format(e))

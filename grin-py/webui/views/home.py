@@ -152,10 +152,6 @@ def obfuscate_name(name):
     obfname += '**'
     return obfname
 
-@home_profile.route('/about')
-def about_template():
-    return home_template()
-
 @home_profile.route('/')
 def home_template():
     ok = False
@@ -206,9 +202,9 @@ def home_template():
     
         ##
         # TOP WORKERS
-        r = 1
         latest_stats = []
         active_miners = []
+        r = 25
         while len(latest_stats) < 1:
           r = r * 2
           latest_stats = json.loads(requests.get(API_URL + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
