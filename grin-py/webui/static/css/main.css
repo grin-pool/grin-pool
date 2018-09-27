@@ -7,17 +7,42 @@
 }
 
 table tr{
-   height: 45px;
+   height: 35px;
 }
 
 table tr td{
    border: 1px solid black;
-   padding:12px !important;
-}
-
-table tr th{
-   border: 1px solid black;
-   padding:12px !important;
+   padding:10px !important;
 }
 
 body {background-color: #111111;}
+
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 0px;
+        }
+
+    </style>
+
+
+/* Clear button styles
+--------------------------------------------- */
+
+::-ms-clear {
+  display: none;
+}
+
+.hidden {
+  display:none;
+}
+
+.form-control-clear {
+  z-index: 10;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
