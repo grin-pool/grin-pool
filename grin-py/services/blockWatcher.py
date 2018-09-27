@@ -36,6 +36,9 @@ PROCESS = "blockWatcher"
 LOGGER = None
 CONFIG = None
 
+# XXX TODO: MOVE TO CONFIG
+BATCHSZ = 100
+
 def main():
     global CONFIG
     global LOGGER
@@ -82,10 +85,13 @@ def main():
                                    lock_height = response["kernels"][0]["lock_height"] if(len(response["kernels"])>0) else 0,
                                    total_kernel_offset = response["header"]["total_kernel_offset"],
                                    state = "new")
-                    database.db.createDataObj(new_block)
+                    # Batch inserts when catching up
+                    database.db.getSession().add(new_block)
+                    if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                        database.db.getSession().commit()
+                    height = height + 1
                 except (sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError):
                     LOGGER.warn("Attempted to re-add block: {}".format(response["header"]["height"]))
-                height = height + 1
             sys.stdout.flush()
             sleep(check_interval)
         except Exception as e:

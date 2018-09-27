@@ -4,21 +4,47 @@
 #
 # Deploy GrinPool
 
-- name: Deploy ssh key
+- name: Deploy access
   hosts: all
   become: true
   become_method: sudo
   vars_files: 
     - variables.yaml
   roles:
-    - ssh_key
+    - access
+  tags:
+    - access
 
-- name: Deploy Docker
+- name: Deploy Pre-Reqs
   hosts: all
   become: true
   become_method: sudo
   vars_files: 
     - variables.yaml
   roles:
-    - docker
+    - prereqs
+  tags:
+    - prereqs
+
+
+- name: Deploy Grin Core
+  hosts: grin
+  become: true
+  become_method: sudo
+  vars_files: 
+    - variables.yaml
+  roles:
+    - grin
+  tags:
+    - grin
+
+- name: Deploy Pool services
+  hosts: pool
+  become: false
+  vars_files:
+    - variables.yaml
+  roles:
+    - pool
+  tags:
+    - pool
 

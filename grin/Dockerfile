@@ -24,7 +24,7 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch xxxyyz
+RUN touch xxxyyza
 RUN git fetch && \
     git pull && \
     cargo build --release
