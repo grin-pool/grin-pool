@@ -20,6 +20,8 @@ import sys
 import requests
 import json
 from time import sleep
+import traceback
+
 
 from grinbase.dbaccess import database
 
@@ -78,8 +80,8 @@ def main():
                 LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
                 height = height + 1
                 sys.stdout.flush()
-        except AssertionError as e:
-            LOGGER.error("Something went wrong: {}".format(e))
+        except Exception as e:  # AssertionError as e:
+            LOGGER.error("Something went wrong: {} - {}".format(e, traceback.print_stack()))
             sleep(check_interval)
         sleep(check_interval)
     LOGGER.warn("=== Completed {}".format(PROCESS))

@@ -230,7 +230,7 @@ class WorkerShares:
             stats_rec = Pool_stats.get_by_height(height)
             if stats_rec is not None:
                 stats_rec.dirty = True
-                database.db.getSession().commit()
+                self.db.getSession().commit()
             self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
 
     def clear(self, height=None):
@@ -260,9 +260,10 @@ class ShareWatcher:
 
         poolShare = next(poolShareItr)
         grinShare = next(grinShareItr)
-        # height = min(grinShare.height, poolShare.height)
         height = Worker_shares.get_latest_height()
-        # XXX TODO: Do I get 0 if no records exist?  None?  Something else?
+        # If there are no existing shares (height is None) then we start at the first share height we got
+        if height is None:
+          height = min(grinShare.height, poolShare.height)
 
         LOGGER.warn("Started {} at height: {}, with grin:{}, pool:{} ".format(PROCESS, height, grinShare.height, poolShare.height))
 

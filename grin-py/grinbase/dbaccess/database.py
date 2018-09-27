@@ -10,12 +10,24 @@ from grinbase.model import initialize_sql
 
 db = None
 
-
 class database_details:
     def __init__(self, MYSQL_CONSTANTS, user=None):
+        self.db = MYSQL_CONSTANTS.mysql_db
         self.session = {}
         self.engine = None
 
+        self.mysql_engine_string = "mysql+pymysql://{user}:{passwd}@{host}".format(
+            user=MYSQL_CONSTANTS.mysql_user if user is None else user,
+            passwd=MYSQL_CONSTANTS.mysql_passwd,
+            host=MYSQL_CONSTANTS.mysql_host)
+
+        # Create db if needed
+        tmp_engine = create_engine(self.mysql_engine_string)
+        conn = tmp_engine.connect()
+        conn.execute("commit")
+        conn.execute("CREATE DATABASE IF NOT EXISTS {};".format(MYSQL_CONSTANTS.mysql_db))
+        conn.close()
+ 
         self.mysql_string = "mysql+pymysql://{user}:{passwd}@{host}/{db_name}".format(
             user=MYSQL_CONSTANTS.mysql_user if user is None else user,
             passwd=MYSQL_CONSTANTS.mysql_passwd,
@@ -32,7 +44,6 @@ class database_details:
 
     def getSession(self):
         return self.session[threading.get_ident()]
-
 
     def initialize(self):
         initialize_sql(self.engine)

@@ -1,0 +1,68 @@
+---
+
+- name: Create Deploy Directory
+  file:
+    path: /home/{{ admin_user }}/pool
+    state: directory
+    mode: 0755
+
+- name: Copy Pool Services
+  copy:
+    src: "{{ item }}"
+    dest: /home/{{ admin_user }}/pool/
+    owner: "{{ admin_user }}"
+    mode: 0755
+  with_items:
+    - "{{ pool_k8s_volumes }}"
+    - "{{ pool_k8s_services }}"
+    - "{{ pool_k8s_secrets_scripts }}"
+
+- name: Add secrests via script
+  shell: ./{{ item }}
+  args:
+    chdir: /home/{{ admin_user }}/pool/
+  with_items:
+    - "{{ pool_k8s_secrets_scripts }}"
+
+- name: Deploy Pool Services
+  shell: kubectl create -f {{ item }} 
+  args:
+    chdir: /home/{{ admin_user }}/pool/
+  with_items:
+    - "{{ pool_k8s_volumes }}"
+    - "{{ pool_k8s_services }}"
+
+#- name: Ensure stratum data directory exists
+#  file: /data/stratum
+#  state: directory
+#  mode: 0755
+#
+#- name: Find stratum container
+#  shell: docker ps | grep stratum- | grep -v pause | awk '{print $1}'
+#  register: stratum_container
+#
+#- name: extract stratum config
+#  shell: docker cp {{ stratum_container }}:/usr/local/bin/grin-pool.toml /data/stratum/grin-pool.toml
+#
+#- name: update grin-pool config
+#  path: /data/stratum/grin-pool.toml
+#  regexp: 'address = "grin"'
+#  line: 'address = "grin"'
+#
+#
+#- name: Ensure services data directory exists
+#  file: /data/services
+#  state: directory
+#  mode: 0755
+#
+#- name: Find services container
+#  shell: docker ps | grep blockwatcher- | grep -v pause | awk '{print $1}'
+#  register: services_container
+#
+#- name: extract services config
+#  shell: docker cp {{ services_container }}:/usr/local/bin/config.ini /data/services/config.ini
+#
+#- name: update services config
+#  path: /data/services/config.ini
+#  regexp: 'address = grin'
+#  line: 'address = {{ ansible_default_ipv4.address }}'

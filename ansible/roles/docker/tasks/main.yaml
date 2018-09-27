@@ -2,8 +2,7 @@
 
 - name: Install Docker's dependencies
   apt:
-    name: "{{ item }}"
-  loop: "{{ docker_package_dependencies }}"
+    name: "{{ docker_package_dependencies }}"
 
 - name: Add Docker's GPG key
   apt_key:
@@ -14,4 +13,22 @@
   apt_repository:
     repo: "{{ docker_apt_repository }}"
 
+- name: Install Docker
+  apt:
+    name: "docker-{{ docker_edition }}"
+    state: "latest"
 
+- name: Restart Docker
+  service:
+    name: "docker"
+    state: "restarted"
+
+- name: Add user(s) to "docker" group
+  user:
+    name: "{{ admin_user }}"
+    groups: "docker"
+    append: True
+
+- name: Install docker-py for managing Docker login credentials
+  pip:
+    name: "docker-py"

@@ -22,3 +22,16 @@
 # Environments
 **/venv/
 
+
+# Other git projects
+**/kubespray/
+
+# Tgz of existing blockchain and db
+*.tgz
+
+# ansible garbage
+ansible/site.retry
+ansible/access
+ansible/grin
+ansible/pool
+ansible/prereqs

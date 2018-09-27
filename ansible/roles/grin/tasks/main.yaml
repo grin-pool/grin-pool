@@ -1,0 +1,41 @@
+---
+
+- name: Install pip
+  apt:
+    name: ["python", "python-pip"]
+
+- name: Install Pre-Reqs
+  pip:
+    name: "docker-py"
+
+- name: Pull and start Grin container
+  docker_container:
+    name: grinwallet
+    image: grinpool/grin
+    command: "/run-wallet.sh"
+    state: started
+    pull: true
+    ports:
+    - "13415:13415"
+    etc_hosts:
+      grin: "{{ ansible_default_ipv4.address }}"
+      grinwallet: "{{ ansible_default_ipv4.address }}"
+    volumes:
+      - /data/wallet:/wallet
+
+- name: Pull and start Grin Wallet container
+  docker_container:
+    name: grin
+    image: grinpool/grin
+    state: started
+    command: "/run.sh"
+    pull: true
+    ports:
+    - "13413:13413"
+    - "13414:13414"
+    - "13416:13416"
+    etc_hosts:
+      grin: "{{ ansible_default_ipv4.address }}"
+      grinwallet: "{{ ansible_default_ipv4.address }}"
+    volumes:
+      - /data/grin:/server
