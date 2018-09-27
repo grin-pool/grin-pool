@@ -3,11 +3,16 @@ import timeit
 
 from flask import Flask, render_template, request, g, Response
 
-from grinbase.constants.MysqlConstants import MysqlConstants
-from grinbase.dbaccess import database
-from grinbase.dbaccess.database import database_details
+#from grinbase.constants.MysqlConstants import MysqlConstants
+#from grinbase.dbaccess import database
+#from grinbase.dbaccess.database import database_details
+
+from grinlib import lib
+
 from webui.views.home import home_profile
 from webui.views.about import about_profile
+
+PROCESS = "webui"
 
 app = Flask(__name__)
 app.secret_key = "E2CCDDE32C54C58152AEFA883F73214"
@@ -51,7 +56,14 @@ def teardn_request(response):
 
 
 if __name__ == '__main__':
-   app.run(host='0.0.0.0', port=13424, debug=True)
+    CONFIG = lib.get_config()
+    LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
+
+    listen_address = CONFIG[PROCESS]["listen_address"]
+    listen_port = CONFIG[PROCESS]["listen_port"]
+    debug = CONFIG[PROCESS]["debug"]
+    app.run(host=listen_address, port=listen_port, debug=debug)
 
 @app.errorhandler(401)
 def custom_401(error):

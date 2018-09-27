@@ -17,6 +17,8 @@ from flask import Flask, Blueprint, render_template, request, session, make_resp
 from wtforms import Form, BooleanField, StringField, PasswordField, validators, SelectField, IntegerField
 from flask import Flask, Blueprint, render_template, request, session, make_response
 
+from grinlib import lib
+
 
 home_profile = Blueprint('home_profile'
                            , __name__
@@ -48,10 +50,13 @@ pool_style_pygal = Style(
   transition='400ms ease-in',
   colors=('#fcef00', '#0f12c1', '#c10e0e', '#0dc110', '#8b0cc1', '#00effc'))
 
-API_URL = 'http://api.mwgrinpool.com:13423'
+def get_api_url():
+    CONFIG = lib.get_config()
+    return "http://" + CONFIG["webui"]["api_url"]
+    # API_URL = 'http://api.mwgrinpool.com:13423'
 
 def get_grin_graph(start='0', r='120'):
-    url = API_URL + '/grin/stats/' + start +','+r+'/gps,height'
+    url = get_api_url() + '/grin/stats/' + start +','+r+'/gps,height'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
@@ -80,7 +85,7 @@ def get_grin_graph(start='0', r='120'):
     return graph
 
 def get_pool_graph(start='0', r='120'):
-    parsed = json.loads(urlopen(API_URL + '/pool/stats/' + start +','+r+'/gps,height').read().decode('utf-8'))
+    parsed = json.loads(urlopen(get_api_url() + '/pool/stats/' + start +','+r+'/gps,height').read().decode('utf-8'))
     gps_data = [float(i['gps']) for i in parsed]
     height_data = [int(i['height']) for i in parsed]
     # create a bar chart
@@ -124,7 +129,7 @@ def pad_worker_graph_data(worker_stats, start, r=120):
     return padded_stats
 
 def get_workers_graph(graph, workers, start='0', r='120'):
-    url = API_URL + '/worker/stats/' + str(start) +','+r+'/gps,height,worker'
+    url = get_api_url() + '/worker/stats/' + str(start) +','+r+'/gps,height,worker'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
@@ -134,6 +139,8 @@ def get_workers_graph(graph, workers, start='0', r='120'):
         continue
       print("miner = {}".format(miner))
       worker_stats = [stat for stat in parsed if stat["worker"] == miner]
+      if worker_stats is None:
+        continue
       #print("Miner stats {}".format(worker_stats))
       padded_worker_stats = pad_worker_graph_data(worker_stats, int(start), int(r))
       #print("PADDED Miner stats {}".format(padded_worker_stats))
@@ -166,13 +173,13 @@ def home_template():
         ##
         # GRIN NETWORK
         grin_graph = get_grin_graph() # default is height=0, range=120
-        latest = json.loads(requests.get(API_URL + "/grin/block").content.decode('utf-8'))
+        latest = json.loads(requests.get(get_api_url() + "/grin/block").content.decode('utf-8'))
         HEIGHT = latest["height"]
         last_found_ago = int(datetime.utcnow().timestamp()) - int(float(latest["timestamp"]))
         print("last_found_ago = {} - {} = {}".format(last_found_ago, int(datetime.utcnow().timestamp()), int(float(latest["timestamp"]))))
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
        # print("grin: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
-        latest_stats = json.loads(requests.get(API_URL + "/grin/stat").content.decode('utf-8'))
+        latest_stats = json.loads(requests.get(get_api_url() + "/grin/stat").content.decode('utf-8'))
         grin = { "gps": round(float(latest_stats["gps"]), 2),
                  "last_block_found": { "found": last_found_ago, "height": latest["height"] },
                  "difficulty": latest_stats["difficulty"],
@@ -184,18 +191,16 @@ def home_template():
         ##
         # POOL
         pool_graph = get_pool_graph() # default is height=0, range=120
-        latest = json.loads(requests.get(API_URL + "/pool/block").content.decode('utf-8'))
+        latest = json.loads(requests.get(get_api_url() + "/pool/block").content.decode('utf-8'))
         last_found_ago = int(datetime.utcnow().timestamp()) - int(float(latest["timestamp"]))
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
        # print("pool: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
-        latest_stats = json.loads(requests.get(API_URL + "/pool/stats/0,25").content.decode('utf-8'))[-1]
-        active_miners = json.loads(requests.get(API_URL + "/worker/stats/{},25/worker".format(latest["height"])).content.decode('utf-8'))
-        active_miners = list(set([d['worker'] for d in active_miners]))
+        latest_stats = json.loads(requests.get(get_api_url() + "/pool/stats/0,60").content.decode('utf-8'))[-1]
     
         pool = { "gps": round(float(latest_stats["gps"]), 2),
                  "last_block_found": { "found": last_found_ago },
                  "blocks_found": latest_stats["total_blocks_found"],
-                 "miner_count": len(active_miners),
+                 "miner_count": latest_stats["active_miners"],
                  "graph": pool_graph.render_data_uri()
         }
     
@@ -204,12 +209,12 @@ def home_template():
         # TOP WORKERS
         latest_stats = []
         active_miners = []
-        r = 25
+        r = 60
         while len(latest_stats) < 1:
           r = r * 2
-          latest_stats = json.loads(requests.get(API_URL + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
+          latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
         while len(active_miners) < 1:
-          active_miners = json.loads(requests.get(API_URL + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
+          active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
           active_miners = list(set([d['worker'] for d in active_miners]))
           r = r * 2
         top_workers = []
