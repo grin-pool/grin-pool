@@ -2,67 +2,57 @@
 
 
 
+# Deploy Grin-Pool to Google Cloud via Kubernetes
 
-
-# Log into gcloud 
+## Log into gcloud 
 gcloud auth login
 gcloud config set project grinpool-218920 
 gcloud config configurations activate default
 gcloud config set compute/zone us-west1-c
 
 
-# Create a k8s cluster
-gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c
-# --enable-autoscaling
+## Create a k8s cluster
+gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c  
 
-# Increase cluster size 
-clusters resize grinpool --size 7
-
-# Add 3 grin nodes
+## Add 3 grin nodes
 cd /root/grin-pool/ansible/roles/pool/files/gcloud
 kubectl create -f grin_set.yaml 
 
-
-# Add 3-node SQL cluster with replication
-#./mysql_password_secret.sh xxx mysql_set.yml does not support a password
+## Add 3-node SQL cluster with replication
 kubectl create -f mysql_svc.yaml
 kubectl create -f mysql_configmap.yaml
 kubectl create -f mysql_set.yaml
 
-# Start the blockWatcher service
+## Start the blockWatcher service
 kubectl create -f blockWatcher.yaml
 
-# Start the grinStats service
+## Start the grinStats service
 kubectl create -f grinStats.yaml
 
-# Create and start the wallet 
+## Create and start the wallet 
 kubectl create -f grinwallet_claim.yaml 
 kubectl create -f grinwallet.yaml 
 
-# Start the API
+## Start the API
 kubectl create -f poolAPI.yaml
 
-# Start grin stats
+## Start grin stats
 kubectl create -f grinStats.yaml
 
-# Start pool stats
+## Start pool stats
 kubectl create -f poolStats.yaml
 
-# Start share aggregator
+## Start share aggregator
 kubectl create -f shareAggr.yaml 
 
-# Start the stratum server
+## Start the stratum server
 kubectl create -f stratum.yaml 
 
-# Start the Web UI
+## Start the Web UI
 kubectl create -f webui.yaml 
 
-# Create ingress ports
-
-
-# Cleanup
-kubectl delete pvc -l app=mysql
-
+## Create ingress ports
+(not yet)
 
 
 
