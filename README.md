@@ -30,7 +30,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 ### Current Status:
 This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
 Please contribute!
-Discussion happens on [https://gitter.im/grin-pool/Lobby](Gitter)
+Discussion happens on [Gitter](https://gitter.im/grin-pool/Lobby)
 
 ## Pizza and "beer" fund:
 ![BTC](https://ipfs.io/ipfs/QmZQxz5LdbCuyc8LcnUiCyTLzmWmHs644mAD7A91bmTzej) <sub>17Gmy9uhE6ziB1PzYT8MMY5A4va25dy3US</sub>
