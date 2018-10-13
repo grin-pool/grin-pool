@@ -23,7 +23,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Deploy: Ansible
 * Orchestration: Kubernetes or systemd+cron
 
-#### To run the pool yourself: [kube/README.md](kube/README.md)
+#### To run the pool yourself: [ansible/roles/pool/files/README.md](ansible/roles/pool/files/README.md)
 
 #### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
