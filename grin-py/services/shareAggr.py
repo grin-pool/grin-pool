@@ -16,21 +16,23 @@
 # Watches the pool logs and adds the records for pool shares:
 #   pool log -> pool_shares: height, nonce, *user_address*, *expected_difficulty*
 
-import sys
-import subprocess
-from threading import Thread
-import re
-import glob
 from datetime import datetime
 import time
 import traceback
+import json
+import sys
+#from http.server import BaseHTTPRequestHandler,HTTPServer
+from socketserver import ThreadingMixIn
+import threading
+import socketserver
 
 from grinlib import lib
+from grinlib import grin
 from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.pool_blocks import Pool_blocks
 from grinbase.model.pool_stats import Pool_stats
 
-PROCESS = "shareWatcher"
+PROCESS = "shareAggr"
 
 # XXX TODO: Move to config
 DIFFICULTY = 29
@@ -76,79 +78,13 @@ class Share:
             self.is_solution = share.is_solution
 
 
-# Consumes log messages, extracts pool shares, provides itr to consume
-class PoolShareItr:
-    def __init__(self, sourceItr):
-        self.source = sourceItr
-        self.poolShareRegex = r'^(.+) WARN .+ Got share at height (\d+) with nonce (\d+) with difficulty (\d+) from worker (.+)$'
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        for msg in self.source:
-            try:
-                if 'Got share at height' in msg:
-                    match = re.search(self.poolShareRegex, msg)
-                    if match and match.group(0):
-                        # We found a pool share log message, parse it and return a pool share object
-                        s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
-                        s_height = int(match.group(2))
-                        s_nonce = match.group(3)
-                        s_difficulty = int(match.group(4))
-                        s_worker = match.group(5)
-                        # Create a new record
-                        new_share = Share(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=s_timestamp, found_by=s_worker)
-                        # LOGGER.warn("New PoolShare: {}".format(new_share.nonce))
-                        return new_share
-            except Exception as e:
-                pass
-        raise StopIteration
-
-
-# Consumes log messages, extracts grin shares, provides itr to consume
-class GrinShareItr:
-    def __init__(self, sourceItr):
-        self.source = sourceItr
-        self.poolShareRegex = r'^(.+) INFO .+ Got share for block: hash (.+), height (\d+), nonce (\d+), difficulty (\d+)/(\d+), submitted by (.+)$'
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        for msg in self.source:
-            try:
-                if "Got share for block:" in msg:
-                    match = re.search(self.poolShareRegex, msg)
-                    if match and match.group(0):
-                        # We found a grin share log message, parse it and return a grin share object
-                        s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + match.group(1), "%Y %b %d %H:%M:%S.%f")
-                        s_hash = match.group(2)
-                        s_height = int(match.group(3))
-                        s_nonce = match.group(4)
-                        s_share_difficulty = int(match.group(5))
-                        s_network_difficulty = int(match.group(6))
-                        s_worker = match.group(7)
-                        if s_share_difficulty >= s_network_difficulty:
-                            share_is_solution = True
-                        else:
-                            share_is_solution = False
-                        # Create a new record
-                        new_share = Share(hash=s_hash, height=s_height, nonce=s_nonce, share_difficulty=s_share_difficulty, network_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=share_is_solution, is_valid=True)
-                        # LOGGER.warn("New GrinShare: {}".format(new_share.nonce))
-                        return new_share
-            except Exception as e:
-                pass
-        raise StopIteration
-
 # Accept shares from both pool and grin logs.
 # Add or merge (validate) them into a hash table
 # Write the data out as worker_shares records
 # Also creates Pool_blocks records for shares that are full solutions
 class WorkerShares:
-    def __init__(self, LOGGER, db):
+    def __init__(self, LOGGER):
         self.LOGGER = LOGGER
-        self.db = db
         # shares is a 2-level hash table:
         # 1) block height
         # 2) share nonce
@@ -172,7 +108,7 @@ class WorkerShares:
         if share.is_valid == False:
             return
         new_pool_block = Pool_blocks(hash=share.hash, height=share.height, nonce=share.nonce, actual_difficulty=share.share_difficulty, net_difficulty=share.network_difficulty, timestamp=share.timestamp, found_by=share.found_by, state="new")
-        duplicate = self.db.createDataObj_ignore_duplicates(new_pool_block)
+        duplicate = lib.get_db().db.createDataObj_ignore_duplicates(new_pool_block)
         if duplicate:
             self.LOGGER.warn("Failed to add duplicate Pool Block: {}".format(new_pool_block.height))
         else:
@@ -181,6 +117,7 @@ class WorkerShares:
     # For each worker with shares
     #   Create a worker_shares record and write it to the db
     def commit(self, height):
+        print("self.shares.keys(): {}".format(self.shares.keys()))
         if height not in self.shares or len(self.shares[height]) == 0:
             self.LOGGER.warn("Processed 0 shares in block {} - Creatiing filler record".format(height))
             # Even if there are no shares in the pool at all for this block, we still need to create a filler record at this height
@@ -192,8 +129,8 @@ class WorkerShares:
                     valid = 0,
                     invalid = 0
                 )
-            self.db.createDataObj_ignore_duplicates(filler_shares_rec)
-            return
+            lib.get_db().db.createDataObj_ignore_duplicates(filler_shares_rec)
+            return 
         
         byWorker = {}
         for nonce in self.shares[height]:
@@ -225,13 +162,13 @@ class WorkerShares:
                     valid = num_valid,
                     invalid = len(workerShares) - num_valid
                 )
-            self.db.createDataObj_ignore_duplicates(new_shares_rec)
+            lib.get_db().db.createDataObj_ignore_duplicates(new_shares_rec)
             # We added new worker share data, so if a Pool_stats record already exists at this height, we mark it dirty so it gets recalulated
             stats_rec = Pool_stats.get_by_height(height)
             if stats_rec is not None:
                 stats_rec.dirty = True
-                self.db.getSession().commit()
-            self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
+                lib.get_db().db.getSession().commit()
+            #self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
 
     def clear(self, height=None):
         if height is None:
@@ -239,70 +176,122 @@ class WorkerShares:
         else:
             self.shares.pop(height, None)
 
+class ThreadedTCPServer(ThreadingMixIn, socketserver.TCPServer):
+    """Handle requests in a separate thread."""
 
-class ShareWatcher:
-    def __init__(self, CONFIG, LOGGER):
-        self.POOL_LOG = CONFIG["stratum"]["log_dir"] + "/" + CONFIG["stratum"]["log_filename"]
-        self.GRIN_LOG = CONFIG["grin_node"]["log_dir"] + "/" + CONFIG["grin_node"]["log_filename"]
-        self.LOGGER = LOGGER
-        self.database = lib.get_db()
-        self.shares = WorkerShares(LOGGER, self.database.db)
-        
-    def processNewLogs(self):
-        self.LOGGER.warn("Processing new logs from: {}".format(self.POOL_LOG))
-        self.LOGGER.warn("Processing new logs from: {}".format(self.GRIN_LOG))
-        # Get poolShares from the pool log
-        poolLogItr = lib.PopenItr(['tail', '-F', self.POOL_LOG])
-        poolShareItr = PoolShareItr(poolLogItr)
-        # Get grinShares from the grin log
-        grinLogItr = lib.PopenItr(['tail', '-F', self.GRIN_LOG])
-        grinShareItr = GrinShareItr(grinLogItr)
 
-        poolShare = next(poolShareItr)
-        grinShare = next(grinShareItr)
-        height = Worker_shares.get_latest_height()
-        # If there are no existing shares (height is None) then we start at the first share height we got
-        if height is None:
-          height = min(grinShare.height, poolShare.height)
+class ShareHandler(socketserver.StreamRequestHandler):
+    def handle(self):
+        global LOGGER
+        global SHARES
+        global HEIGHT
+        global GRINSHARE_HEIGHT
+        global POOLSHARE_HEIGHT
 
-        LOGGER.warn("Started {} at height: {}, with grin:{}, pool:{} ".format(PROCESS, height, grinShare.height, poolShare.height))
-
+        print("Reading from rfile")
+        sys.stdout.flush()
         while True:
-            try:
-                while grinShare.height == height and poolShare.height == height:
-                    # Get the next share for each
-                    poolShare = next(poolShareItr)
-                    self.shares.add(poolShare)
-                    grinShare = next(grinShareItr)
-                    self.shares.add(grinShare)
+            raw_content = self.rfile.readline().decode('utf8')
+            print("{}".format(raw_content))
+            sys.stdout.flush()
+            content = json.loads(raw_content)
+            LOGGER.warn("Processing new {} message".format(content["type"]))
+            #LOGGER.warn("PUT message: {}".format(content))
+    
+            # If there are no existing shares (height is None) then we start at the first share height we got
+            if HEIGHT is None:
+                HEIGHT = content["height"]
+    
+            LOGGER.warn("Current Height: {}, Share Height: {} - {}".format(HEIGHT, content["height"], content["nonce"]))
+    
+            # create a Share instance
+            if content["type"] == "poolshare":
+                s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + content["log_timestamp"], "%Y %b %d %H:%M:%S.%f")
+                s_height = int(content["height"])
+                s_nonce = content["nonce"]
+                s_difficulty = int(content["difficulty"])
+                s_worker = content["worker"]
+                #print("log_timestamp: {}, height: {}, nonce: {}, difficulty: {}, worker: {}".format(s_timestamp, s_height, s_nonce, s_difficulty, s_worker))
+                new_share = Share(height=s_height, nonce=s_nonce, worker_difficulty=s_difficulty, timestamp=s_timestamp, found_by=s_worker)
+                SHARES.add(new_share)
+                POOLSHARE_HEIGHT = s_height
+            elif content["type"] == "grinshare":
+                s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + content["log_timestamp"], "%Y %b %d %H:%M:%S.%f")
+                s_hash = content["hash"]
+                s_height = int(content["height"])
+                s_nonce = content["nonce"]
+                s_share_difficulty = int(content["share_difficulty"])
+                s_network_difficulty = int(content["net_difficulty"])
+                s_worker = content["worker"]
+                s_share_is_solution = int(s_share_difficulty) >= int(s_network_difficulty)
+                new_share = Share(hash=s_hash, height=s_height, nonce=s_nonce, share_difficulty=s_share_difficulty, network_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=s_share_is_solution, is_valid=True)
+                SHARES.add(new_share)
+                GRINSHARE_HEIGHT = s_height
+            else:
+                LOGGER.warn("Invalid message id: {}".format(content["id"]))
+    
+         
+#            LOGGER.warn("HEIGHT: {}, POOLSHARE_HEIGHT: {}, GRINSHARE_HEIGHT: {}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
+#            while HEIGHT < POOLSHARE_HEIGHT and HEIGHT < GRINSHARE_HEIGHT:
+#                LOGGER.warn("Commit shares for height: {}".format(HEIGHT))
+#                SHARES.commit(HEIGHT)
+#                SHARES.clear(HEIGHT)
+#                HEIGHT = HEIGHT + 1
 
-                while poolShare.height == height:
-                    poolShare = next(poolShareItr)
-                    self.shares.add(poolShare)
-
-                while grinShare.height == height:
-                    grinShare = next(grinShareItr)
-                    self.shares.add(grinShare)
-
-                self.shares.commit(height)
-                self.shares.clear(height)
-                height = height + 1
-                #LOGGER.getLogger(__name__).flush()
-
-            except Exception as e:
-                LOGGER.error("Something went wrong: {}".format(e))
-                raise e
-
-
+def ShareCommitScheduler(interval=15):
+    global LOGGER
+    global SHARES
+    global HEIGHT
+    global GRINSHARE_HEIGHT
+    global POOLSHARE_HEIGHT
+    LOGGER.warn("HEIGHT: {}, POOLSHARE_HEIGHT: {}, GRINSHARE_HEIGHT: {}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
+    # XXX TODO:  enhance
+    while True:
+        bc_height = grin.blocking_get_current_height()
+        while (HEIGHT < POOLSHARE_HEIGHT and HEIGHT < GRINSHARE_HEIGHT) or (bc_height > HEIGHT):
+            LOGGER.warn("Commit shares for height: {}".format(HEIGHT))
+            SHARES.commit(HEIGHT)
+            SHARES.clear(HEIGHT)
+            HEIGHT = HEIGHT + 1
+        time.sleep(interval)
+    
+            
 def main():
     global LOGGER
     global CONFIG
+    global SHARES
+    global HEIGHT
+    global GRINSHARE_HEIGHT
+    global POOLSHARE_HEIGHT
     CONFIG = lib.get_config()
+
+    # XXX TODO: Put in config
+    HOST = "0.0.0.0"
+    PORT = 80
+    GRINSHARE_HEIGHT = 0
+    POOLSHARE_HEIGHT = 0
+
     LOGGER = lib.get_logger(PROCESS)
+    LOGGER.warn("=== Starting {}".format(PROCESS))
 
-    shareWatcher = ShareWatcher(CONFIG, LOGGER)
-    shareWatcher.processNewLogs()
+    database = lib.get_db()
+    HEIGHT = Worker_shares.get_latest_height()
+    if HEIGHT is None:
+        HEIGHT = grin.blocking_get_current_height()
+    SHARES = WorkerShares(LOGGER)
 
+
+    #server = ThreadedHTTPServer((HOST, PORT), ShareHandler)
+    #server = HTTPServer((HOST, PORT), ShareHandler)
+
+#    server = socketserver.TCPServer((HOST, PORT), ShareHandler)
+#    server.handle_request()
+#    server.server_close()
+
+    commit_thread = threading.Thread(target = ShareCommitScheduler, args = (15, ))
+    commit_thread.start()
+    server = ThreadedTCPServer((HOST, PORT), ShareHandler)
+    server.serve_forever()
 
 if __name__ == "__main__":
     main()

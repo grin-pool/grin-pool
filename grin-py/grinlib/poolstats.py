@@ -21,6 +21,7 @@ import sys
 import time
 import requests
 import json
+from datetime import datetime
 
 from grinlib import lib
 from grinlib import grin
@@ -116,7 +117,7 @@ def initialize():
     # Special case for new pool startup
     seed_stat = Pool_stats(
             height=0,
-            timestamp=0,
+            timestamp=datetime.utcnow(),
             gps=0,
             active_miners=0,
             shares_processed=0,

@@ -1,49 +1,78 @@
 
-# Set up the minikube and start the pool services/jobs:
-
-* install and start kubernetes cluster (minikube)
-* add kubernetes volumes and secrets
-* start grin and mysql
-* start the stratum server and pool services
-
-Note:  You may want to update the "externalIPs" address in kubernetes spec files to match your host.
 
 
-```
-sudo -E minikube stop
-sudo -E minikube delete
-kill all kubelet processes
-for f in $(docker ps -aq); do docker stop $f; docker rm $f; done
-sudo -E rm -r ~/.kube ~/.minikube
-sudo rm /usr/local/bin/localkube /usr/local/bin/minikube
-sudo systemctl stop '*kubelet*.mount'
-sudo rm -rf /etc/kubernetes/
-sudo systemctl restart docker
-sudo init 6
 
-sudo vi /etc/resolv.conf
-sudo -E ./minikube start --vm-driver=none
 
-sudo mv /root/.kube $HOME/.kube
-sudo chown -R $USER $HOME/.kube
-sudo chgrp -R $USER $HOME/.kube
-sudo mv /root/.minikube $HOME/.minikube
-sudo chown -R $USER $HOME/.minikube
-sudo chgrp -R $USER $HOME/.minikube
 
-git checkout grinpool into ~/dev/grin-pool/
-cd ~/dev/grin-pool/kube/secrets
-./mysql_password_secret.sh
-kubectl create -f docker_registry_secret.yaml
-cd ~/dev/grin-pool/kube/volumes
-kubectl create -f local.yaml
-kubectl create -f claim.yaml
-cd ~/dev/grin-pool/kube
-for f in *.yaml; do kubectl create -f $f; done
-```
+# Log into gcloud 
+gcloud auth login
+gcloud config set project grinpool-218920 
+gcloud config configurations activate default
+gcloud config set compute/zone us-west1-c
 
-Place config files as follows:
-  /data/stratum/grin-pool.toml
-  /data/grin/grin.toml
-  /data/services/config.ini
-  
+
+# Create a k8s cluster
+gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c
+# --enable-autoscaling
+
+# Increase cluster size 
+clusters resize grinpool --size 7
+
+# Add 3 grin nodes
+cd /root/grin-pool/ansible/roles/pool/files/gcloud
+kubectl create -f grin_set.yaml 
+
+
+# Add 3-node SQL cluster with replication
+#./mysql_password_secret.sh xxx mysql_set.yml does not support a password
+kubectl create -f mysql_svc.yaml
+kubectl create -f mysql_configmap.yaml
+kubectl create -f mysql_set.yaml
+
+# Start the blockWatcher service
+kubectl create -f blockWatcher.yaml
+
+# Start the grinStats service
+kubectl create -f grinStats.yaml
+
+# Create and start the wallet 
+kubectl create -f grinwallet_claim.yaml 
+kubectl create -f grinwallet.yaml 
+
+# Start the API
+kubectl create -f poolAPI.yaml
+
+# Start grin stats
+kubectl create -f grinStats.yaml
+
+# Start pool stats
+kubectl create -f poolStats.yaml
+
+# Start share aggregator
+kubectl create -f shareAggr.yaml 
+
+# Start the stratum server
+kubectl create -f stratum.yaml 
+
+# Start the Web UI
+kubectl create -f webui.yaml 
+
+# Create ingress ports
+
+
+# Cleanup
+kubectl delete pvc -l app=mysql
+
+
+
+
+
+
+
+
+
+----------
+https://kubernetes.io/docs/setup/turnkey/gce/
+
+https://cloud.google.com/kubernetes-engine/docs/quickstart
+https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/

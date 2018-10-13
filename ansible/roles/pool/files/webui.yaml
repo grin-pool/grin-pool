@@ -8,13 +8,10 @@ spec:
   type: LoadBalancer
   ports:
   - port: 13424
-    nodePort: 32424
     protocol: TCP
     name: webui
   selector:
     run: webui
-  externalIPs:
-  - 192.168.2.224
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -35,13 +32,3 @@ spec:
         command: ["/usr/local/bin/webui/__init__.py"]
         ports:
         - containerPort: 13424
-        volumeMounts: # directory inside container
-        - mountPath: /services
-          name: webuidir
-      volumes: # directory location on host
-      - name: webuidir
-        hostPath:
-          path: /data/services
-
-#      imagePullSecrets:
-#      - name: regsecret

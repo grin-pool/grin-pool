@@ -11,6 +11,8 @@ from grinlib import lib
 
 from webui.views.home import home_profile
 from webui.views.about import about_profile
+from webui.views.pool import pool_profile
+from webui.views.miner import miner_profile
 
 PROCESS = "webui"
 
@@ -19,6 +21,8 @@ app.secret_key = "E2CCDDE32C54C58152AEFA883F73214"
 
 app.register_blueprint(home_profile)
 app.register_blueprint(about_profile)
+app.register_blueprint(pool_profile)
+app.register_blueprint(miner_profile)
 
 
 def set_my_request_var(name, value):

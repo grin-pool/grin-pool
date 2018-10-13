@@ -50,13 +50,8 @@ COPY grinbase/ /usr/local/bin/grinbase/
 COPY grinlib/ /usr/local/bin/grinlib/
 COPY services/*.py /usr/local/bin/
 COPY services/config.ini /usr/local/bin/
+COPY services/config.ini /services/
 COPY api/ /usr/local/bin/api/
 COPY webui/ /usr/local/bin/webui
 
 CMD ["/bin/sh"]
-
-#RUN set -ex && \
-#    apt-get update && \
-#    apt-get -q --no-install-recommends --yes install \
-#        logrotate
-#COPY utils/logrotate.conf /etc/

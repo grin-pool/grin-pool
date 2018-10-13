@@ -1,4 +1,4 @@
-XXX DO NOT USE THIS RIGHT NOW
+XXXX Dont use thi -l
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:

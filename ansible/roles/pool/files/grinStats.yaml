@@ -15,16 +15,8 @@ spec:
         command: ["/usr/local/bin/grinStats.py"]
         env:
         - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-pass
-              key: password
-        volumeMounts: # directory inside container
-        - mountPath: /services
-          name: poolservicesdir
-      volumes: # directory location on host
-      - name: poolservicesdir
-        hostPath:
-          path: /data/services
-#      imagePullSecrets:
-#      - name: regsecret
+          value:
+          #valueFrom:
+          #  secretKeyRef:
+          #    name: mysql-pass
+          #    key: password

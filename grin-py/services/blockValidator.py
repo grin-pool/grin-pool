@@ -57,6 +57,8 @@ def main():
     LOGGER.warn("Starting from block #{}".format(last))
 
     for i in range(last, latest+1):
+        if i % 100 == 0:
+            LOGGER.warn("Processing #{}".format(i))
         response = grin.blocking_get_block_by_height(i)
         assert(response is not None)
         assert(int(response["header"]["height"]) == i)
