@@ -20,17 +20,17 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Pool Web UI: Python3/Flask/nginx/Jinja2/PyGal
 * Database: MariaDB
 * Build CI/CD: Docker (+ travis or jenkins?)
-* Deploy: Ansible
-* Orchestration: Kubernetes or systemd+cron
+* Deploy: Ansible and gcloud CLI
+* Orchestration: Kubernetes
 
 #### To run the pool yourself: [ansible/roles/pool/files/README.md](ansible/roles/pool/files/README.md)
 
 #### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
 ### Current Status:
-This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
-Please contribute!
-Discussion happens on [Gitter](https://gitter.im/grin-pool/Lobby)
+* This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
+* Please contribute!
+* Discussion happens on [Gitter](https://gitter.im/grin-pool/Lobby)
 
 ## Pizza and "beer" fund:
 ![BTC](https://ipfs.io/ipfs/QmZQxz5LdbCuyc8LcnUiCyTLzmWmHs644mAD7A91bmTzej) <sub>17Gmy9uhE6ziB1PzYT8MMY5A4va25dy3US</sub>
