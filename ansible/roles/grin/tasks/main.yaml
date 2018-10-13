@@ -8,6 +8,31 @@
   pip:
     name: "docker-py"
 
+- name: Ensure grin data directory exists
+  file:
+    path: /data/grin
+    state: directory
+    mode: 0755
+
+
+- name: Check for pre-canned blockchain tgz
+  local_action: stat path={{ role_path }}/files/grin_bc.tgz
+  become: no
+  register: stat_grinbc
+
+- name: Copy pre-canned blockchain (if one exists)
+  copy:
+    src: "{{ role_path }}/files/grin_bc.tgz"
+    dest: /data/grin
+  when: stat_grinbc.stat.exists
+
+- name: Extract the pre-canned blockchain (if one exists)
+  shell: tar xzf grin_bc.tgz
+  args:
+    chdir: /data/grin
+  when: stat_grinbc.stat.exists
+
+
 - name: Pull and start Grin container
   docker_container:
     name: grinwallet

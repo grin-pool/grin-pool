@@ -67,12 +67,12 @@ def main():
             end_height = poolstats.recalculate(dirty.height, avg_over_range_pool)
             LOGGER.warn("Finished Recalculating Pool Stats: {} - {}".format(dirty.height, end_height))
 #        # Check for dirty worker stats
-#        dirty = Worker_stats.get_first_dirty(rebuild_height)
-#        while dirty is not None:
-#            LOGGER.warn("Recalculating Worker Stats for {} from {}".format(dirty.height, avg_over_range_worker))
-#            end_height = workerstats.recalculate(dirty.height, avg_over_range_worker)
-#            LOGGER.warn("Finished Recalculating Worker Stats for {} - {}".format(dirty.height, end_height))
-#            dirty = Worker_stats.get_first_dirty()
+        dirty = Worker_stats.get_first_dirty(rebuild_height)
+        while dirty is not None:
+            LOGGER.warn("Recalculating Worker Stats for {} from {}".format(dirty.height, avg_over_range_worker))
+            end_height = workerstats.recalculate(dirty.height, avg_over_range_worker)
+            LOGGER.warn("Finished Recalculating Worker Stats for {} - {}".format(dirty.height, end_height))
+            dirty = Worker_stats.get_first_dirty()
 
         sys.stdout.flush()
         time.sleep(check_interval)

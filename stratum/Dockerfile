@@ -29,8 +29,10 @@ FROM debian:9.4
 WORKDIR /stratum
 COPY --from=builder /stratum/target/*/grin-pool /usr/local/bin/
 COPY grin-pool.toml /usr/local/bin/
+COPY grin-pool.toml /stratum
+COPY run.sh /
 
 ENV RUST_BACKTRACE=1
 ENV PATH=/usr/local/bin:$PATH
 EXPOSE 3333
-CMD ["/usr/local/bin/grin-pool"]
+CMD ["/run.sh"]

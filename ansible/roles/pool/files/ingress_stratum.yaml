@@ -1,0 +1,10 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: stratum-ingress
+spec:
+  backend:
+    serviceName: stratum
+    servicePort: 13416
+

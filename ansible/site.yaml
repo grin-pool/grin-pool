@@ -39,8 +39,9 @@
     - grin
 
 - name: Deploy Pool services
-  hosts: pool
-  become: false
+  hosts: poolmaster
+  become: true
+  become_method: sudo
   vars_files:
     - variables.yaml
   roles:

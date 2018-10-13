@@ -17,6 +17,7 @@
 # Common Routines for Grin-Pool Services
 #
 
+import os
 import sys
 import time
 import configparser
@@ -80,7 +81,7 @@ def get_db_constraints():
     config = get_config()
     db_host = config["db"]["address"] + ":" + config["db"]["port"]
     db_user = config["db"]["user"]
-    db_password = config["db"]["password"]
+    db_password = os.environ['MYSQL_ROOT_PASSWORD'] # config["db"]["password"]
     db_name = config["db"]["db_name"]
     mysqlcontsraints = MysqlConstants(db_host, db_user, db_password, db_name)
     return mysqlcontsraints

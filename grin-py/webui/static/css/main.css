@@ -7,12 +7,12 @@
 }
 
 table tr{
-   height: 35px;
+   height: 40px;
 }
 
 table tr td{
    border: 1px solid black;
-   padding:10px !important;
+   padding:8px !important;
 }
 
 body {background-color: #111111;}
@@ -25,8 +25,14 @@ body {background-color: #111111;}
         th, td {
             padding: 0px;
         }
+        th {
+            padding:0px !important;
+        }
 
     </style>
+
+table.fixed { table-layout:fixed; }
+table.fixed td { overflow: hidden; }
 
 
 /* Clear button styles

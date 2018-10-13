@@ -24,6 +24,7 @@ import traceback
 import requests
 import json
 from time import sleep
+from datetime import datetime
 
 import pymysql
 import sqlalchemy
@@ -71,7 +72,7 @@ def main():
                                    version = response["header"]["version"],
                                    height = response["header"]["height"],
                                    previous = response["header"]["previous"],
-                                   timestamp = response["header"]["timestamp"][:-1],
+                                   timestamp = datetime.strptime(response["header"]["timestamp"][:-1], "%Y-%m-%dT%H:%M:%S+00:0"),
                                    output_root = response["header"]["output_root"],
                                    range_proof_root = response["header"]["range_proof_root"],
                                    kernel_root = response["header"]["kernel_root"],

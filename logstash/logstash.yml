@@ -1,0 +1,3 @@
+http.host: "0.0.0.0"
+pipeline.batch.size: 1
+pipeline.workers: 1

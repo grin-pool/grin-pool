@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: grin
   labels:
-    run: grin
+    app: grin
 spec:
   type: LoadBalancer
   ports:
@@ -20,42 +20,48 @@ spec:
     protocol: TCP
     name: grinstratum
   selector:
-    run: grin
-  externalIPs:
-  - 192.168.2.224
+    app: grin
 ---
 apiVersion: apps/v1beta1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: grin
 spec:
-  replicas: 1
+  selector:
+    matchLabels:
+      app: grin
+  serviceName: grin
+  replicas: 3
   template:
     metadata:
       labels:
-        run: grin
+        app: grin
     spec:
       containers:
       - name: grin
         image: grinpool/grin:latest
-#        command: ["sleep", "9999999"]
+#        command: ["sleep", "9999"]
         command: ["/run.sh"]
         ports:
         - containerPort: 13413
         - containerPort: 13414
         - containerPort: 13415
         - containerPort: 13416
-        volumeMounts: # directory inside container
-        - mountPath: /server
-          name: grinblockchain
+        volumeMounts:
+        - name: grinblockchain
+          mountPath: /server
       - name: sharewatcher
         image: grinpool/logstash:latest
         command: ["logstash", "-f", "/usr/share/logstash/config/grinsharefilter.conf"]
 #        command: ["sleep", "9999999"]
         volumeMounts: # directory inside container
-        - mountPath: /server
-          name: grinblockchain
-      volumes: # directory location on host
-      - name: grinblockchain
-        hostPath:
-          path: /data/grin
+        - name: grinblockchain
+          mountPath: /server
+  volumeClaimTemplates:
+  - metadata:
+      name: grinblockchain
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi

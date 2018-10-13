@@ -1,41 +1,42 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: poolapi
+  name: shareaggr
   labels:
-    run: poolapi
+    run: shareaggr
 spec:
   type: LoadBalancer
   ports:
-  - port: 13423
-    nodePort: 32423
+  - port: 80
+    nodePort: 32080
     protocol: TCP
-    name: poolapi
+    name: shareaggr
   selector:
-    run: poolapi
+    run: shareaggr
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: poolapi
+  name: shareaggr
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        run: poolapi
+        run: shareaggr
     spec:
       containers:
-      - name: poolapi
+      - name: shareaggr
         image: grinpool/services:latest
-#        command: ["sleep", "9999"]
-        command: ["/usr/local/bin/api/api.py"]
+        command: ["/usr/local/bin/shareAggr.py"]
+#        command: ["sleep", "9999999"]
         ports:
-        - containerPort: 13423
+        - containerPort: 80
         env:
         - name: MYSQL_ROOT_PASSWORD
           value:
-          # valueFrom:
+          #valueFrom:
           #  secretKeyRef:
           #    name: mysql-pass
           #    key: password

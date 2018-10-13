@@ -1,7 +1,7 @@
 # Multistage docker build, requires docker 17.05
 
 # builder stage
-FROM rust:1.28 as builder
+FROM rust:latest as builder
 
 RUN rustup update && \
     set -ex && \
@@ -13,7 +13,8 @@ RUN rustup update && \
         libncurses5 \
         libncursesw5 \
         cmake \
-        git
+        git \
+        libssl-dev
 
 WORKDIR /usr/src/grin
 
@@ -24,9 +25,11 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch xxxyyza
+RUN touch asxxyyzzzz
 RUN git fetch && \
     git pull && \
+    git checkout master && \
+#    git checkout 0.0.0-pre.0.3.0 && \
     cargo build --release
 
 # Generate configuration
@@ -37,7 +40,17 @@ RUN target/release/grin server config && \
 # runtime stage
 FROM debian:9.4
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y locales procps
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    locales \
+    procps \
+    libssl-dev \
+    vim \
+    telnet \
+    curl \
+    python3 \
+      && \
+    apt-get autoremove -y && \
+    rm -rf /var/cache/apt
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
@@ -81,4 +94,5 @@ EXPOSE 13416
 
 COPY run.sh /
 COPY run-wallet.sh /
+COPY libheath.py /
 CMD ["/run.sh"]

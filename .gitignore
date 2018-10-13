@@ -35,3 +35,6 @@ ansible/access
 ansible/grin
 ansible/pool
 ansible/prereqs
+
+# Google Cloud Creds and Config
+**/gcloud/

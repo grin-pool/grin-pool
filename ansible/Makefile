@@ -1,8 +1,8 @@
 
 default: build
 
-PUB_IP := "18.206.45.124"
-INT_IP := "172.31.70.105"
+EXT_IP := 35.197.114.41
+INT_IP := 10.138.0.2
 USER := "ubuntu"
 
 clean:
@@ -12,11 +12,14 @@ clean:
 	rm -f pool
 	rm -f grin
 
+python:
+	ssh ${USER}@${EXT_IP} sudo apt-get -y install python python-apt
+
 access:
-	ansible-playbook -i inventory --tags "access" --ask-pass --ask-sudo-pass site.yaml 
+	ansible-playbook -i inventory --tags "access" -u ${USER} --ask-pass --ask-sudo-pass site.yaml 
 	touch access
 
-prereqs: access
+prereqs: access python
 	ansible-playbook -i inventory --tags "prereqs" site.yaml
 	touch prereqs
 
@@ -26,7 +29,8 @@ kubespray: access prereqs
 	cd kubespray && . venv/bin/activate && pip install -r requirements.txt
 	cd kubespray && mkdir -p inventory/mycluster
 	cd kubespray && cp -rfp inventory/sample/* inventory/mycluster
-	cd kubespray && CONFIG_FILE=inventory/mycluster/hosts.ini python3 contrib/inventory_builder/inventory.py ${IPS}
+	cd kubespray && CONFIG_FILE=inventory/mycluster/hosts.ini python3 contrib/inventory_builder/inventory.py ${EXT_IP}
+	sed -i 's/ip=${EXT_IP}/ip=${INT_IP}/' kubespray/inventory/mycluster/hosts.ini
 	cd kubespray && . venv/bin/activate && ansible-playbook -u ${USER} --become -i inventory/mycluster/hosts.ini  cluster.yml
 
 grin: kubespray

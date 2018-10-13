@@ -13,8 +13,6 @@ spec:
     name: grinwallet
   selector:
     run: grinwallet
-  externalIPs:
-  - 192.168.2.224
 ---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -37,9 +35,7 @@ spec:
         volumeMounts: # directory inside container
         - mountPath: /wallet
           name: grinwallet
-#      imagePullSecrets:
-#      - name: regsecret
-      volumes: # directory location on host
+      volumes:
       - name: grinwallet
-        hostPath:
-          path: /data/wallet
+        persistentVolumeClaim:
+          claimName: grinwallet
