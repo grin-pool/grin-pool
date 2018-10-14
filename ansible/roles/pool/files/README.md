@@ -76,7 +76,9 @@ kubectl create -f stratum.yaml
 kubectl create -f webui.yaml 
 ```
 
-## Create ingress ports
+## Start ... XXX TODO ADD XXX
+
+## Create LoadBalancers for ingress ports
 (not yet)
 
 
