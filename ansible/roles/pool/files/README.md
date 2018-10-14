@@ -19,7 +19,7 @@ gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25
 
 ## Add 3 grin nodes
 ```
-cd /root/grin-pool/ansible/roles/pool/files/gcloud
+cd /root/grin-pool/ansible/roles/pool/files/
 kubectl create -f grin_set.yaml 
 ```
 
