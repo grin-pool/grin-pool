@@ -59,11 +59,6 @@ kubectl create -f grinwallet.yaml
 kubectl create -f poolAPI.yaml
 ```
 
-## Start grin stats
-```
-kubectl create -f grinStats.yaml
-```
-
 ## Start pool stats
 ```
 kubectl create -f poolStats.yaml
