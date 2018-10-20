@@ -17,9 +17,17 @@ gcloud config set compute/zone us-west1-c
 gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c  
 ```
 
-## Add 3 grin nodes
+
+## Add volumes
 ```
 cd /root/grin-pool/ansible/roles/pool/files/
+kubectl create -f claim.yaml 
+kubectl create -f local.yaml 
+```
+
+
+## Add 3 grin nodes
+```
 kubectl create -f grin_set.yaml 
 ```
 
