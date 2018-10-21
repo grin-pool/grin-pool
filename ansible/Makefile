@@ -1,8 +1,8 @@
 
 default: build
 
-EXT_IP := 35.197.114.41
-INT_IP := 10.138.0.2
+EXT_IP := 192.168.1.100
+INT_IP := 192.168.1.100
 USER := "ubuntu"
 
 clean:
@@ -20,7 +20,7 @@ access:
 	touch access
 
 prereqs: access python
-	ansible-playbook -i inventory --tags "prereqs" site.yaml
+	ansible-playbook -i inventory -u ${USER} --tags "prereqs" site.yaml
 	touch prereqs
 
 kubespray: access prereqs
@@ -34,11 +34,11 @@ kubespray: access prereqs
 	cd kubespray && . venv/bin/activate && ansible-playbook -u ${USER} --become -i inventory/mycluster/hosts.ini  cluster.yml
 
 grin: kubespray
-	ansible-playbook -i inventory --tags "grin" site.yaml
+	ansible-playbook -i inventory -u ${USER} --tags "grin" site.yaml
 	touch grin
 
 pool: grin
-	ansible-playbook -i inventory --tags "pool" site.yaml
+	ansible-playbook -i inventory -u ${USER} --tags "pool" site.yaml
 	touch pool
 
 build: access kubespray grin

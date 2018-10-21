@@ -79,9 +79,13 @@ def get_logger(program):
 
 def get_db_constraints():
     config = get_config()
+    print("config: {}".format(config))
     db_host = config["db"]["address"] + ":" + config["db"]["port"]
     db_user = config["db"]["user"]
-    db_password = os.environ['MYSQL_ROOT_PASSWORD'] # config["db"]["password"]
+    try:
+        db_password = os.environ['MYSQL_ROOT_PASSWORD']
+    except KeyError as e:
+        db_password = config["db"]["password"]
     db_name = config["db"]["db_name"]
     mysqlcontsraints = MysqlConstants(db_host, db_user, db_password, db_name)
     return mysqlcontsraints
@@ -114,12 +118,14 @@ def get_current_height():
 
 # Network graph rate
 def calculate_graph_rate(difficulty, ts1, ts2, n):
-    # gps = 42 * (diff/scale) / 60
-    # XXX TODO:  Assumes cuckoo 30 for all blocks
+    # XXX TODO:  Assumes cuckoo 30 for all blocks - Fixes for cuckatoos?
     scale = 29.0
-    avg_time_between_blocks = (ts2 - ts1).total_seconds() / n
-    gps = 42.0 * (difficulty/scale) / avg_time_between_blocks
+    timedelta = (ts2 - ts1).total_seconds()
+    if n == 0 or timedelta == 0:
+      return 0
+    gps = (42.0 * float(n)) / float(timedelta)
     return gps
+
 
 # API 'fields' string to python list
 def fields_to_list(fields):

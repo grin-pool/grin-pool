@@ -40,21 +40,22 @@ api = Api(app)
 ##
 # Stats
 class GrinAPI_stats(Resource):
-    def get(self, height=0, range=None, fields=None):
+    def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
-        if height == 0:
-            height = grin.get_current_height()
-        if range == None:
-            stat = Grin_stats.get_by_height(height)
-            if stat is None:
-                return None
-            return stat.to_json(fields)
+        if height is None or height == 0:
+            stats = Grin_stats.get_latest(range)
         else:
-            stats = []
-            for stat in Grin_stats.get_by_height(height, range):
-                stats.append(stat.to_json(fields))
-            return stats
+            stats = Grin_stats.get_by_height(height, range)
+        if range == None:
+            if stats is None:
+                return None
+            return stats.to_json(fields)
+        else:
+            st = []
+            for stat in stats:
+                st.append(stat.to_json(fields))
+            return st
 
 api.add_resource(GrinAPI_stats,
         '/grin/stat',
@@ -67,21 +68,22 @@ api.add_resource(GrinAPI_stats,
 ##
 # Blocks
 class GrinAPI_blocks(Resource):
-    def get(self, height=0, range=None, fields=None):
+    def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
-        if height == 0:
-            height = grin.get_current_height()
-        if range == None:
-            block = Blocks.get_by_height(height)
-            if block is None:
-                return None
-            return block.to_json(fields)
+        if height is None or height == 0:
+            blocks = Blocks.get_latest(range)
         else:
-            blocks = []
-            for block in Blocks.get_by_height(height, range):
-                blocks.append(block.to_json(fields))
-            return blocks
+            blocks = Blocks.get_by_height(height, range)
+        if range == None:
+            if blocks is None:
+                return None
+            return blocks.to_json(fields)
+        else:
+            bl = []
+            for block in blocks:
+                bl.append(block.to_json(fields))
+            return bl
 
 api.add_resource(GrinAPI_blocks,
         '/grin/block',
@@ -99,21 +101,22 @@ api.add_resource(GrinAPI_blocks,
 ##
 # Stats
 class PoolAPI_stats(Resource):
-    def get(self, height=0, range=None, fields=None):
+    def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
-        if height == 0:
-            height = grin.get_current_height()
-        if range == None:
-            stat = Pool_stats.get_by_height(height)
-            if stat is None:
-                return None
-            return stat.to_json(fields)
+        if height is None or height == 0:
+            stats = Pool_stats.get_latest(range)
         else:
-            stats = []
-            for stat in Pool_stats.get_by_height(height, range):
-                stats.append(stat.to_json(fields))
-            return stats
+            stats = Pool_stats.get_by_height(height, range)
+        if range == None:
+            if stats is None:
+                return None
+            return stats.to_json(fields)
+        else:
+            st = []
+            for stat in stats:
+                st.append(stat.to_json(fields))
+            return st
 
 api.add_resource(PoolAPI_stats,
         '/pool/stat',
@@ -126,22 +129,22 @@ api.add_resource(PoolAPI_stats,
 ##
 # Blocks
 class PoolAPI_blocks(Resource):
-    def get(self, height=0, range=None, fields=None):
+    def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
         fields = lib.fields_to_list(fields)
-        if height == 0:
-            height = Pool_blocks.get_latest().height
-        if range == None:
-            block = Pool_blocks.get_by_height(height)
-            if block is None:
-                return None
-            else:
-                return block.to_json(fields)
+        if height is None or height == 0:
+            blocks = Pool_blocks.get_latest(range)
         else:
-            blocks = []
-            for block in Pool_blocks.get_by_height(height, range):
-                blocks.append(block.to_json(fields))
-            return blocks
+            blocks = Pool_blocks.get_by_height(height, range)
+        if range == None:
+            if blocks is None:
+                return None
+            return blocks.to_json(fields)
+        else:
+            bl = []
+            for block in blocks:
+                bl.append(block.to_json(fields))
+            return bl
 
 api.add_resource(PoolAPI_blocks,
         '/pool/block',

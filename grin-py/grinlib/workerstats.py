@@ -49,7 +49,7 @@ def calculate(height, avg_range):
 #    assert len(latest_worker_shares) != 0, "Missing worker shares record for height {}".format(height)
     avg_over_worker_shares = Worker_shares.get_by_height(height, avg_range)
     # Create a worker_stats for each user who submitted a share in this range
-    workers = list(set([share.worker for share in latest_worker_shares]))
+    workers = list(set([share.worker for share in avg_over_worker_shares]))
     new_stats = []
     for worker in workers:
         # Get this workers most recent worker_stats record (for running totals)
@@ -62,9 +62,17 @@ def calculate(height, avg_range):
         timestamp = grin_block.timestamp
         difficulty = POOL_MIN_DIFF # XXX TODO - enchance to support multiple difficulties
         num_shares_in_range = sum([shares.valid for shares in avg_over_worker_shares if shares.worker == worker])
-        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
-        num_valid_this_block = [shares.valid for shares in latest_worker_shares if shares.worker == worker][0]
-        num_invalid_this_block = [shares.invalid for shares in latest_worker_shares if shares.worker == worker][0]
+        gps = lib.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
+        tmp = [shares.valid for shares in latest_worker_shares if shares.worker == worker]
+        if len(tmp) > 0:
+            num_valid_this_block = tmp[0]
+        else:
+            num_valid_this_block = 0
+        tmp = [shares.invalid for shares in latest_worker_shares if shares.worker == worker]
+        if len(tmp) > 0:
+            num_invalid_this_block = tmp[0]
+        else:
+            num_invalid_this_block = 0
         shares_processed = num_valid_this_block + num_invalid_this_block
 #        latest_worker_shares = [share for share in latest_pool_shares if share.found_by == worker]
         #shares_processed = len(worker_shares_this_block)

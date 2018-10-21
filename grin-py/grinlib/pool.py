@@ -30,11 +30,14 @@ from grinbase.model.pool_shares import Pool_shares
 # Share graph rate
 def calculate_graph_rate(difficulty, ts1, ts2, n):
     # gps = 42 * (diff/scale) / 60
-    # XXX TODO:  Assumes cuckoo 30 for all shares
+    # XXX TODO:  Assumes cuckoo 30 for all blocks - Fixes for cuckatoos?
     scale = 29.0
-    avg_time_between_blocks = (ts2 - ts1).total_seconds() / n
-    gps = 42.0 * (difficulty/scale) / avg_time_between_blocks
+    timedelta = (ts2 - ts1).total_seconds()
+    if n == 0 or timedelta == 0:
+      return 0
+    gps = (42.0 * float(n)) / float(timedelta)
     return gps
+
     
 
 # get_stats() Response is:

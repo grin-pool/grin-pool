@@ -286,7 +286,7 @@ impl Pool {
         // XXX TODO: need to randomize the nonce (just in case a miner forgets)
         // XXX TODO: need to set a unique timestamp and record it in the worker struct
         for num in 0..workers_l.len() {
-            workers_l[num].set_difficulty(1);
+            workers_l[num].set_difficulty(1); // XXX TODO: this get from config?
             workers_l[num].set_height(self.job.height);
             workers_l[num].send_job(&mut self.job.clone());
         }

@@ -72,11 +72,12 @@ class Pool_stats(Base):
 
     # Get the latest record
     @classmethod
-    def get_latest(cls):
-        last_height = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
-        if last_height == None:
-            return None
-        return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == last_height).first()
+    def get_latest(cls, n=None):
+        highest = database.db.getSession().query(func.max(Pool_stats.height)).scalar()
+        if n == None:
+            return database.db.getSession().query(Pool_stats).filter(Pool_stats.height == highest).first()
+        else:
+            return list(database.db.getSession().query(Pool_stats).filter(Pool_stats.height >= highest-n).order_by(asc(Pool_stats.height)))
 
     # Get record(s) by height
     @classmethod
