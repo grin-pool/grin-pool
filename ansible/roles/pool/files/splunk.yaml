@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: splunk
+  labels:
+    run: splunk
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8000
+    nodePort: 32088
+    protocol: TCP
+    name: splunkweb
+  - port: 9997
+    protocol: TCP
+    name: splunkrecvr
+  selector:
+    run: splunk
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: splunk
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: splunk
+    spec:
+      containers:
+      - name: splunk
+        image: grinpool/splunk:latest
+#        command: ["sleep", "9999999"]
+        command: ["/sbin/entrypoint.sh", "start"]
+        ports:
+        - containerPort: 8000
+        - containerPort: 9997
+        volumeMounts:
+        - name: splunk
+          mountPath: /opt/splunk
+      volumes:
+      - name: splunk
+        persistentVolumeClaim:
+          claimName: splunk

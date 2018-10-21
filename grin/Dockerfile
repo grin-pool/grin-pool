@@ -25,7 +25,7 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch asxxyyzzzz
+RUN touch asxxyyzzzzq
 RUN git fetch && \
     git pull && \
     git checkout master && \
@@ -76,13 +76,15 @@ RUN sed -i 's/^db_root = .*$/db_root = "\/server\/.grin"/' /usr/src/grin/grin-se
     sed -i 's/^log_file_path = .*$/log_file_path = "\/server\/grin.log"/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^log_file_append = .*$/log_file_append = true/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^file_log_level = .*$/file_log_level = "Debug"/' /usr/src/grin/grin-server.toml && \
-    sed -i 's/^log_to_stdout = .*$/log_to_stdout = false/' /usr/src/grin/grin-server.toml
+    sed -i 's/^log_to_stdout = .*$/log_to_stdout = true/' /usr/src/grin/grin-server.toml && \
+    sed -i 's/^stdout_log_level = .*$/stdout_log_level = "Debug"/' /usr/src/grin/grin-server.toml
 
 # Update grin-wallet config
 RUN sed -i 's/^api_listen_interface = .*$/api_listen_interface = "0.0.0.0"/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^check_node_api_http_addr = .*$/check_node_api_http_addr = "http:\/\/grin:13413"/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^data_file_dir = .*$/data_file_dir = "\/wallet\/wallet_data"/' /usr/src/grin/grin-wallet.toml && \
-    sed -i 's/^log_to_stdout = .*$/log_to_stdout = false/' /usr/src/grin/grin-wallet.toml && \
+    sed -i 's/^log_to_stdout = .*$/log_to_stdout = true/' /usr/src/grin/grin-wallet.toml && \
+    sed -i 's/^stdout_log_level = .*$/stdout_log_level = "Debug"/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^log_to_file = .*$/log_to_file = true/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^log_file_append = .*$/log_file_append = true/' /usr/src/grin/grin-wallet.toml && \
     sed -i 's/^log_file_path = .*$/log_file_path = "\/wallet\/grin-wallet.log"/' /usr/src/grin/grin-wallet.toml

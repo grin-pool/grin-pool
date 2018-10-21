@@ -11,6 +11,7 @@ import json
 import sys
 import traceback 
 import cairosvg
+import copy
 
 
 from flask import Flask, Blueprint, render_template, request, session, make_response, flash, url_for, redirect
@@ -134,17 +135,28 @@ def get_pool_graph(start='0', r='120'):
 def pad_worker_graph_data(worker_stats, start, r=120):
     padded_stats = []
     current = start-r
-    previous_stat = worker_stats[0]
-    #previous_stat["gps"] = 0
+    # Missing from the beginning
+    # If its only a few clone the first, else Zero
+    while current < int(worker_stats[0]["height"]):
+        pad_stat = copy.copy(worker_stats[0])
+        pad_stat["height"] = current
+        if int(worker_stats[0]["height"]) - current > 5:
+            pad_stat["gps"] = 0
+        padded_stats.append(pad_stat)
+    # Missing from middle
     for stat in worker_stats:
         while int(stat["height"]) > current:
-            padded_stats.append(previous_stat)
+            fill_stat = copy.copy(stat)
+            fill_stat["height"] = current
+            padded_stats.append(fill_stat)
             current = current + 1
         padded_stats.append(stat)
-        previous_stat = stat
         current = current + 1
+    # Missing from the end
     while len(padded_stats) < r:
-        padded_stats.append(padded_stats[-1])
+        pad_stat = copy.copy(padded_stats[-1])
+        pad_stat["height"] = pad_stat["height"] + 1
+        padded_stats.append(pad_stat)
     return padded_stats
 
 
@@ -246,13 +258,14 @@ def home_template():
         except:
           last_found_ago = -1
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
-       # print("pool: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
-        latest_stats = json.loads(requests.get(get_api_url() + "/pool/stats/0,60").content.decode('utf-8'))[-1]
+        #print("pool: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
+        last_hour_stats = json.loads(requests.get(get_api_url() + "/pool/stats/0,60").content.decode('utf-8'))
+        latest_stats = last_hour_stats[-1]
     
         pool = { "gps": round(float(latest_stats["gps"]), 2),
                  "last_block_found": { "found": last_found_ago },
                  "blocks_found": latest_stats["total_blocks_found"],
-                 "miner_count": latest_stats["active_miners"],
+                 "miner_count": max([s["active_miners"] for s in last_hour_stats]),
                  "graph": pool_graph.render_data_uri()
         }
     
@@ -262,13 +275,9 @@ def home_template():
         latest_stats = []
         active_miners = []
         r = 60
-        while len(active_miners) < 1:
-          active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
-          active_miners = list(set([d['worker'] for d in active_miners]))
-          r = r * 2
-        while len(latest_stats) < 1:
-          r = r * 2
-          latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
+        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
+        active_miners = list(set([d['worker'] for d in active_miners]))
+        latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
         top_workers = []
         workers = []
         #print("Active Miners: {}".format(active_miners))

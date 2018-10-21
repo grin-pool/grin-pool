@@ -16,8 +16,6 @@ log_dir = "/stratum"
 listen_address = "0.0.0.0"
 port_difficulty = [
  [3333, 1],
- [4444, 5],
- [5555, 10],
 ]
 
 #

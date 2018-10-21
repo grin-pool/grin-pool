@@ -61,7 +61,7 @@ def calculate(height, avg_range):
     num_shares_in_range = 0
     if len(avg_over_worker_shares) > 0:
         num_shares_in_range = sum([shares.valid for shares in avg_over_worker_shares])
-        gps = grin.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
+        gps = lib.calculate_graph_rate(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range)
         print("XXX: difficulty={}, {}-{}, len={}".format(difficulty, avg_over_first_grin_block.timestamp, grin_block.timestamp, num_shares_in_range))
     if latest_worker_shares is not None:
         active_miners = len(latest_worker_shares) # XXX NO, FIX THIS

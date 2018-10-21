@@ -8,6 +8,7 @@ spec:
   type: LoadBalancer
   ports:
   - port: 13424
+    nodePort: 32424
     protocol: TCP
     name: webui
   selector:

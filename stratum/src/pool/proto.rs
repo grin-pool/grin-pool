@@ -66,6 +66,7 @@ pub struct SubmitParams {
     height: u64,
     pub job_id: u64,
     pub nonce: u64,
+    edge_bits: u32,
     pow: Vec<u32>,
 }
 

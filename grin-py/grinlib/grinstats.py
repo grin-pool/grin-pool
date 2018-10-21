@@ -43,10 +43,10 @@ def calculate(height, avg_range):
     if len(recent_blocks) < min(avg_range, height):
         # We dont have all of these blocks in the DB
         raise AssertionError("Missing blocks in range: {}:{}".format(height-avg_range, height))
-    print(recent_blocks[-1])
-    print(recent_blocks[-2])
-    print(recent_blocks[-3])
-    print(recent_blocks[-4])
+#    print(recent_blocks[-1])
+#    print(recent_blocks[-2])
+#    print(recent_blocks[-3])
+#    print(recent_blocks[-4])
     assert recent_blocks[-1].height == height, "Invalid height in recent_blocks[-1]" 
     assert recent_blocks[-2].height == height - 1, "Invalid height in recent_blocks[-2]: {} vs {}".format(recent_blocks[-2].height, height - 1) 
     # Calculate the stats data
@@ -54,7 +54,7 @@ def calculate(height, avg_range):
     last_block = recent_blocks[-1]
     timestamp = last_block.timestamp
     difficulty = recent_blocks[-1].total_difficulty - recent_blocks[-2].total_difficulty
-    gps = lib.calculate_graph_rate(difficulty, first_block.timestamp, last_block.timestamp, len(recent_blocks))
+    gps = grin.calculate_graph_rate(difficulty, 29)
     # utxo set size = sum outputs - sum inputs
     total_utxoset_size = previous_stats_record.total_utxoset_size + last_block.num_outputs - last_block.num_inputs
     return Grin_stats(

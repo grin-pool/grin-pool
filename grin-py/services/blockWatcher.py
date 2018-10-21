@@ -77,8 +77,9 @@ def main():
                                    range_proof_root = response["header"]["range_proof_root"],
                                    kernel_root = response["header"]["kernel_root"],
                                    nonce = response["header"]["nonce"],
-                                   cuckoo_size = response["header"]["cuckoo_size"],
+                                   edge_bits = response["header"]["edge_bits"],
                                    total_difficulty = response["header"]["total_difficulty"],
+                                   scaling_difficulty = response["header"]["scaling_difficulty"],
                                    num_inputs = len(response["inputs"]),
                                    num_outputs = len(response["outputs"]),
                                    num_kernels = len(response["kernels"]),
@@ -93,10 +94,16 @@ def main():
                     height = height + 1
                 except (sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError):
                     LOGGER.warn("Attempted to re-add block: {}".format(response["header"]["height"]))
+                    database.db.getSession().rollback()
+                    latest_block = Blocks.get_latest()
+                    height = latest_block.height + 1
+                    sleep(check_interval)
             sys.stdout.flush()
             sleep(check_interval)
         except Exception as e:
             LOGGER.error("Something went wrong: {}\n{}".format(e, traceback.format_exc().splitlines()))
+            sys.stdout.flush()
+            sleep(check_interval)
     # Should never get here, but....
     LOGGER.warn("=== Completed {}".format(PROCESS))
 

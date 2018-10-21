@@ -23,8 +23,9 @@ class Blocks(Base):
     range_proof_root = Column(String(64))
     kernel_root = Column(String(64))
     nonce = Column(String(20), nullable=False)
-    cuckoo_size = Column(SmallInteger)
+    edge_bits = Column(SmallInteger)
     total_difficulty = Column(BigInteger)
+    scaling_difficulty = Column(BigInteger)
     num_inputs = Column(Integer)
     num_outputs = Column(Integer)
     num_kernels = Column(Integer)
@@ -34,7 +35,7 @@ class Blocks(Base):
     state = Column(String(64))
 
     def __repr__(self):
-        return "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(
+        return "{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}".format(
             self.hash,
             self.version,
             self.height,
@@ -44,8 +45,9 @@ class Blocks(Base):
             self.range_proof_root,
             self.kernel_root,
             self.nonce,
-            self.cuckoo_size,
+            self.edge_bits,
             self.total_difficulty,
+            self.scaling_difficulty,
             self.num_inputs,
             self.num_outputs,
             self.num_kernels,
@@ -54,7 +56,7 @@ class Blocks(Base):
             self.total_kernel_offset,
             self.state) 
 
-    def __init__(self, hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, cuckoo_size, total_difficulty, num_inputs, num_outputs, num_kernels, fee, lock_height, total_kernel_offset, state):
+    def __init__(self, hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, edge_bits, total_difficulty, scaling_difficulty, num_inputs, num_outputs, num_kernels, fee, lock_height, total_kernel_offset, state):
             self.hash = hash
             self.version = version
             self.height = height
@@ -64,8 +66,9 @@ class Blocks(Base):
             self.range_proof_root = range_proof_root
             self.kernel_root = kernel_root
             self.nonce = nonce
-            self.cuckoo_size = cuckoo_size
+            self.edge_bits = edge_bits
             self.total_difficulty = total_difficulty
+            self.scaling_difficulty = scaling_difficulty
             self.num_inputs = num_inputs
             self.num_outputs = num_outputs
             self.num_kernels = num_kernels
@@ -84,8 +87,9 @@ class Blocks(Base):
                 'range_proof_root': self.range_proof_root,
                 'kernel_root': self.kernel_root,
                 'nonce': self.nonce,
-                'cuckoo_size': self.cuckoo_size,
+                'edge_bits': self.edge_bits,
                 'total_difficulty': self.total_difficulty,
+                'scaling_difficulty': self.scaling_difficulty,
                 'num_inputs': self.num_inputs,
                 'num_outputs': self.num_outputs,
                 'num_kernels': self.num_kernels,

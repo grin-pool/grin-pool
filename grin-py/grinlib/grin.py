@@ -77,17 +77,22 @@ def blocking_get_block_by_height(i):
 #  difficulty = block or share difficulty
 #  ts1, ts2   = Time range for finding the blocks or shares
 #  n          = Number of blocks or shares found in that range
-def calculate_graph_rate(difficulty, ts1, ts2, n):
-    # gps = 42 * (diff/scale) / 60
-    # XXX TODO:  Assumes cuckoo 30 for all blocks
-    scale = 29.0
-    if n == 0:
-      return 0
-    avg_time_between_blocks = abs((ts2 - ts1).total_seconds()) / n
-    if avg_time_between_blocks == 0:
-      return 0
-    gps = 42.0 * (difficulty/scale) / avg_time_between_blocks
+def calculate_graph_rate(difficulty, edge_bits=29):
+    print("in: calculate_graph_rate difficulty = {}".format(difficulty))
+    g_weight = graph_weight(edge_bits)
+    print("Graph Weight = {}".format(g_weight))
+    gps = 42.0 * (difficulty / g_weight) / 60.0
+    print("G/s  = {}".format(gps))
     return gps
+
+# Compute weight of a graph as number of siphash bits defining the graph
+# Must be made dependent on height to phase out smaller size over the years
+# This can wait until end of 2019 at latest
+# https://github.com/mimblewimble/grin/blob/6980278b95d266f6a420b64052ab6231a6e1c466/core/src/consensus.rs#L157
+def graph_weight(edge_bits):
+    BASE_EDGE_BITS = 24 # HARD FORK TO CHANGE
+    return (2 << (edge_bits - BASE_EDGE_BITS)) * edge_bits
+
 
 # Network Difficulty
 def get_network_difficulty(height):
