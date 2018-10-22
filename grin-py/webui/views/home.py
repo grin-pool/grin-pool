@@ -140,9 +140,9 @@ def pad_worker_graph_data(worker_stats, start, r=120):
     while current < int(worker_stats[0]["height"]):
         pad_stat = copy.copy(worker_stats[0])
         pad_stat["height"] = current
-        if int(worker_stats[0]["height"]) - current > 5:
-            pad_stat["gps"] = 0
+        pad_stat["gps"] = 0
         padded_stats.append(pad_stat)
+        current += 1
     # Missing from middle
     for stat in worker_stats:
         while int(stat["height"]) > current:

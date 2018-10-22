@@ -12,7 +12,7 @@ from grinbase.model import Base
 class Pool_payment(Base):
     __tablename__ = 'pool_payment'
     id = Column(String(36), primary_key=True)
-    timestamp = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime, primary_key=True)
     address = Column(String(1024), nullable=False)
     amount = Column(Float)
     fee = Column(Float)
