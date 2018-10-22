@@ -8,7 +8,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 80
+  - port: 32080
     nodePort: 32080
     protocol: TCP
     name: shareaggr
@@ -32,7 +32,7 @@ spec:
         command: ["/usr/local/bin/shareAggr.py"]
 #        command: ["sleep", "9999999"]
         ports:
-        - containerPort: 80
+        - containerPort: 32080
         env:
         - name: MYSQL_ROOT_PASSWORD
           value:
