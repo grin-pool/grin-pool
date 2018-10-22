@@ -16,12 +16,14 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 ### The components:
 * Pool Stratum Proxy: Rust
 * Pool data processing jobs: Python3
-* Pool API: Python3/Flask/nginx
-* Pool Web UI: Python3/Flask/nginx/Jinja2/PyGal
+* Pool API: Python3/Flask/NGINX
+* Pool Web UI: Python3/Flask/NGINX/Jinja2/PyGal
 * Database: MariaDB
-* Build CI/CD: Docker (+ travis or jenkins?)
+* Build CI/CD: Docker
 * Deploy: Ansible and gcloud CLI
 * Orchestration: Kubernetes
+* Log collection: Splunk
+* Monitoring & Alerting: ?? NotYet (Icinga?)
 
 #### To run the pool yourself: [ansible/roles/pool/files/README.md](ansible/roles/pool/files/README.md)
 
@@ -30,7 +32,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 ### Current Status:
 * This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
 * Please contribute!
-* Discussion happens on [Gitter](https://gitter.im/grin-pool/Lobby)
+* Join the discussion on [Gitter](https://gitter.im/grin-pool/Lobby)
 
 ## Pizza and "beer" fund:
 ![BTC](https://ipfs.io/ipfs/QmZQxz5LdbCuyc8LcnUiCyTLzmWmHs644mAD7A91bmTzej) <sub>17Gmy9uhE6ziB1PzYT8MMY5A4va25dy3US</sub>

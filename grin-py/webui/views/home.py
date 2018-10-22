@@ -68,8 +68,8 @@ def get_api_url():
     return "http://" + CONFIG["webui"]["api_url"]
     # API_URL = 'http://api.mwgrinpool.com:13423'
 
-def get_grin_graph(start='0', r='120'):
-    url = get_api_url() + '/grin/stats/' + start +','+str(r)+'/gps,height,difficulty'
+def get_grin_graph(start, r):
+    url = get_api_url() + '/grin/stats/' + str(start) +','+str(r)+'/gps,height,difficulty'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
@@ -104,8 +104,8 @@ def get_grin_graph(start='0', r='120'):
 #    graph.add('diff', difficulty_data, secondary=True)
     return graph
 
-def get_pool_graph(start='0', r='120'):
-    parsed = json.loads(urlopen(get_api_url() + '/pool/stats/' + start +','+str(r)+'/gps,height').read().decode('utf-8'))
+def get_pool_graph(start, r):
+    parsed = json.loads(urlopen(get_api_url() + '/pool/stats/' + str(start) +','+str(r)+'/gps,height').read().decode('utf-8'))
     gps_data = [float(i['gps']) for i in parsed]
     height_data = sorted(set([int(i['height']) for i in parsed]))
     # create a line graph
@@ -132,9 +132,9 @@ def get_pool_graph(start='0', r='120'):
     graph.add('GrinPool', gps_data)
     return graph
 
-def pad_worker_graph_data(worker_stats, start, r=120):
+def pad_worker_graph_data(worker_stats, start, r):
     padded_stats = []
-    current = start-r
+    current = start-r+1
     # Missing from the beginning
     # If its only a few clone the first, else Zero
     while current < int(worker_stats[0]["height"]):
@@ -160,12 +160,12 @@ def pad_worker_graph_data(worker_stats, start, r=120):
     return padded_stats
 
 
-def get_workers_graph(workers, start='0', r='120'):
+def get_workers_graph(workers, start, r):
     url = get_api_url() + '/worker/stats/' + str(start) +','+str(r)+'/gps,height,worker'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
-    height_data = sorted(set([int(i['height']) for i in parsed]))
+    height_data = range(start-r+1, start) # sorted(set([int(i['height']) for i in parsed]))
     print("height data:  {}".format(height_data))
 
     # create a line graph
@@ -226,13 +226,13 @@ def home_template():
         # Get the data (from the API), structure it, pass it into the jinja2 templated page
         ##
 
-        HEIGHT = 0
+        latest = json.loads(requests.get(get_api_url() + "/grin/block").content.decode('utf-8'))
+        HEIGHT = latest["height"]
+        RANGE = 120
 
         ##
         # GRIN NETWORK
-        grin_graph = get_grin_graph() # default is height=0, range=120
-        latest = json.loads(requests.get(get_api_url() + "/grin/block").content.decode('utf-8'))
-        HEIGHT = latest["height"]
+        grin_graph = get_grin_graph(HEIGHT, RANGE)
         last_found_ago = int(datetime.utcnow().timestamp()) - int(float(latest["timestamp"]))
         print("last_found_ago = {} - {} = {}".format(last_found_ago, int(datetime.utcnow().timestamp()), int(float(latest["timestamp"]))))
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
@@ -248,7 +248,7 @@ def home_template():
     
         ##
         # POOL
-        pool_graph = get_pool_graph() # default is height=0, range=120
+        pool_graph = get_pool_graph(HEIGHT, RANGE)
         try:
           latest_pool = json.loads(requests.get(get_api_url() + "/pool/block").content.decode('utf-8'))
         except:
@@ -296,7 +296,7 @@ def home_template():
         top_workers.sort(key=lambda s: s["gps"], reverse=True)
         print("Top Workers: {}".format(top_workers))
           
-        workers_graph = get_workers_graph(active_miners, HEIGHT) #  get_workers_graph(active_miners) # default is range=120
+        workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
         
         workers = { "top": top_workers,
                     "graph": workers_graph.render_data_uri()

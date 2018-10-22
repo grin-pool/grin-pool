@@ -19,6 +19,7 @@ import time
 import subprocess
 from datetime import datetime
 from random import randint
+import socket
 
 from grinlib import lib
 from grinlib import grin
@@ -40,6 +41,13 @@ CONFIG = None
 def makePayout(address, amount):
     global LOGGER
     global CONFIG
+
+    # Test a low-timeout connection before involving the wallet
+    probe = testWalletPort(address)
+    if probe == False:
+        LOGGER.warn("Test Connection Failed: {} {}".format(address, amount))
+        return 1 # failure status
+    LOGGER.warn("Test Connection Ok: {} {}".format(address, amount))
     grin_api_url = grin.get_api_url()
     os.chdir(CONFIG[PROCESS]["wallet_dir"])
     send_cmd = [
@@ -63,6 +71,22 @@ def makePayout(address, amount):
         LOGGER.error("Send failed with error {}".format(str(e)))
         return 1
 
+def testWalletPort(address):
+    global LOGGER
+    s = socket.socket()
+    s.settimeout(2)
+    addr = address.replace('http://', '')
+    addr = addr.split(':')
+    try:
+        LOGGER.warn("Testing: {}, {}".format(addr[0], addr[1]))
+        s.connect((addr[0], int(addr[1])))
+        s.close()
+    except Exception as e:
+        LOGGER.error("Failed test connection: {}".format(str(e)))
+        return False
+    
+    return True
+        
 
 def main():
     global LOGGER
@@ -87,7 +111,6 @@ def main():
             if utxo.amount < utxo.failure_count:
                 if randint(0, 11) != 0:
                     continue
-            # XXX TODO: Test a low-timeout connection before locking the utxo table and the wallet
             LOGGER.warn("Trying to pay: {} {} {}".format(utxo.id, utxo.address, utxo.amount))
             # Lock just this current record for update
             locked_utxo = Pool_utxo.get_locked_by_id(utxo.id)
