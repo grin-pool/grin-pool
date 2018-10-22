@@ -267,7 +267,7 @@ def main():
 
     # XXX TODO: Put in config
     HOST = "0.0.0.0"
-    PORT = 80
+    PORT = 32080
     GRINSHARE_HEIGHT = 0
     POOLSHARE_HEIGHT = 0
 
