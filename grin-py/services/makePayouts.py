@@ -42,6 +42,7 @@ def makePayout(address, amount):
     global LOGGER
     global CONFIG
 
+    LOGGER.warn("Making Payout of: {} to: {}".format(address, amount))
     # Test a low-timeout connection before involving the wallet
     probe = testWalletPort(address)
     if probe == False:
@@ -73,11 +74,11 @@ def makePayout(address, amount):
 
 def testWalletPort(address):
     global LOGGER
-    s = socket.socket()
-    s.settimeout(2)
-    addr = address.replace('http://', '')
-    addr = addr.split(':')
     try:
+        s = socket.socket()
+        s.settimeout(2)
+        addr = address.replace('http://', '')
+        addr = addr.split(':')
         LOGGER.warn("Testing: {}, {}".format(addr[0], addr[1]))
         s.connect((addr[0], int(addr[1])))
         s.close()
