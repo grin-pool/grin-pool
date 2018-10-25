@@ -1,0 +1,1 @@
+export const API_URL = 'http://api.mwgrinpool.com:13423/grin/' // enter your own endpoint here
