@@ -25,7 +25,7 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch asxxyyzzzzq
+RUN touch asxxyyzzzzqx
 RUN git fetch && \
     git pull && \
     git checkout master && \
@@ -70,7 +70,7 @@ RUN sed -i 's/^db_root = .*$/db_root = "\/server\/.grin"/' /usr/src/grin/grin-se
     sed -i 's/^enable_stratum_server = .*$/enable_stratum_server = true/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^stratum_server_addr = .*$/stratum_server_addr = "0.0.0.0:13416"/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^attempt_time_per_block = .*$/attempt_time_per_block = 180/' /usr/src/grin/grin-server.toml && \
-    sed -i 's/^minimum_share_difficulty = .*$/minimum_share_difficulty = 29/' /usr/src/grin/grin-server.toml && \
+    sed -i 's/^minimum_share_difficulty = .*$/minimum_share_difficulty = 1/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^wallet_listener_url = .*$/wallet_listener_url = "http:\/\/grinwallet:13415"/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^burn_reward = .*$/burn_reward = false/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^log_file_path = .*$/log_file_path = "\/server\/grin.log"/' /usr/src/grin/grin-server.toml && \

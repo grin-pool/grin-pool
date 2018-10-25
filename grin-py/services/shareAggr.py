@@ -17,6 +17,7 @@
 #   pool log -> pool_shares: height, nonce, *user_address*, *expected_difficulty*
 
 from datetime import datetime
+import dateutil.parser
 import time
 import traceback
 import json
@@ -206,7 +207,7 @@ class ShareHandler(socketserver.StreamRequestHandler):
     
             # create a Share instance
             if content["type"] == "poolshare":
-                s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + content["log_timestamp"], "%Y %b %d %H:%M:%S.%f")
+                s_timestamp = dateutil.parser.parse(str(datetime.utcnow().year) + " " + content["log_timestamp"])
                 s_height = int(content["height"])
                 s_nonce = content["nonce"]
                 s_difficulty = int(content["difficulty"])
@@ -216,7 +217,7 @@ class ShareHandler(socketserver.StreamRequestHandler):
                 SHARES.add(new_share)
                 POOLSHARE_HEIGHT = s_height
             elif content["type"] == "grinshare":
-                s_timestamp = datetime.strptime(str(datetime.utcnow().year) + " " + content["log_timestamp"], "%Y %b %d %H:%M:%S.%f")
+                s_timestamp = dateutil.parser.parse(content["log_timestamp"])
                 s_hash = content["hash"]
                 s_height = int(content["height"])
                 s_nonce = content["nonce"]
@@ -229,6 +230,7 @@ class ShareHandler(socketserver.StreamRequestHandler):
                 GRINSHARE_HEIGHT = s_height
             else:
                 LOGGER.warn("Invalid message id: {}".format(content["id"]))
+            sys.stdout.flush()
     
          
 #            LOGGER.warn("HEIGHT: {}, POOLSHARE_HEIGHT: {}, GRINSHARE_HEIGHT: {}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
