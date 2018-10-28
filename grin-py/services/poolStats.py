@@ -54,36 +54,37 @@ def main():
     check_interval = float(CONFIG[PROCESS]["check_interval"])
     avg_over_range = int(CONFIG[PROCESS]["avg_over_range"])
 
-    # Find the height of the latest stats record
-    last_height = 0
+    # Initialize poolStats records if this is the first run
     latest_stat = Pool_stats.get_latest()
     if latest_stat is None:
         # Special case for new pool startup
         poolstats.initialize()
-        last_height = 0
-    else:
-        last_height = latest_stat.height
-    height = last_height + 1
-    LOGGER.warn("Starting at height: {}".format(height))
 
     # Generate pool stats records - one per grin block
     while True:
+        # Find the height of the latest stats record
+        latest_stat = Pool_stats.get_latest()
+        height = latest_stat.height + 1
+        LOGGER.warn("Starting at height: {}".format(height))
         try:
-            # latest = grin.blocking_get_current_height()
-            latest = Blocks.get_latest().height
-            while latest > height:
-                new_stats = poolstats.calculate(height, avg_over_range)
-                # Batch new stats when possible, but commit at reasonable intervals
-                database.db.getSession().add(new_stats)
-                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
-                    database.db.getSession().commit()
-                LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
-                height = height + 1
-                sys.stdout.flush()
+            while True:
+                # latest = grin.blocking_get_current_height()
+                latest = Blocks.get_latest().height
+                while latest > height:
+                    new_stats = poolstats.calculate(height, avg_over_range)
+                    # Batch new stats when possible, but commit at reasonable intervals
+                    database.db.getSession().add(new_stats)
+                    if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                        database.db.getSession().commit()
+                    LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
+                    height = height + 1
+                    sys.stdout.flush()
+                sleep(check_interval)
         except Exception as e:  # AssertionError as e:
             LOGGER.error("Something went wrong: {} - {}".format(e, traceback.print_stack()))
+            database.db.getSession().rollback()
             sleep(check_interval)
-        sleep(check_interval)
+
     LOGGER.warn("=== Completed {}".format(PROCESS))
 
 if __name__ == "__main__":

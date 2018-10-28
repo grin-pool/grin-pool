@@ -12,20 +12,12 @@ spec:
       containers:
       - name: grin-pool
         image: grinpool/services:latest
-        command: ["/usr/local/bin/statsValidator.py"]
-#        command: ["sleep", "999999"]
+#        command: ["/usr/local/bin/statsValidator.py"]
+        command: ["sleep", "999999"]
         env:
         - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-pass
-              key: password
-        volumeMounts: # directory inside container
-        - mountPath: /services
-          name: poolservicesdir
-      volumes: # directory location on host
-      - name: poolservicesdir
-        hostPath:
-          path: /data/services
-#      imagePullSecrets:
-#      - name: regsecret
+          value:
+          #valueFrom:
+          #  secretKeyRef:
+          #    name: mysql-pass
+          #    key: password

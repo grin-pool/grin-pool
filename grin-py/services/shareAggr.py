@@ -32,15 +32,17 @@ from grinlib import grin
 from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.pool_blocks import Pool_blocks
 from grinbase.model.pool_stats import Pool_stats
+from grinbase.model.worker_stats import Worker_stats
 
 PROCESS = "shareAggr"
 
 # XXX TODO: Move to config
 DIFFICULTY = 29
+SHARE_EXPIRETIME = 1400 # (a bit less than the validation depth / coinbase lock time)
 
 
 class Share:
-    def __init__(self, timestamp, height, nonce, found_by, worker_difficulty=1, hash=None, share_difficulty=None, network_difficulty=None, is_solution=None, is_valid=False, invalid_reason="None"):
+    def __init__(self, timestamp, height, nonce, found_by, worker_difficulty=1, hash=None, share_difficulty=None, network_difficulty=None, is_solution=None, is_valid=False, invalid_reason="Unvalidated"):
         self.timestamp = timestamp
         self.height = height
         self.nonce = nonce
@@ -65,6 +67,7 @@ class Share:
         # Merge
         if share.is_valid == True:
             self.is_valid = True
+            self.invalid_reason="None"
         if self.found_by == "GrinPool":
             self.found_by = share.found_by
         if self.worker_difficulty > share.worker_difficulty:
@@ -115,62 +118,89 @@ class WorkerShares:
         else:
             self.LOGGER.warn("Added Pool Block: {}".format(new_pool_block.height))
 
-    # For each worker with shares
+    # For each worker with shares at height
     #   Create a worker_shares record and write it to the db
-    def commit(self, height):
-        print("self.shares.keys(): {}".format(self.shares.keys()))
-        if height not in self.shares or len(self.shares[height]) == 0:
-            self.LOGGER.warn("Processed 0 shares in block {} - Creatiing filler record".format(height))
-            # Even if there are no shares in the pool at all for this block, we still need to create a filler record at this height
-            filler_shares_rec = Worker_shares(
-                    height = height,
-                    worker = "GrinPool",
-                    timestamp = datetime.utcnow(),
-                    difficulty = DIFFICULTY,
-                    valid = 0,
-                    invalid = 0
-                )
-            lib.get_db().db.createDataObj_ignore_duplicates(filler_shares_rec)
-            return 
+    def commit(self, height=None):
+        global HEIGHT
+        database = lib.get_db()
+        if height is None:
+            block_heights = list(self.shares.keys())
+            try:
+                # Process all heights, except
+                # Dont process shares from current block or newer
+                block_heights = [h for h in block_heights if h < HEIGHT]
+            except ValueError as e:
+                pass
+            self.LOGGER.warn("Committing shares for blocks: {}".format(block_heights))
+        else:
+            block_heights = [height]
+
+        self.LOGGER.warn("Will commit shares for blocks: {} - (current height: {})".format(block_heights, HEIGHT))
+        for height in block_heights:
+            if height not in self.shares or len(self.shares[height]) == 0:
+                # XXX TODO: Only create filler record if no records already exist for this height
+                self.LOGGER.warn("Processed 0 shares in block {} - Creatiing filler record".format(height))
+                # Even if there are no shares in the pool at all for this block, we still need to create a filler record at this height
+                filler_shares_rec = Worker_shares(
+                        height = height,
+                        worker = "GrinPool",
+                        timestamp = datetime.utcnow(),
+                        difficulty = DIFFICULTY,
+                        valid = 0,
+                        invalid = 0
+                    )
+                database.db.createDataObj_ignore_duplicates(filler_shares_rec)
+                return 
         
-        byWorker = {}
-        for nonce in self.shares[height]:
-            share = self.shares[height][nonce]
-            # Sort shares by worker
-            if share.found_by not in byWorker:
-                byWorker[share.found_by] = []
-            byWorker[share.found_by].append(share)
-            # Create Pool_blocks for full solution shares
-            if share.is_solution:
-                self.addPoolBlock(share)
+            byWorker = {}
+            for nonce in self.shares[height]:
+                share = self.shares[height][nonce]
+                # Sort shares by worker
+                if share.found_by not in byWorker:
+                    byWorker[share.found_by] = []
+                byWorker[share.found_by].append(share)
+                # Create Pool_blocks for full solution shares
+                if share.is_solution:
+                    self.addPoolBlock(share)
 
-        # Create a Worker_shares record for each user and commit to DB
-        # XXX TODO: Bulk Insert - will be needed when the pool has hundredes or thousands of workers
-        for worker in byWorker:
-            workerShares = byWorker[worker]
-# Not possible?
-#            if len(workerShares) == 0:
-#                continue
-            self.LOGGER.warn("Processed {} shares in block {} for worker {}".format(len(workerShares), height, worker))
-            valid_list = [share.is_valid for share in workerShares]
-            # self.LOGGER.warn("xxx:  {}".format(valid_list))
-            num_valid = sum([int(share.is_valid) for share in workerShares])
-            new_shares_rec = Worker_shares(
-                    height = height,
-                    worker = worker,
-                    timestamp = datetime.utcnow(),
-                    difficulty = DIFFICULTY,
-                    valid = num_valid,
-                    invalid = len(workerShares) - num_valid
-                )
-            lib.get_db().db.createDataObj_ignore_duplicates(new_shares_rec)
-            # We added new worker share data, so if a Pool_stats record already exists at this height, we mark it dirty so it gets recalulated
-            stats_rec = Pool_stats.get_by_height(height)
-            if stats_rec is not None:
-                stats_rec.dirty = True
-                lib.get_db().db.getSession().commit()
-            #self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
-
+            # Create/update a Worker_shares record for each user and commit to DB
+            # XXX TODO: Bulk Insert - will be needed when the pool has hundredes or thousands of workers
+            for worker in byWorker:
+                workerShares = byWorker[worker]
+                self.LOGGER.warn("Processed {} shares in block {} for worker {}".format(len(workerShares), height, worker))
+                valid_list = [share.is_valid for share in workerShares]
+                # self.LOGGER.warn("xxx:  {}".format(valid_list))
+                num_valid = sum([int(share.is_valid) for share in workerShares])
+                # Get any existing record for this worker at this height
+                existing_shares_rec = Worker_shares.get_by_user_and_height(worker, height)
+                if len(existing_shares_rec) == 0:
+                    # No existing record, create it
+                    self.LOGGER.warn("New share record for {} at height {} with {} valid shares, {} invalid share".format(worker, height, num_valid, len(workerShares) - num_valid))
+                    new_shares_rec = Worker_shares(
+                            height = height,
+                            worker = worker,
+                            timestamp = datetime.utcnow(),
+                            difficulty = DIFFICULTY,
+                            valid = num_valid,
+                            invalid = len(workerShares) - num_valid
+                        )
+                    database.db.createDataObj_ignore_duplicates(new_shares_rec)
+                else:
+                    existing_shares_rec = existing_shares_rec[0]
+                    self.LOGGER.warn("Updated share record for {} at height {}: Prev={} valid, {} invalid ; Now={} valid, {} invalid".format(worker, height, existing_shares_rec.valid, existing_shares_rec.invalid, existing_shares_rec.valid + num_valid, existing_shares_rec.invalid + len(workerShares) - num_valid))
+                    existing_shares_rec.valid += num_valid
+                    existing_shares_rec.invalid += len(workerShares) - num_valid
+                # After we commit share data we need to clear it
+                self.clear(height)
+                # We added new worker share data, so if a Pool_stats record already exists at this height,
+                # we mark it dirty so it gets recalulated by thre shareValidator service
+                stats_rec = Pool_stats.get_by_height(height)
+                if stats_rec is not None:
+                    stats_rec.dirty = True
+                # Commit any changes
+                database.db.getSession().commit()
+                #self.LOGGER.warn("New worker share record: {}".format(new_shares_rec))
+    
     def clear(self, height=None):
         if height is None:
             self.shares = {}
@@ -199,11 +229,12 @@ class ShareHandler(socketserver.StreamRequestHandler):
             LOGGER.warn("Processing new {} message".format(content["type"]))
             #LOGGER.warn("PUT message: {}".format(content))
     
-            # If there are no existing shares (height is None) then we start at the first share height we got
-            if HEIGHT is None:
-                HEIGHT = content["height"]
-    
-            LOGGER.warn("Current Height: {}, Share Height: {} - {}".format(HEIGHT, content["height"], content["nonce"]))
+            LOGGER.warn("Current Share -  Height: {} - Nonce: {}".format(HEIGHT, content["height"], content["nonce"]))
+
+            # Dont process very old shares
+            if (HEIGHT - int(content["height"])) > SHARE_EXPIRETIME:
+                LOGGER.warn("Dropping expired share - Type: {}, Height: {}, Nonce: {}".format(content["type"], content["height"], content["nonce"]))
+                return
     
             # create a Share instance
             if content["type"] == "poolshare":
@@ -225,7 +256,7 @@ class ShareHandler(socketserver.StreamRequestHandler):
                 s_network_difficulty = int(content["net_difficulty"])
                 s_worker = content["worker"]
                 s_share_is_solution = int(s_share_difficulty) >= int(s_network_difficulty)
-                new_share = Share(hash=s_hash, height=s_height, nonce=s_nonce, share_difficulty=s_share_difficulty, network_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=s_share_is_solution, is_valid=True)
+                new_share = Share(hash=s_hash, height=s_height, nonce=s_nonce, share_difficulty=s_share_difficulty, network_difficulty=s_network_difficulty, timestamp=s_timestamp, found_by=s_worker, is_solution=s_share_is_solution, is_valid=True, invalid_reason="None")
                 SHARES.add(new_share)
                 GRINSHARE_HEIGHT = s_height
             else:
@@ -233,28 +264,26 @@ class ShareHandler(socketserver.StreamRequestHandler):
             sys.stdout.flush()
     
          
-#            LOGGER.warn("HEIGHT: {}, POOLSHARE_HEIGHT: {}, GRINSHARE_HEIGHT: {}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
-#            while HEIGHT < POOLSHARE_HEIGHT and HEIGHT < GRINSHARE_HEIGHT:
-#                LOGGER.warn("Commit shares for height: {}".format(HEIGHT))
-#                SHARES.commit(HEIGHT)
-#                SHARES.clear(HEIGHT)
-#                HEIGHT = HEIGHT + 1
-
 def ShareCommitScheduler(interval=15):
     global LOGGER
     global SHARES
     global HEIGHT
     global GRINSHARE_HEIGHT
     global POOLSHARE_HEIGHT
-    LOGGER.warn("HEIGHT: {}, POOLSHARE_HEIGHT: {}, GRINSHARE_HEIGHT: {}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
+
+
     # XXX TODO:  enhance
     while True:
         bc_height = grin.blocking_get_current_height()
+        LOGGER.warn("HEIGHT={}, POOLSHARE_HEIGHT={}, GRINSHARE_HEIGHT={}".format(HEIGHT, POOLSHARE_HEIGHT, GRINSHARE_HEIGHT))
         while (HEIGHT < POOLSHARE_HEIGHT and HEIGHT < GRINSHARE_HEIGHT) or (bc_height > HEIGHT):
+            # Commit and purge current block share data if we are starting a new block
             LOGGER.warn("Commit shares for height: {}".format(HEIGHT))
+            # time.sleep(5) # Give straggler shares a chance to come in
             SHARES.commit(HEIGHT)
-            SHARES.clear(HEIGHT)
             HEIGHT = HEIGHT + 1
+        # Commit and purge all old share data (except current block) every 'interval' seconds
+        SHARES.commit() # All except current block
         time.sleep(interval)
     
             
