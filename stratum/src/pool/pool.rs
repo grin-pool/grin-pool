@@ -18,7 +18,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use std::{thread, time};
 use sha2::{Sha256, Digest};
-use std::mem::transmute;
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;

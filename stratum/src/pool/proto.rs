@@ -67,7 +67,7 @@ pub struct SubmitParams {
     pub job_id: u64,
     pub nonce: u64,
     edge_bits: u32,
-    pow: Vec<u32>,
+    pub pow: Vec<u32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
