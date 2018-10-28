@@ -27,7 +27,6 @@ from grinlib import lib
 from grinlib import grin
 
 from grinbase.model.blocks import Blocks
-from grinbase.model.grin_stats import Grin_stats
 from grinbase.model.pool_stats import Pool_stats
 from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.worker_stats import Worker_stats
@@ -109,4 +108,8 @@ def recalculate(start_height, avg_range):
             if(height % BATCHSZ == 0):
                 database.db.getSession().commit()
         height = height + 1
+    # We updated one or more worker stats so we mark the Pool_stats dirty
+    stats_rec = Pool_stats.get_by_height(height)
+    if stats_rec is not None:
+        stats_rec.dirty = True
     database.db.getSession().commit()

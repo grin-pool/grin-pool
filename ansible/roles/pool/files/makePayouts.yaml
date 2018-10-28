@@ -15,24 +15,18 @@ spec:
             command: ["/usr/local/bin/makePayouts.py"]
             env:
             - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-pass
-                  key: password
-            volumeMounts: # directory inside container
-            - mountPath: /wallet
-              name: grinwallet
-            - mountPath: /services
-              name: poolservicesdir
-          volumes: # directory location on host
+              value:
+              #valueFrom:
+              #  secretKeyRef:
+              #    name: mysql-pass
+              #    key: password
+            volumeMounts:
+            - name: grinwallet
+              mountPath: /wallet
+          volumes:
           - name: grinwallet
-            hostPath:
-              path: /data/wallet
-          - name: poolservicesdir
-            hostPath:
-              path: /data/services
-#          imagePullSecrets:
-#          - name: regsecret
+            persistentVolumeClaim:
+              claimName: grinwallet
           restartPolicy: Never
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0

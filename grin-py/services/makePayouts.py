@@ -20,6 +20,7 @@ import subprocess
 from datetime import datetime
 from random import randint
 import socket
+from urllib.parse import urlparse
 
 from grinlib import lib
 from grinlib import grin
@@ -43,11 +44,17 @@ def makePayout(address, amount):
     global CONFIG
 
     LOGGER.warn("Making Payout of: {} to: {}".format(address, amount))
+    # Validate the address does not contain dangerous shell characters
+    valid = validateWalletAddress(address)
+    if valid == False:
+        LOGGER.warn("Wallet address is invalid: {}".format(address))
+        return 1 # failure status
     # Test a low-timeout connection before involving the wallet
     probe = testWalletPort(address)
     if probe == False:
         LOGGER.warn("Test Connection Failed: {} {}".format(address, amount))
         return 1 # failure status
+    # Make the payout
     LOGGER.warn("Test Connection Ok: {} {}".format(address, amount))
     grin_api_url = grin.get_api_url()
     os.chdir(CONFIG[PROCESS]["wallet_dir"])
@@ -71,14 +78,24 @@ def makePayout(address, amount):
     except Exception as e:
         LOGGER.error("Send failed with error {}".format(str(e)))
         return 1
+ 
+# Only supporting http url for wallet address for now
+def validateWalletAddress(address):
+    global LOGGER
+    try:
+        LOGGER.warn("Validating wallet address: {}".format(address))
+        return urlparse(address).scheme == 'http'
+    except Exception as e:
+        LOGGER.error("Wallet address is invalid: {}".format(str(e)))
+    return False
 
 def testWalletPort(address):
     global LOGGER
     try:
         s = socket.socket()
         s.settimeout(2)
-        addr = address.replace('http://', '')
-        addr = addr.split(':')
+        netloc = urlparse(address).netloc
+        addr = netloc.split(':')
         LOGGER.warn("Testing: {}, {}".format(addr[0], addr[1]))
         s.connect((addr[0], int(addr[1])))
         s.close()
@@ -97,7 +114,10 @@ def main():
     LOGGER.warn("=== Starting {}".format(PROCESS))
 
     # Connect to DB
-    database = lib.get_db()
+    try:
+        database = lib.get_db()
+    except Exception as e:
+        LOGGER.error("Failed to connect to the db: {}".format(e))
 
     wallet_dir = CONFIG[PROCESS]["wallet_dir"]
     minimum_payout = int(CONFIG[PROCESS]["minimum_payout"])

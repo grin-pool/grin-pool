@@ -17,6 +17,8 @@ use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use std::{thread, time};
+use sha2::{Sha256, Digest};
+use std::mem::transmute;
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
@@ -82,7 +84,7 @@ pub struct Pool {
     config: Config,
     server: Server,
     workers: Arc<Mutex<Vec<Worker>>>,
-    duplicates: HashMap<u64, usize>, // nonce, worker id who first submitted it
+    duplicates: HashMap<Vec<u32>, usize>, // nonce, worker id who first submitted it
 }
 
 impl Pool {
@@ -228,7 +230,7 @@ impl Pool {
                 Some(shares) => {
                     for share in shares {
                         //  Check for duplicate or add to duplicate map
-                        if self.duplicates.contains_key(&share.nonce) {
+                        if self.duplicates.contains_key(&share.pow) {
                             debug!(
                                 LOGGER,
                                 "{} - Rejected duplicate share from worker {} with login {}",
@@ -240,7 +242,7 @@ impl Pool {
                             worker.block_status.rejected += 1;
                             continue; // Dont process this share anymore
                         } else {
-                            self.duplicates.insert(share.nonce, worker.id());
+                            self.duplicates.insert(share.pow.clone(), worker.id());
                         }
                         // XXX TODO:
                         // Verify the timestamp matches what we sent so we know

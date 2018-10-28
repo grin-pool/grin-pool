@@ -12,3 +12,4 @@ wtforms_components
 pytz
 pygal
 cairosvg
+flask-cors

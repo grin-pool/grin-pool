@@ -17,6 +17,7 @@ import json
 
 from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
+from flask_cors import CORS
 
 from grinbase.model.grin_stats import Grin_stats
 from grinbase.model.blocks import Blocks
@@ -31,6 +32,7 @@ from grinlib import grin
 
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app)
 
 

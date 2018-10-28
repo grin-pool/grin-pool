@@ -287,10 +287,23 @@ impl Server {
                                             return Err(e);
                                         }
                                     };
-                                    let w_id: usize = workers_l
+                                    let w_id_o: Option<usize> = workers_l
                                         .iter()
-                                        .position(|ref i| i.id == w_id_usz)
-                                        .unwrap();
+                                        .position(|ref i| i.id == w_id_usz);
+                                    let w_id: usize;
+                                    match w_id_o {
+                                        Some(id) => w_id = id,
+                                        _ => {
+                                            let err_msg = "Null Worker ID".to_string();
+                                            debug!(LOGGER, "Null Worker ID");
+                                            self.error = true;
+                                            let e = RpcError {
+                                                code: -32600,
+                                                message: err_msg,
+                                            };
+                                            return Err(e);
+                                        }
+                                    };
                                     match res.method.as_str() {
                                         // This is a response to a getjobtemplate request made by the pool
                                         "getjobtemplate" => {

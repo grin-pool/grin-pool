@@ -86,6 +86,7 @@ def main():
             except Exception as e:
                 LOGGER.error("Something went wrong: {}".format(e))
                 LOGGER.error("Traceback: {}".format(traceback.format_exc().splitlines()))
+                database.db.getSession().rollback()
                 sleep(check_interval)
         sys.stdout.flush()
         sleep(check_interval)

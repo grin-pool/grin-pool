@@ -53,6 +53,19 @@ def main():
     rebuild_height = current_height - max_rebuild_depth
 
     while True:
+        # Check for dirty worker stats
+        dirty = Worker_stats.get_first_dirty(rebuild_height)
+        while dirty is not None:
+            LOGGER.warn("Recalculating Worker Stats for {} from {}".format(dirty.height, avg_over_range_worker))
+            end_height = workerstats.recalculate(dirty.height, avg_over_range_worker)
+            LOGGER.warn("Finished Recalculating Worker Stats for {} - {}".format(dirty.height, end_height))
+            dirty = Worker_stats.get_first_dirty()
+        # Check for dirty pool stats
+        dirty = Pool_stats.get_first_dirty(rebuild_height)
+        if dirty is not None:
+            LOGGER.warn("Recalculating Pool Stats from {}".format(dirty.height))
+            end_height = poolstats.recalculate(dirty.height, avg_over_range_pool)
+            LOGGER.warn("Finished Recalculating Pool Stats: {} - {}".format(dirty.height, end_height))
 # Grin blocks and therefore grin stats cant be dirty
 #        # Check for dirty grin stats
 #        dirty = Grin_stats.get_first_dirty()
@@ -60,19 +73,6 @@ def main():
 #            LOGGER.warn("Recalculating Grin Stats from {}".format(dirty.height))
 #            end_height = grinstats.recalculate(dirty.height, avg_over_range_grin)
 #            LOGGER.warn("Finished Recalculating Grin Stats: {} - {}".format(dirty.height, end_height))
-        # Check for dirty pool stats
-        dirty = Pool_stats.get_first_dirty(rebuild_height)
-        if dirty is not None:
-            LOGGER.warn("Recalculating Pool Stats from {}".format(dirty.height))
-            end_height = poolstats.recalculate(dirty.height, avg_over_range_pool)
-            LOGGER.warn("Finished Recalculating Pool Stats: {} - {}".format(dirty.height, end_height))
-#        # Check for dirty worker stats
-        dirty = Worker_stats.get_first_dirty(rebuild_height)
-        while dirty is not None:
-            LOGGER.warn("Recalculating Worker Stats for {} from {}".format(dirty.height, avg_over_range_worker))
-            end_height = workerstats.recalculate(dirty.height, avg_over_range_worker)
-            LOGGER.warn("Finished Recalculating Worker Stats for {} - {}".format(dirty.height, end_height))
-            dirty = Worker_stats.get_first_dirty()
 
         sys.stdout.flush()
         time.sleep(check_interval)
