@@ -1,6 +1,6 @@
 import { API_URL } from '../../config.js'
 
-const BLOCK_RANGE = 180
+const BLOCK_RANGE = 120
 
 export const fetchNetworkData = (start: number = 0) => async (dispatch) => {
   try {
