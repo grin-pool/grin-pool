@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody } from 'reactstrap'
-
+import { NetworkDataConnector } from '../../redux/connectors/NetworkDataConnector.js'
 export class HomepageComponent extends Component {
   render () {
     return (
@@ -11,10 +11,10 @@ export class HomepageComponent extends Component {
           </Col>
         </Row>
         <Row>
-          <Col xs={12} md={12} lg={12} xl={6}>
+          <Col xs={12} md={12} lg={12} xl={12}>
             <Card>
               <CardBody>
-                <div>Test</div>
+                <NetworkDataConnector />
               </CardBody>
             </Card>
           </Col>
