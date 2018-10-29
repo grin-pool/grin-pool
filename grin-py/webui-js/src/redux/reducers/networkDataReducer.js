@@ -1,9 +1,24 @@
+import { combineReducers } from 'redux'
 
-export const networkData = (state = 0, action) => {
+export const historical = (state = [], action) => {
   switch (action.type) {
     case 'NETWORK_DATA':
-      return action.data
+      return action.data.historical
     default:
       return state
   }
 }
+
+export const latestBlock = (state = {}, action) => {
+  switch (action.type) {
+    case 'NETWORK_DATA':
+      return action.data.latestBlock
+    default:
+      return state
+  }
+}
+
+export const networkData = combineReducers({
+  historical,
+  latestBlock
+})

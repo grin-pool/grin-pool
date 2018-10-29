@@ -4,9 +4,11 @@ import { NetworkDataComponent } from '../../containers/NetworkData/NetworkData.j
 import { fetchNetworkData } from '../actions/networkDataActions.js'
 
 const mapStateToProps = (state) => {
-  const networkData = state.networkData || []
+  const networkData = state.networkData.historical || []
+  const latestBlock = state.networkData.latestBlock
   return {
-    networkData
+    networkData,
+    latestBlock
   }
 }
 

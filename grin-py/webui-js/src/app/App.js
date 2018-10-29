@@ -1,8 +1,15 @@
 import React, { Component } from 'react'
 import 'bootstrap/dist/css/bootstrap.css'
 import '../scss/app.scss'
-
 import Router from './Router'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faChartLine, faClock, faDollarSign, faLink, faDesktop } from '@fortawesome/free-solid-svg-icons'
+
+library.add(faChartLine)
+library.add(faClock)
+library.add(faDollarSign)
+library.add(faLink)
+library.add(faDesktop)
 
 class App extends Component {
   constructor () {
