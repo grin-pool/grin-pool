@@ -15,9 +15,9 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 
 ### The components:
 * Pool Stratum Proxy: Rust
-* Pool data processing jobs: Python3
+* Pool data processing jobs: Python3/SQLAlchemy
 * Pool API: Python3/Flask/NGINX
-* Pool Web UI: Python3/Flask/NGINX/Jinja2/PyGal
+* Pool Web UI: ~~Python3/Flask/NGINX/Jinja2/PyGal~~ ?? NodeJS/Electron/Bootstrap/React
 * Database: MariaDB
 * Build CI/CD: Docker
 * Deploy: Ansible and gcloud CLI
