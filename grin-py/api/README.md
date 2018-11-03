@@ -153,13 +153,17 @@
 
 ### Share Counts:
 
-```/pool/shares/count```
+```/pool/share/count```
 
     Get the total number of shares submitted to the pool by all workers
 
-```/pool/shares/count/<int:height>```
+```/pool/share/count/<int:height>```
 
     Get the total number of shares submitted to the pool by all workers up to block height
+
+```/pool/share/counts/<int:height>,<int:range>```
+
+    Get the total number of shares submitted to the pool by all workers up to block height for a range of heights
 
 
 ## Worker:
@@ -219,61 +223,63 @@
     Specify height = 0 to start at the ‘latest’ height 
     Filter all but specified fields
 
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-### Share Count:
-
-```/worker/shares/count```
-    
-    Get the count of all shares submitted to the pool by all workers
-       
-```/worker/shares/count/<int:height>```
-    
-    Get the count of all shares submitted to the pool by all workers for the block at specified height
-
-```/worker/shares/count/<string:id>```
-    
-    Get the count of shares for the latest block from worker id
-
-```/worker/shares/count/<string:id>/<int:height>```
-    
-    Get the count of shares for the block at height from worker id
-    Specify height = 0 to get shares from the ‘latest’ height
 
 ### Shares:
 
-```/worker/shares/<string:id>```
+#### For all active Workers:
 
-    Get all shares from all workers for the latest block
+```/worker/shares/<int:height>```
 
-```/worker/shares/<string:id>/<string:fields>```
+    Get worker shares data for the block at specified height for all active workers
+    Specify height = 0 to get shares data from the latest block height
 
-    Get all shares for the latest block from worker id
+```/worker/shares/<int:height>/<string:fields>```
+
+    Get worker shares data for the block at specified height for all active workers
+    Specify height = 0 to get shares data from the latest block height
     Filter all but specified fields
+
+```/worker/shares/<int:height>,<int:range>```
+
+    Get worker shares data from a range of pool blocks for all active workers
+    Starting at 'height' and returning the previous 'range' of blocks
+    Specify height = 0 to start at the latest height
+
+```/worker/shares/<int:height>,<int:range>/<string:fields>```
+
+    Get worker shares data from a range of pool blocks for all active workers
+    Starting at 'height' and returning the previous 'range' of blocks
+    Specify height = 0 to start at the latest height
+    Filter all but specified fields
+
+
+#### For one specific worker:
 
 ```/worker/shares/<string:id>/<int:height>```
 
-    Get all shares from the block at height from worker id
-    Specify height = 0 to get shares from the ‘latest’ height
+    Get worker shares data for the block at the specified height for specified worker
 
 ```/worker/shares/<string:id>/<int:height>/<string:fields>```
 
-    Get all shares from the block at height from worker id
+    Get worker shares data for the block at the specified height for specified worker
+    Starting at 'height' and returning the previous 'range' of blocks
+    Specify height = 0 to start at the latest height
     Filter all but specified fields
-    Specify height = 0 to get shares from the ‘latest’ height
 
 ```/worker/shares/<string:id>/<int:height>,<int:range>```
 
-    Get all shares from a range of pool blocks from worker id
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
+    Get worker shares data for a range of blocks for specified worker
+    Starting at 'height' and returning the previous 'range' of blocks
+    Specify height = 0 to start at the latest height
 
 ```/worker/shares/<string:id>/<int:height>,<int:range>/<string:fields>```
 
-    Get all shares from a range of pool blocks from worker id
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
+    Get worker shares data for a range of blocks for specified worker
+    Starting at 'height' and returning the previous 'range' of blocks
+    Specify height = 0 to start at the latest height
     Filter all but specified fields
+
 
 
 
