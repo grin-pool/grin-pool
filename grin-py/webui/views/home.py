@@ -65,20 +65,14 @@ worker_style_pygal = Style(
 
 def get_api_url():
     CONFIG = lib.get_config()
-    return "http://" + CONFIG["webui"]["api_url"]
     # API_URL = 'http://api.mwgrinpool.com:13423'
+    return "http://" + CONFIG["webui"]["api_url"]
 
 def get_grin_graph(start, r):
     url = get_api_url() + '/grin/stats/' + str(start) +','+str(r)+'/gps,height,difficulty'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
-    gps_data = [float(i['gps']) for i in parsed]
-    height_data = sorted(set([int(i['height']) for i in parsed]))
-    difficulty_data = [int(i['difficulty']) for i in parsed]
-    min_difficulty = min(d for d in difficulty_data)
-    max_difficulty = max(d for d in difficulty_data)
-    #print("HEIGHT DATA: {}".format(height_data))
     # create a line graph
     title = 'Grin Network - g/s'
     graph = pygal.Line(width=500, # 3.75
@@ -92,22 +86,49 @@ def get_grin_graph(start, r):
                        stroke_style={'width': 2},
                        margin=0,
                        show_legend=False,
+                       legend_at_bottom=True,
                        x_label_rotation=1,
                        x_labels_major_count=5,
                        show_minor_x_labels=False,
                        y_labels_major_count=3,
                        show_minor_y_labels=False,
-                       # secondary_range=(min_difficulty, max_difficulty) 
     )
+    height_data = sorted(set([int(i['height']) for i in parsed]))
     graph.x_labels = height_data
-    graph.add('g/s', gps_data)
+    secondary = False
+    try:
+        primary_gps_data = []
+        first_gps_data = 0
+        for i in parsed:
+            if len(i['gps']) > 1:
+                first_gps_data = i['gps'][1]["gps"]
+                break
+        for i in parsed:
+            if len(i['gps']) > 1:
+                primary_gps_data.append(i['gps'][1]["gps"])
+            else:
+                if len(primary_gps_data) > 0:
+                    primary_gps_data.append(primary_gps_data[-1])
+                else:
+                    primary_gps_data.append(first_gps_data)
+                    
+        
+        #primary_gps_data = [i['gps'][1]["gps"] for i in parsed]
+        graph.add('C30+ g/s', primary_gps_data)
+        secondary = True
+    except Exception as e:
+        print("problem: {}".format(e))
+        print("Traceback: {}".format(traceback.format_exc().splitlines()))
+        sys.stdout.flush()
+    secondary_gps_data = [i['gps'][0]["gps"] for i in parsed]
+    graph.add('C29 g/s', secondary_gps_data, secondary=secondary)
+#    difficulty_data = [int(i['difficulty']) for i in parsed]
 #    graph.add('diff', difficulty_data, secondary=True)
     return graph
 
 def get_pool_graph(start, r):
     parsed = json.loads(urlopen(get_api_url() + '/pool/stats/' + str(start) +','+str(r)+'/gps,height').read().decode('utf-8'))
-    gps_data = [float(i['gps']) for i in parsed]
-    height_data = sorted(set([int(i['height']) for i in parsed]))
+    print("Parsed: {}".format(parsed))
     # create a line graph
     title = 'GrinPool - g/s'
     graph = pygal.Line(width=500, # 1.875
@@ -127,9 +148,37 @@ def get_pool_graph(start, r):
                        show_minor_x_labels=False,
                        y_labels_major_count=5,
                        show_minor_y_labels=False)
+    height_data = sorted(set([int(i['height']) for i in parsed]))
     graph.x_labels = height_data
-    print("Len of pool stats: {}".format(len(gps_data)))
-    graph.add('GrinPool', gps_data)
+    secondary = False
+    real_data = 0
+    recent_data = False
+    try:
+        primary_gps_data = []
+        #primary_gps_data = [i['gps'][1]["gps"] for i in parsed]
+        for i in parsed:
+            if len(i['gps']) > 1:
+                primary_gps_data.append(i['gps'][1]["gps"])
+                real_data += 1
+                if i['height'] > height_data[-1] - 20:
+                    recent_data = True
+            else:
+                if len(primary_gps_data) > 0:
+                    primary_gps_data.append(primary_gps_data[-1])
+                else:
+                    primary_gps_data.append(0)
+                    
+        #print("primary_gps_data={}".format(primary_gps_data))
+        if real_data > 20 or recent_data == True:
+            graph.add('C30+ g/s', primary_gps_data)
+            secondary = True
+    except Exception as e:
+        print("problem: {}".format(e))
+        print("Traceback: {}".format(traceback.format_exc().splitlines()))
+        sys.stdout.flush()
+    secondary_gps_data = [i['gps'][0]["gps"] for i in parsed if len(i['gps']) > 0]
+    #print("Len of pool stats: {}".format(len(primary_gps_data)))
+    graph.add('C29 g/s', secondary_gps_data, secondary=secondary)
     return graph
 
 def pad_worker_graph_data(worker_stats, start, r):
@@ -165,8 +214,9 @@ def get_workers_graph(workers, start, r):
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
+    #print("parsed: {}".format(parsed))
     height_data = range(start-r+1, start) # sorted(set([int(i['height']) for i in parsed]))
-    print("height data:  {}".format(height_data))
+    #print("height data:  {}".format(height_data))
 
     # create a line graph
     title = 'PoolWorkers - g/s'
@@ -202,7 +252,7 @@ def get_workers_graph(workers, start, r):
         continue
       print("Len of padded worker stats: {}".format(len(padded_worker_stats)))
       #print("PADDED Miner stats {}".format(padded_worker_stats))
-      worker_data = [float(i['gps']) for i in padded_worker_stats]
+      worker_data = [i['gps'][0] for i in padded_worker_stats]
       graph.add(obfuscate_name(miner), worker_data)
 
     return graph
@@ -238,14 +288,17 @@ def home_template():
         #ts_latest = datetime.fromtimestamp(float(latest["timestamp"]))
        # print("grin: last_found_ago: {}, ts_latest: {}, now: {}".format(last_found_ago, ts_latest, datetime.utcnow()))
         latest_stats = json.loads(requests.get(get_api_url() + "/grin/stat").content.decode('utf-8'))
-        grin = { "gps": round(float(latest_stats["gps"]), 2),
+        gpsStr = ""
+        for g in latest_stats["gps"]:
+            gpsStr += "C{}: {} g/s ".format(g["edge_bits"], round(g["gps"],2))
+        grin = { "gps": gpsStr, 
                  "last_block_found": { "found": last_found_ago, "height": latest["height"] },
                  "difficulty": latest_stats["difficulty"],
                  "height": HEIGHT,
                  "rewards": 60,
                  "graph": grin_graph.render_data_uri()
         }
-    
+
         ##
         # POOL
         pool_graph = get_pool_graph(HEIGHT, RANGE)
@@ -262,45 +315,57 @@ def home_template():
         last_hour_stats = json.loads(requests.get(get_api_url() + "/pool/stats/0,60").content.decode('utf-8'))
         latest_stats = last_hour_stats[-1]
     
-        pool = { "gps": round(float(latest_stats["gps"]), 2),
+        gpsStr = ""
+        for g in latest_stats["gps"]:
+            gpsStr += "C{}: {} g/s ".format(g["edge_bits"], round(g["gps"],2))
+        pool = { "gps": gpsStr,
                  "last_block_found": { "found": last_found_ago },
                  "blocks_found": latest_stats["total_blocks_found"],
-                 "miner_count": max([s["active_miners"] for s in last_hour_stats]),
+                 "miner_count": max([s["active_miners"] for s in last_hour_stats])-1,
                  "graph": pool_graph.render_data_uri()
         }
+
+
+
+        workers = None
+#        ##
+#        # TOP WORKERS
+#        latest_stats = []
+#        active_miners = []
+#        r = 60
+#        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
+#        active_miners = list(set([d['worker'] for d in active_miners]))
+#        latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
+#        top_workers = []
+#        workers = []
+#        #print("Active Miners: {}".format(active_miners))
+#        #print("latest_stats: {}".format(latest_stats))
+#        for miner in active_miners:
+#          print("Miner: {}".format(miner))
+#          try:
+#            miner_stats = [stat for stat in latest_stats if stat["worker"] == miner][-1]
+#           #print("Adding stats for miner: {}, {}".format(miner, miner_stats))
+#            workers.append(miner_stats["worker"])
+#            top_workers.append({"name": obfuscate_name(miner_stats["worker"]), "gps": round(miner_stats["gps"], 2)})
+#          except Exception as e:
+#           pass
+#        while len(top_workers) < 5:
+#          top_workers.append({"name": "None", "gps": 0})
+#        top_workers.sort(key=lambda s: s["gps"], reverse=True)
+#        print("Top Workers: {}".format(top_workers))
+#          
+#        workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
+#        
+#        workers = { "top": top_workers,
+#                    "graph": workers_graph.render_data_uri()
+#        }
+
+
+
+
+
+
     
-    
-        ##
-        # TOP WORKERS
-        latest_stats = []
-        active_miners = []
-        r = 60
-        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
-        active_miners = list(set([d['worker'] for d in active_miners]))
-        latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
-        top_workers = []
-        workers = []
-        #print("Active Miners: {}".format(active_miners))
-        #print("latest_stats: {}".format(latest_stats))
-        for miner in active_miners:
-          print("Miner: {}".format(miner))
-          try:
-            miner_stats = [stat for stat in latest_stats if stat["worker"] == miner][-1]
-            #print("Adding stats for miner: {}, {}".format(miner, miner_stats))
-            workers.append(miner_stats["worker"])
-            top_workers.append({"name": obfuscate_name(miner_stats["worker"]), "gps": round(miner_stats["gps"], 2)})
-          except Exception as e:
-           pass
-        while len(top_workers) < 5:
-          top_workers.append({"name": "None", "gps": 0})
-        top_workers.sort(key=lambda s: s["gps"], reverse=True)
-        print("Top Workers: {}".format(top_workers))
-          
-        workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
-        
-        workers = { "top": top_workers,
-                    "graph": workers_graph.render_data_uri()
-        }
         ok = True
       except Exception as e:
         print("FAILED - {}".format(e))
