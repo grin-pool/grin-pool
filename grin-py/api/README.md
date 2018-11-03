@@ -86,10 +86,6 @@
     Get a single pool block at specified height
     Will return None if there is no pool-found block at that height
 
-```/pool/block/<int:height>/count```
-
-    Get the number of pool blocks found up to height
-
 ```/pool/block/<int:height>/<string:fields>```
         
     Get a single pool block at specified height 
@@ -108,11 +104,28 @@
     Will return None if there are no pool-found block in that range
     Filter all but specified fields
 
+
+```/pool/blocks/count```
+
+    Get the number of pool blocks found by the pool
+
+
+```/pool/blocks/count/<int:height>```
+
+    Get the number of pool blocks found up to height
+
+
+
 ### Stats:
 
 ```/pool/stat```
 
     Get pool stats for the latest block 
+
+```/pool/stat/<string:fields>```
+
+    Get pool stats for the latest block 
+    Filter out all but specified fields
 
 ```/pool/stat/<int:height>```
 
@@ -138,41 +151,94 @@
     Filter all but specified fields
 
 
+### Share Counts:
+
+```/pool/shares/count```
+
+    Get the total number of shares submitted to the pool by all workers
+
+```/pool/shares/count/<int:height>```
+
+    Get the total number of shares submitted to the pool by all workers up to block height
+
 
 ## Worker:
+
+### Stats:
+
+#### For all active Workers:
+
+```/worker/stats/<int:height>```
+
+    Get worker stats for the block at specified height for all active workers
+    Specify height = 0 to get stats from the ‘latest’ block height
+
+```/worker/stats/<int:height>/<string:fields>```
+        
+    Get worker stats for the block at specified height for all active workers
+    Specify height = 0 to get stats from the ‘latest’ block height
+    Filter all but specified fields
+
+```/worker/stats/<int:height>,<int:range>```
+
+    Get worker stats from a range of pool blocks for all active workers
+    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Specify height = 0 to start at the ‘latest’ height 
+
+```/worker/stats/<int:height>,<int:range>/<string:fields>```
+
+    Get worker stats from a range of pool blocks for all active workers
+    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Specify height = 0 to start at the ‘latest’ height 
+    Filter all but specified fields
+
+
+#### For one specific worker:
+
+```/worker/stats/<string:id>/<int:height>```
+
+    Get worker stats for the block at the specified height for specified worker
+
+```/worker/stats/<string:id>/<int:height>/<string:fields>```
+
+    Get worker stats for the block at the specified height for specified worker
+    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Specify height = 0 to start at the ‘latest’ height 
+    Filter all but specified fields
+
+```/worker/stats/<string:id>/<int:height>,<int:range>```
+
+    Get worker stats for a range of blocks for specified worker
+    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Specify height = 0 to start at the ‘latest’ height 
+
+```/worker/stats/<string:id>/<int:height>,<int:range>/<string:fields>```
+
+    Get worker stats for a range of blocks for specified worker
+    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Specify height = 0 to start at the ‘latest’ height 
+    Filter all but specified fields
+
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ### Share Count:
 
 ```/worker/shares/count```
     
-    Get the count of all shares submitted to the pool
-        
- ```/worker/shares/<int:height>/count```
+    Get the count of all shares submitted to the pool by all workers
+       
+```/worker/shares/count/<int:height>```
     
-    Get the count of all shares submitted to the pool for the block at specified height
+    Get the count of all shares submitted to the pool by all workers for the block at specified height
 
-```/worker/shares/<int:height>,<int:range>/count```
-
-    Get the count of all shares submitted to the pool within specified block range
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height
-    Specify range = 0 to get count of shares submitted for all blocks up to height
-
-```/worker/shares/<string:id>/count```
+```/worker/shares/count/<string:id>```
     
     Get the count of shares for the latest block from worker id
 
-```/worker/shares/<string:id>/<int:height>/count```
+```/worker/shares/count/<string:id>/<int:height>```
     
     Get the count of shares for the block at height from worker id
     Specify height = 0 to get shares from the ‘latest’ height
-
-```/worker/shares/<string:id>/<int:height>,<int:range>/count```
-
-    Get the count of shares submitted to the pool within specified block range by worker id
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to get shares from the ‘latest’ height
-    Specify range = 0 to get count of shares submitted for all blocks up to height
 
 ### Shares:
 
@@ -205,60 +271,6 @@
 ```/worker/shares/<string:id>/<int:height>,<int:range>/<string:fields>```
 
     Get all shares from a range of pool blocks from worker id
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
-    Filter all but specified fields
-
-### Stats:
-
-#### For all active Workers:
-
-```/worker/stats/<int:height>```
-
-    Get worker stats for the block at specified height for all active workers
-    Specify height = 0 to get stats from the ‘latest’ block height
-
-```/worker/stats/<int:height>/<string:fields>```
-        
-    Get worker stats for the block at specified height for all active workers
-    Specify height = 0 to get stats from the ‘latest’ block height
-    Filter all but specified fields
-
-```/worker/stats/<int:height>,<int:range>```
-
-    Get worker stats from a range of pool blocks for all active workers
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
-
-```/worker/stats/<int:height>,<int:range>/<string:fields>```
-
-    Get worker stats from a range of pool blocks for all active workers
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
-    Filter all but specified fields
-
-#### For one specific worker:
-
-```/worker/stats/<string:id>/<int:height>```
-
-    Get worker stats for the block at the specified height for specified worker
-
-```/worker/stats/<string:id>/<int:height>/<string:fields>```
-
-    Get worker stats for the block at the specified height for specified worker
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
-    Filter all but specified fields
-
-```/worker/stats/<string:id>/<int:height>,<int:range>```
-
-    Get worker stats for a range of blocks for specified worker
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
-    Specify height = 0 to start at the ‘latest’ height 
-
-```/worker/stats/<string:id>/<int:height>,<int:range>/<string:fields>```
-
-    Get worker stats for a range of blocks for specified worker
     Starting at ‘height’ and returning the previous ‘range’ of blocks
     Specify height = 0 to start at the ‘latest’ height 
     Filter all but specified fields
