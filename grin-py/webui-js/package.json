@@ -2,7 +2,7 @@
   "name": "grin-pool-ui",
   "version": "0.0.1",
   "private": false,
-  "homepage": "https://github.com/grin-pool/grin-pool",
+  "homepage": "http://localhost:5000",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.7",
     "@fortawesome/free-solid-svg-icons": "^5.4.2",

@@ -8,7 +8,7 @@ import ScrollToTop from './app/ScrollToTop'
 
 render(
   <Provider store={store}>
-    <BrowserRouter basename='/'>
+    <BrowserRouter basename='http://localhost:5000/'>
       <ScrollToTop>
         <App/>
       </ScrollToTop>
