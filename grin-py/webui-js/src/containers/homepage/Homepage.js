@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody } from 'reactstrap'
 import { NetworkDataConnector } from '../../redux/connectors/NetworkDataConnector.js'
+import { GrinPoolDataConnector } from '../../redux/connectors/GrinPoolDataConnector.js'
+
 export class HomepageComponent extends Component {
   render () {
     return (
@@ -18,10 +20,10 @@ export class HomepageComponent extends Component {
               </CardBody>
             </Card>
           </Col>
-          <Col xs={12} md={12} lg={12} xl={6}>
+          <Col xs={12} md={12} lg={12} xl={12}>
             <Card>
               <CardBody>
-                <div>Test</div>
+                <GrinPoolDataConnector />
               </CardBody>
             </Card>
           </Col>
