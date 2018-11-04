@@ -6,9 +6,9 @@ The purpose of this repo is to provide a web user interface for a GRIN mining po
 
 In order to build and deploy the web-ui, we are going to need to install a few Javascript-related items:
 
-***node**: allows command-line execution of Javascript | [installation instructions](https://nodejs.org/en/download/package-manager/)
-***yarn**: Javascript dependency manager | [instructions](https://yarnpkg.com/lang/en/docs/install/)
-***serve**: allows serving of local files. `yarn global serve` from the command line | [more info](https://www.npmjs.com/package/serve)
+***node**: allows command-line execution of Javascript | [installation instructions](https://nodejs.org/en/download/package-manager/)  
+***yarn**: Javascript dependency manager | [instructions](https://yarnpkg.com/lang/en/docs/install/)  
+***serve**: allows serving of local files. `yarn global serve` from the command line | [more info](https://www.npmjs.com/package/serve)  
 
 #### Steps to build & serve:
 1.) From your terminal, navigate to the `grin-pool/grin-py/webui-js` file  
