@@ -62,6 +62,7 @@ export class NetworkDataComponent extends Component {
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={3} lg={3} xl={3}>
+          <h4 className='page-title' style={{ marginBottom: 36 }}>Network Stats</h4>
           <Table>
             <tbody>
               <tr>
