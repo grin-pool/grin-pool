@@ -1,3 +1,4 @@
+// @flow
 import { API_URL } from '../../config.js'
 
 const BLOCK_RANGE = 120

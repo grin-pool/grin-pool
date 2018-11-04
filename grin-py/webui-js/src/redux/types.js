@@ -1,5 +1,5 @@
 import { Dispatch as ReduxDispatch, Store as ReduxStore } from 'redux'
-
+console.log(ReduxStore)
 export type Action = { type: string, data?: any }
 
 export interface State {
@@ -10,7 +10,6 @@ export interface State {
     collapse: boolean
   }
 }
-
 
 export type ThunkDispatch<A> = ((Dispatch, GetState) => Promise<void> | void) => A
 
@@ -24,4 +23,3 @@ export interface Providers {
 
 export type FunctionType = (...args: any[]) => any
 export type ActionsCreatorsMapObject = { [actionCreator: string]: FunctionType}
-

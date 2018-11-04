@@ -5,8 +5,8 @@ import { fetchGrinPoolData } from '../actions/grinPoolDataActions.js'
 
 const mapStateToProps = (state) => {
   return {
-    networkData: state.grinPoolData.historical,
-    latestBlock: state.networkData.latestBlock
+    networkData: state.grinPoolData.historical || [],
+    latestBlock: state.networkData.latestBlock || 0
   }
 }
 

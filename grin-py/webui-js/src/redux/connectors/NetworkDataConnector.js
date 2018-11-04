@@ -5,7 +5,7 @@ import { fetchNetworkData } from '../actions/networkDataActions.js'
 
 const mapStateToProps = (state) => {
   const networkData = state.networkData.historical || []
-  const latestBlock = state.networkData.latestBlock
+  const latestBlock = state.networkData.latestBlock || 0
   return {
     networkData,
     latestBlock

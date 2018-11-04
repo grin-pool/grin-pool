@@ -1,3 +1,4 @@
+// @flow
 import { API_URL } from '../../config.js'
 import { getLatestBlock } from './networkDataActions.js'
 
