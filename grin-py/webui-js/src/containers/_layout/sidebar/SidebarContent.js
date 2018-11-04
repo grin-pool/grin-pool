@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import SidebarLink from './SidebarLink'
-import SidebarCategory from './SidebarCategory'
 import { changeThemeToDark, changeThemeToLight } from '../../../redux/actions/themeActions'
 
 class SidebarContent extends PureComponent {
@@ -23,21 +22,15 @@ class SidebarContent extends PureComponent {
     return (
       <div className='sidebar__content'>
         <SidebarLink title='Home' route='/' icon='home' />
-        <SidebarLink title='Pool' route='/pages/one' icon='chart-bars' />
-        <SidebarLink title='Miner' route='/pages/one' icon='screen' />
-        <SidebarLink title='About' route='/pages/one' icon='file-empty' />
-        <SidebarLink title='GitHub' route='/pages/one' icon='code' />
-
-        <ul className='sidebar__block'>
-          <SidebarCategory title='Layout' icon='layers'>
-            <li className='sidebar__link' onClick={this.changeToLight}>
-              <p className='sidebar__link-title'>Light Theme</p>
-            </li>
-            <li className='sidebar__link' onClick={this.changeToDark}>
-              <p className='sidebar__link-title'>Dark Theme</p>
-            </li>
-          </SidebarCategory>
-        </ul>
+        <SidebarLink title='Pool' route='/pool' icon='chart-bars' />
+        <SidebarLink title='Miner' route='/miner' icon='screen' />
+        <SidebarLink title='About' route='/about' icon='file-empty' />
+        <li className='sidebar__link'>
+          <span className={`sidebar__link-icon lnr lnr-code`}/>
+          <p className='sidebar__link-title'>
+            <a href={'https://github.com/grin-pool/grin-pool'} style={{ color: 'inherit' }}>GitHub</a>
+          </p>
+        </li>
       </div>
     )
   }
