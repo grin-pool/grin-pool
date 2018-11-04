@@ -1,19 +1,26 @@
 
 import { connect } from 'react-redux'
-import { NetworkDataComponent } from '../../containers/NetworkData/NetworkData.js'
-import { fetchGrinPoolData } from '../actions/grinPoolDataActions.js'
+import { GrinPoolDataComponent } from '../../containers/GrinPoolData/GrinPoolData.js'
+import {
+  fetchGrinPoolData,
+  fetchGrinPoolActiveMinerCount,
+  fetchGrinPoolLastBlock
+} from '../actions/grinPoolDataActions.js'
 
 const mapStateToProps = (state) => {
   return {
     networkData: state.grinPoolData.historical || [],
-    latestBlock: state.networkData.latestBlock || 0
+    activeWorkers: state.grinPoolData.activeWorkers,
+    lastBlockMined: state.grinPoolData.lastBlockMined
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchNetworkData: () => dispatch(fetchGrinPoolData())
+    fetchNetworkData: () => dispatch(fetchGrinPoolData()),
+    fetchGrinPoolActiveMinerCount: () => dispatch(fetchGrinPoolActiveMinerCount()),
+    fetchGrinPoolLastBlock: () => dispatch(fetchGrinPoolLastBlock())
   }
 }
 
-export const GrinPoolDataConnector = connect(mapStateToProps, mapDispatchToProps)(NetworkDataComponent)
+export const GrinPoolDataConnector = connect(mapStateToProps, mapDispatchToProps)(GrinPoolDataComponent)

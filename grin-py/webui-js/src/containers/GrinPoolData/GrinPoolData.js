@@ -6,15 +6,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 const C29_COLOR = '#8884d8'
 const C30_COLOR = '#cc9438'
 
-export class NetworkDataComponent extends Component {
+export class GrinPoolDataComponent extends Component {
   UNSAFE_componentWillMount () {
-    const { fetchNetworkData } = this.props
+    this.fetchGrinPoolData()
+    setInterval(this.fetchGrinPoolData, 10000)
+  }
+
+  fetchGrinPoolData = () => {
+    const { fetchNetworkData, fetchGrinPoolActiveMinerCount, fetchGrinPoolLastBlock } = this.props
+    fetchGrinPoolActiveMinerCount()
     fetchNetworkData()
-    setInterval(fetchNetworkData, 10000)
+    fetchGrinPoolLastBlock()
   }
 
   render () {
-    const { networkData, latestBlock } = this.props
+    const { networkData, activeWorkers, lastBlockMined } = this.props
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
@@ -39,8 +45,6 @@ export class NetworkDataComponent extends Component {
     })
     let c29LatestGraphRate = 'C29 = n/a gps'
     let c30LatestGraphRate = 'C30 = n/a gps'
-    let latestDifficulty = 'n/a'
-    let latestBlockHeight = 'n/a'
     if (networkData.length > 0) {
       const lastBlock = networkData[networkData.length - 1]
       if (lastBlock.gps[0]) {
@@ -49,16 +53,13 @@ export class NetworkDataComponent extends Component {
       if (lastBlock.gps[1]) {
         c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps} gps`
       }
-      latestDifficulty = lastBlock.difficulty
-      latestBlockHeight = lastBlock.height
     } else {
       c29LatestGraphRate = 'n/a gps'
       c30LatestGraphRate = 'n/a gps'
-      latestDifficulty = 'n/a'
-      latestBlockHeight = 'n/a'
     }
     const nowTimestamp = Date.now()
-    const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
+    const lastBlockTimeAgo = Math.floor(nowTimestamp / 1000 - lastBlockMined)
+    const totalPoolBlocksMined = networkData[networkData.length - 1] ? networkData[networkData.length - 1].total_blocks_found : 0
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={3} lg={3} xl={3}>
@@ -70,19 +71,15 @@ export class NetworkDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
-                <td>{latestBlockTimeAgo} sec ago</td>
+                <td>{lastBlockTimeAgo} sec ago</td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'desktop'} />Difficulty</td>
-                <td>{latestDifficulty}</td>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'desktop'} />Active Miners</td>
+                <td>{activeWorkers}</td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Chain Height</td>
-                <td>{latestBlockHeight}</td>
-              </tr>
-              <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>
-                <td>60 grin / block</td>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Blocks Found</td>
+                <td>{totalPoolBlocksMined}</td>
               </tr>
             </tbody>
           </Table>

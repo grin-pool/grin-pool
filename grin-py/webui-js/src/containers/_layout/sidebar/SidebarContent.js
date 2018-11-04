@@ -22,6 +22,12 @@ class SidebarContent extends PureComponent {
   render () {
     return (
       <div className='sidebar__content'>
+        <SidebarLink title='Home' route='/' icon='home' />
+        <SidebarLink title='Pool' route='/pages/one' icon='chart-bars' />
+        <SidebarLink title='Miner' route='/pages/one' icon='screen' />
+        <SidebarLink title='About' route='/pages/one' icon='file-empty' />
+        <SidebarLink title='GitHub' route='/pages/one' icon='code' />
+
         <ul className='sidebar__block'>
           <SidebarCategory title='Layout' icon='layers'>
             <li className='sidebar__link' onClick={this.changeToLight}>
@@ -30,12 +36,6 @@ class SidebarContent extends PureComponent {
             <li className='sidebar__link' onClick={this.changeToDark}>
               <p className='sidebar__link-title'>Dark Theme</p>
             </li>
-          </SidebarCategory>
-        </ul>
-        <ul className='sidebar__block'>
-          <SidebarCategory title='Example Pages' icon='diamond'>
-            <SidebarLink title='Page one' route='/pages/one' onClick={this.hideSidebar}/>
-            <SidebarLink title='Page two' route='/pages/two' onClick={this.hideSidebar}/>
           </SidebarCategory>
         </ul>
       </div>
