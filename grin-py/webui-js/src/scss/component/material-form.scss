@@ -1,0 +1,58 @@
+.material-form {
+
+  .material-form__field {
+    width: 100%;
+    margin-bottom: 20px;
+
+    & > div:before {
+
+      @include themify($themes) {
+        border-bottom-color: themed('colorFieldsBorder');
+      }
+    }
+
+    & > div:hover:before {
+      border-bottom: 1px solid $color-accent !important;
+    }
+
+    & > div:after {
+      border-color: $color-accent;
+    }
+
+    input, textarea {
+      font-size: 12px;
+
+      @include themify($themes) {
+        color: themed('colorText');
+      }
+    }
+
+    svg {
+
+      @include themify($themes) {
+        fill: themed('colorText');
+      }
+    }
+  }
+
+  .material-form__label {
+    margin: 0;
+
+    @include themify($themes) {
+      color: themed('colorText');
+    }
+  }
+
+  label {
+    font-size: 12px;
+
+    @include themify($themes) {
+      color: themed('colorText');
+    }
+  }
+}
+
+.material-form__option {
+  font-size: 13px !important;
+  height: 18px !important;
+}
