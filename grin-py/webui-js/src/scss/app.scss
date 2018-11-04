@@ -1,0 +1,25 @@
+@import 'settings/variable';  //themes' colors
+
+//base...
+@import 'generic/normalize.scss';
+@import 'generic/box-sizing.scss';
+@import './base/scaffolding';         // styles of base elements
+@import './base/typography';          // base styles of h1-h6, p, span
+
+//components...
+@import 'component/btn';
+@import './component/card';
+@import './component/check-box';
+@import './component/sidebar';
+@import './component/topbar';
+@import './component/modal';
+@import './component/load';
+@import './component/form';
+@import './component/material-form';
+
+//pages...
+@import 'containers/account';
+
+//objects...
+@import 'objects/layout.scss';
+

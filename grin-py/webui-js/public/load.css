@@ -1,0 +1,25 @@
+.load__icon {
+  animation: linear load 2s infinite;
+  width: 32px;
+  height: 32px;
+}
+
+.load__icon-wrap {
+  margin: auto;
+}
+
+.load {
+  height: calc(100vh - 16px);
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes load {
+  from {
+    transform: rotate(0deg) scale(2);
+  }
+  to {
+    transform: rotate(360deg) scale(2);
+  }
+}
