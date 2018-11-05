@@ -61,7 +61,7 @@ export class NetworkDataComponent extends Component {
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
-        <Col xs={12} md={3} lg={3} xl={3}>
+        <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>Network Stats</h4>
           <Table>
             <tbody>
@@ -88,13 +88,13 @@ export class NetworkDataComponent extends Component {
             </tbody>
           </Table>
         </Col>
-        <Col xs={12} md={9} lg={9} xl={9}>
-          <ResponsiveContainer width='100%' height={250}>
+        <Col xs={12} md={12} lg={7} xl={9}>
+          <ResponsiveContainer width='100%' height={270}>
             <LineChart data={graphRateData} >
               <XAxis dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
-              <YAxis connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
+              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
