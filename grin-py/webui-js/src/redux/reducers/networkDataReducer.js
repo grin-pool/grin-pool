@@ -11,7 +11,7 @@ export const historical = (state = [], action) => {
 
 export const latestBlock = (state = {}, action) => {
   switch (action.type) {
-    case 'NETWORK_DATA':
+    case 'LATEST_BLOCK':
       return action.data.latestBlock
     default:
       return state

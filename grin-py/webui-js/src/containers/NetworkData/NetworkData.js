@@ -90,7 +90,7 @@ export class NetworkDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <ResponsiveContainer width='100%' height={270}>
-            <LineChart data={graphRateData} >
+            <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
