@@ -1,8 +1,7 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { getLatestBlock } from './networkDataActions.js'
-
-const BLOCK_RANGE = 120
+import { BLOCK_RANGE } from '../../constants/dataConstants.js'
 
 export const fetchGrinPoolData = (start: number = 0) => async (dispatch) => {
   try {
