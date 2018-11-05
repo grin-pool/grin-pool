@@ -37,8 +37,8 @@ export class NetworkDataComponent extends Component {
         difficulty: block.difficulty
       })
     })
-    let c29LatestGraphRate = 'C29 = n/a gps'
-    let c30LatestGraphRate = 'C30 = n/a gps'
+    let c29LatestGraphRate = 'C29 = 0 gps'
+    let c30LatestGraphRate = 'C30 = 0 gps'
     let latestDifficulty = 'n/a'
     let latestBlockHeight = 'n/a'
     if (networkData.length > 0) {
@@ -52,8 +52,8 @@ export class NetworkDataComponent extends Component {
       latestDifficulty = lastBlock.difficulty
       latestBlockHeight = lastBlock.height
     } else {
-      c29LatestGraphRate = 'n/a gps'
-      c30LatestGraphRate = 'n/a gps'
+      c29LatestGraphRate = '0 gps'
+      c30LatestGraphRate = '0 gps'
       latestDifficulty = 'n/a'
       latestBlockHeight = 'n/a'
     }
@@ -83,7 +83,7 @@ export class NetworkDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>
-                <td>60 grin / block</td>
+                <td>60 GRIN / block</td>
               </tr>
             </tbody>
           </Table>
@@ -91,7 +91,7 @@ export class NetworkDataComponent extends Component {
         <Col xs={12} md={12} lg={7} xl={9}>
           <ResponsiveContainer width='100%' height={270}>
             <LineChart data={graphRateData} >
-              <XAxis dataKey='height'/>
+              <XAxis interval={19} dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
               <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />

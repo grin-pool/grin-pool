@@ -1,7 +1,6 @@
 // @flow
 import { API_URL } from '../../config.js'
-
-const BLOCK_RANGE = 120
+import { BLOCK_RANGE } from '../../constants/dataConstants.js'
 
 export const fetchNetworkData = (start: number = 0) => async (dispatch) => {
   try {
