@@ -4,10 +4,9 @@ import Layout from '../containers/_layout/Layout'
 import MainWrapper from './MainWrapper'
 
 import LogIn from '../containers/log_in/LogIn'
-import ExamplePageOne from '../containers/example/ExamplePageOne'
-import ExamplePageTwo from '../containers/example_two/ExamplePageTwo'
 import { HomepageConnector } from '../redux/connectors/HomepageConnector.js'
 import { AboutComponent } from '../containers/About/About.js'
+import { GrinPoolDetailsConnector } from '../redux/connectors/GrinPoolDetailsConnector.js'
 
 const Router = () => (
   <MainWrapper>
@@ -27,6 +26,7 @@ const wrappedRoutes = () => (
       <Route exact path='/' component={HomepageConnector}/>
       <Route path='/pages' component={Pages}/>
       <Route path='/about' component={AboutComponent}/>
+      <Route path='/pool' component={GrinPoolDetailsConnector} />
     </div>
   </div>
 )
@@ -34,8 +34,6 @@ const wrappedRoutes = () => (
 const Pages = () => (
   <Switch>
     <Route exact path='/' component={HomepageConnector}/>
-    <Route path='/pages/one' component={ExamplePageOne}/>
-    <Route path='/pages/two' component={ExamplePageTwo}/>
   </Switch>
 )
 

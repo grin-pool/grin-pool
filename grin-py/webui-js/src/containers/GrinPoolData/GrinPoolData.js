@@ -2,9 +2,7 @@ import React, { Component } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-
-const C29_COLOR = '#8884d8'
-const C30_COLOR = '#cc9438'
+import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolDataComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -87,7 +85,7 @@ export class GrinPoolDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <ResponsiveContainer width='100%' height={270}>
-            <LineChart data={graphRateData} >
+            <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
@@ -95,9 +93,6 @@ export class GrinPoolDataComponent extends Component {
               <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
-              {/* <YAxis yAxisId='right' orientation='right' domain={[minDifficulty, maxDifficulty]} stroke='#82ca9d' />
-                <Line yAxisId='right' dataKey='difficulty' stroke='#82ca9d' />
-              */}
             </LineChart>
           </ResponsiveContainer>
         </Col>

@@ -1,7 +1,14 @@
 import React, { PureComponent } from 'react'
+import { getLatestBlock } from '../redux/actions/networkDataActions.js'
 import { connect } from 'react-redux'
 
-class MainWrapper extends PureComponent {
+class MainWrapperComponent extends PureComponent {
+  constructor (props) {
+    super(props)
+    const { getLatestBlock } = this.props
+    getLatestBlock()
+    setInterval(getLatestBlock, 10000)
+  }
   render () {
     const theme = this.props.theme.className
     return (
@@ -14,7 +21,17 @@ class MainWrapper extends PureComponent {
   }
 }
 
-export default connect(state => {
-  return { theme: state.theme,
-    sidebar: state.sidebar }
-})(MainWrapper)
+const mapStateToProps = (state) => {
+  return {
+    theme: state.theme,
+    sidebar: state.sidebar
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    getLatestBlock: () => dispatch(getLatestBlock())
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MainWrapperComponent)
