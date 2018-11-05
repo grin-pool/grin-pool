@@ -7,6 +7,7 @@ import LogIn from '../containers/log_in/LogIn'
 import ExamplePageOne from '../containers/example/ExamplePageOne'
 import ExamplePageTwo from '../containers/example_two/ExamplePageTwo'
 import { HomepageConnector } from '../redux/connectors/HomepageConnector.js'
+import { AboutComponent } from '../containers/About/About.js'
 
 const Router = () => (
   <MainWrapper>
@@ -25,6 +26,7 @@ const wrappedRoutes = () => (
     <div className='container__wrap'>
       <Route exact path='/' component={HomepageConnector}/>
       <Route path='/pages' component={Pages}/>
+      <Route path='/about' component={AboutComponent}/>
     </div>
   </div>
 )
