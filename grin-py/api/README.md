@@ -74,7 +74,7 @@
 
 ```/pool/block```
 
-    Get the latest pool block
+    Get the latest block mined by pool
 
 ```/pool/block/<string:fields>```
     
