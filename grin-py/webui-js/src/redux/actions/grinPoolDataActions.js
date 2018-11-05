@@ -31,7 +31,7 @@ export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispa
 
 export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch) => {
   try {
-    const url = `${API_URL}grin/stat`
+    const url = `${API_URL}pool/block`
     const grinPoolLastBlockDataResponse = await fetch(url)
     const grinPoolLastBlockData = await grinPoolLastBlockDataResponse.json()
     dispatch({ type: 'GRIN_POOL_LAST_BLOCK_MINED', data: { lastBlockMined: grinPoolLastBlockData.timestamp } })
