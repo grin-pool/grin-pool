@@ -116,11 +116,10 @@ def get_current_height():
     # XXX TODO:  Validate somehow?
     return latest
 
-# Network graph rate
-def calculate_graph_rate(difficulty, ts1, ts2, n):
-    # XXX TODO:  Assumes cuckoo 30 for all blocks - Fixes for cuckatoos?
-    scale = 29.0
+# Worker graph rate
+def calculate_graph_rate(ts1, ts2, n):
     timedelta = (ts2 - ts1).total_seconds()
+    print("Calculate gps: timedelta: {}, num_shares {}".format(timedelta, n))
     if n == 0 or timedelta == 0:
       return 0
     gps = (42.0 * float(n)) / float(timedelta)

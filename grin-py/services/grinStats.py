@@ -68,7 +68,7 @@ def main():
                 database.db.getSession().add(new_stats)
                 if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
                     database.db.getSession().commit()
-                LOGGER.warn("Added Grin_stats for block: {} - gps:{} diff:{} utxosz:{}".format(new_stats.height, new_stats.gps, new_stats.difficulty, new_stats.total_utxoset_size))
+                LOGGER.warn("Added Grin_stats for block: {} - gps:{} diff:{}".format(new_stats.height, new_stats.gps, new_stats.difficulty))
                 height = height + 1
             except AssertionError as e:
                 LOGGER.error("Something went wrong: {}".format(e))

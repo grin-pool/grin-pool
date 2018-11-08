@@ -33,8 +33,10 @@ from grinlib import lib
 from grinlib import grin
 
 # so hard...
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+#import pprint
+#pp = pprint.PrettyPrinter(indent=4)
+
+PROCESS = "poolapi"
 
 
 app = Flask(__name__)
@@ -50,12 +52,14 @@ api = Api(app)
 class GrinAPI_stats(Resource):
     def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("GrinAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             stats = Grin_stats.get_latest(range)
         else:
             stats = Grin_stats.get_by_height(height, range)
-        pp.pprint(stats)
+        #pp.pprint(stats)
         
         if range == None:
             if stats is None:
@@ -80,6 +84,8 @@ api.add_resource(GrinAPI_stats,
 class GrinAPI_blocks(Resource):
     def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("GrinAPI_blocks get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             blocks = Blocks.get_latest(range)
@@ -113,6 +119,8 @@ api.add_resource(GrinAPI_blocks,
 class PoolAPI_blocks(Resource):
     def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("PoolAPI_blocks get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             blocks = Pool_blocks.get_latest(range)
@@ -140,6 +148,8 @@ api.add_resource(PoolAPI_blocks,
 class PoolAPI_blocksCount(Resource):
     def get(self, height=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("PoolAPI_blocksCount get height:{}".format(height))
         count = Pool_blocks.count(height)
         return count
 
@@ -154,6 +164,8 @@ api.add_resource(PoolAPI_blocksCount,
 class PoolAPI_stats(Resource):
     def get(self, height=None, range=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("PoolAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             stats = Pool_stats.get_latest(range)
@@ -183,6 +195,8 @@ api.add_resource(PoolAPI_stats,
 class PoolAPI_shareCount(Resource):
     def get(self, height=None, range=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("PoolAPI_shareCount get height:{} range:{} fields:{}".format(height, range))
         # Totals across all workers are stored in the Pool_stats record
         if range is None:
             if height is None:
@@ -220,13 +234,15 @@ api.add_resource(PoolAPI_shareCount,
 class WorkerAPI_stats(Resource):
     def get(self, id=None, height=0, range=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("WorkerAPI_stats get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
         fields = lib.fields_to_list(fields)
         if height == 0:
             height = Blocks.get_latest().height
         stats = []
         if id is None:
             for stat in Worker_stats.get_by_height(height, range):
-                print("YYY: {}".format(stats))
+                #print("YYY: {}".format(stats))
                 stats.append(stat.to_json(fields))
             return stats
         else:
@@ -255,7 +271,8 @@ api.add_resource(WorkerAPI_stats,
 class WorkerAPI_shares(Resource):
     def get(self, id=None, height=0, range=0, fields=None):
         database = lib.get_db()
-        print("id={} , height={}, range={}, fields={}".format(id,height,range,fields))
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("WorkerAPI_shares get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
         fields = lib.fields_to_list(fields)
         if height == 0:
             height = Blocks.get_latest().height
@@ -267,7 +284,7 @@ class WorkerAPI_shares(Resource):
         else:
             if range is None:
                 worker_sh_recs = Worker_shares.get_by_height_and_id(height, id)
-                print("worker_sh_recs = {}".format(worker_sh_recs))
+                #print("worker_sh_recs = {}".format(worker_sh_recs))
                 if res is None:
                     return "[]".to_json()
                 return res.to_json(fields)
@@ -298,6 +315,8 @@ api.add_resource(WorkerAPI_shares,
 class WorkerAPI_payments(Resource):
     def get(self, id=None, fields=None):
         database = lib.get_db()
+        LOGGER = lib.get_logger(PROCESS)
+        LOGGER.warn("WorkerAPI_payments get id:{} fields:{}".format(id, fields))
         fields = lib.fields_to_list(fields)
         utxo = Pool_utxo.get_by_address(id)
         return utxo.to_json(fields)

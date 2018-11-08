@@ -79,7 +79,7 @@ def main():
                                    nonce = response["header"]["nonce"],
                                    edge_bits = response["header"]["edge_bits"],
                                    total_difficulty = response["header"]["total_difficulty"],
-                                   scaling_difficulty = response["header"]["scaling_difficulty"],
+                                   secondary_scaling = response["header"]["secondary_scaling"],
                                    num_inputs = len(response["inputs"]),
                                    num_outputs = len(response["outputs"]),
                                    num_kernels = len(response["kernels"]),

@@ -13,3 +13,4 @@ pytz
 pygal
 cairosvg
 flask-cors
+pika

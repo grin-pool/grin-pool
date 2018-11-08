@@ -12,33 +12,22 @@ from grinbase.model import Base
 
 class Pool_stats(Base):
     __tablename__ = 'pool_stats'
-    height = Column(BigInteger, primary_key=True, nullable=False, unique=True, index=True, autoincrement=False)
+    height = Column(BigInteger, primary_key=True, index=True, autoincrement=False)
     timestamp = Column(DateTime, nullable=False, index=True)
-    gps = Column(Float)
     active_miners = Column(Integer)
     shares_processed = Column(Integer) # this block only
     total_blocks_found = Column(Integer) 
     total_shares_processed = Column(BigInteger) 
     total_grin_paid = Column(Float)
     dirty = Column(Boolean, index=True)
-    
+    gps = relationship("Gps")
     
     def __repr__(self):
-        return "{} {} {} {} {} {} {} {} {}".format(
-            self.timestamp,
-            self.height,
-            self.gps,
-            self.active_miners,
-            self.shares_processed,
-            self.total_shares_processed, 
-            self.total_grin_paid, 
-            self.total_blocks_found,
-            self.dirty)
+        return str(self.to_json())
 
-    def __init__(self, timestamp, height, gps, active_miners, shares_processed, total_shares_processed, total_grin_paid, total_blocks_found, dirty=False):
+    def __init__(self, timestamp, height, active_miners, shares_processed, total_shares_processed, total_grin_paid, total_blocks_found, dirty=False):
         self.timestamp = timestamp
         self.height = height
-        self.gps = gps
         self.active_miners = active_miners
         self.shares_processed = shares_processed
         self.total_shares_processed = total_shares_processed
@@ -47,16 +36,20 @@ class Pool_stats(Base):
         self.dirty = dirty
 
     def to_json(self, fields=None):
+        gps_data =  []
+        for rec in self.gps:
+            gps_data.append(rec.to_json())
         obj = { 
                 'timestamp': self.timestamp.timestamp(),
                 'height': self.height,
-                'gps': self.gps,
                 'active_miners': self.active_miners,
                 'shares_processed': self.shares_processed,
                 'total_shares_processed': self.total_shares_processed,
                 'total_grin_paid': self.total_grin_paid,
                 'total_blocks_found': self.total_blocks_found,
-                'dirty': self.dirty }
+                'dirty': self.dirty,
+                'gps': gps_data,
+        }
         # Filter by field(s)
         if fields != None:
             for k in list(obj.keys()):

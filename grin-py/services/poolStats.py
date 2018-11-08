@@ -42,7 +42,6 @@ CONFIG = None
 # XXX TODO: Move to config
 BATCHSZ = 100
 
-
 def main():
     CONFIG = lib.get_config()
     LOGGER = lib.get_logger(PROCESS)
@@ -70,7 +69,7 @@ def main():
             while True:
                 # latest = grin.blocking_get_current_height()
                 latest = Blocks.get_latest().height
-                while latest > height:
+                while latest >= height:
                     new_stats = poolstats.calculate(height, avg_over_range)
                     # Batch new stats when possible, but commit at reasonable intervals
                     database.db.getSession().add(new_stats)
