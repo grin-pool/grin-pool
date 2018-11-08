@@ -25,7 +25,7 @@ class Blocks(Base):
     nonce = Column(String(20), nullable=False)
     edge_bits = Column(SmallInteger)
     total_difficulty = Column(BigInteger)
-    scaling_difficulty = Column(BigInteger)
+    secondary_scaling = Column(BigInteger)
     num_inputs = Column(Integer)
     num_outputs = Column(Integer)
     num_kernels = Column(Integer)
@@ -47,7 +47,7 @@ class Blocks(Base):
             self.nonce,
             self.edge_bits,
             self.total_difficulty,
-            self.scaling_difficulty,
+            self.secondary_scaling,
             self.num_inputs,
             self.num_outputs,
             self.num_kernels,
@@ -56,7 +56,7 @@ class Blocks(Base):
             self.total_kernel_offset,
             self.state) 
 
-    def __init__(self, hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, edge_bits, total_difficulty, scaling_difficulty, num_inputs, num_outputs, num_kernels, fee, lock_height, total_kernel_offset, state):
+    def __init__(self, hash, version, height, previous, timestamp, output_root, range_proof_root, kernel_root, nonce, edge_bits, total_difficulty, secondary_scaling, num_inputs, num_outputs, num_kernels, fee, lock_height, total_kernel_offset, state):
             self.hash = hash
             self.version = version
             self.height = height
@@ -68,7 +68,7 @@ class Blocks(Base):
             self.nonce = nonce
             self.edge_bits = edge_bits
             self.total_difficulty = total_difficulty
-            self.scaling_difficulty = scaling_difficulty
+            self.secondary_scaling = secondary_scaling
             self.num_inputs = num_inputs
             self.num_outputs = num_outputs
             self.num_kernels = num_kernels
@@ -89,7 +89,7 @@ class Blocks(Base):
                 'nonce': self.nonce,
                 'edge_bits': self.edge_bits,
                 'total_difficulty': self.total_difficulty,
-                'scaling_difficulty': self.scaling_difficulty,
+                'secondary_scaling': self.secondary_scaling,
                 'num_inputs': self.num_inputs,
                 'num_outputs': self.num_outputs,
                 'num_kernels': self.num_kernels,

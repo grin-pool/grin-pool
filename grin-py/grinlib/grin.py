@@ -100,51 +100,15 @@ def get_network_difficulty(height):
     return latest_blocks[1].total_difficulty - latest_blocks[0].total_difficulty
 
 
-def get_stats(height):
-    ##
-    # Get requested grin network stats as seen by our grin node
-    return Grin_stats.get_by_height(height)
 
-def get_blocks_found_data(num_blocks):
-    ##
-    # Returns data needed to create a *blocks found* chart over the past num_blocks history
-    blocks_found_data = []
-    latest_blocks = Blocks.get_last_n(num_blocks)
-    for block in iter(latest_blocks):
-      blockdata = {}
-      blockdata["time"] = block.timestamp.strftime('%s')
-      blockdata["height"] =  block.height
-      blocks_found_data.append(blockdata)
-    return blocks_found_data
+
 
 def main():
     config = lib.get_config()
     PROCESS = "libNetworkTest"
     LOGGER = lib.get_logger(PROCESS)
-
     database = lib.get_db()
     
-    # Get stats
-    stats = get_stats()
-    LOGGER.warn("stats = {}".format(stats))
-    LOGGER.warn("")
-
-    # Get blocks found
-    bf = get_blocks_found_data(5)
-    LOGGER.warn("blocks found = {}".format(bf))
-    LOGGER.warn("")
-
-    # Get graph rate
-    gr = get_graph_rate_data(20)
-    LOGGER.warn("graph rate = {}".format(gr))
-    LOGGER.warn("")
-
-    # Get difficulty data
-    diff = get_difficulty_data(200)
-    LOGGER.warn("difficulty = {}".format(diff))
-
-    sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

@@ -128,7 +128,7 @@ def get_grin_graph(start, r):
 
 def get_pool_graph(start, r):
     parsed = json.loads(urlopen(get_api_url() + '/pool/stats/' + str(start) +','+str(r)+'/gps,height').read().decode('utf-8'))
-    print("Parsed: {}".format(parsed))
+    #print("Parsed: {}".format(parsed))
     # create a line graph
     title = 'GrinPool - g/s'
     graph = pygal.Line(width=500, # 1.875
@@ -252,7 +252,7 @@ def get_workers_graph(workers, start, r):
         continue
       print("Len of padded worker stats: {}".format(len(padded_worker_stats)))
       #print("PADDED Miner stats {}".format(padded_worker_stats))
-      worker_data = [i['gps'][0] for i in padded_worker_stats]
+      worker_data = [i['gps'] for i in padded_worker_stats]
       graph.add(obfuscate_name(miner), worker_data)
 
     return graph
@@ -328,37 +328,38 @@ def home_template():
 
 
         workers = None
-#        ##
-#        # TOP WORKERS
-#        latest_stats = []
-#        active_miners = []
-#        r = 60
-#        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
-#        active_miners = list(set([d['worker'] for d in active_miners]))
-#        latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
-#        top_workers = []
-#        workers = []
-#        #print("Active Miners: {}".format(active_miners))
-#        #print("latest_stats: {}".format(latest_stats))
-#        for miner in active_miners:
-#          print("Miner: {}".format(miner))
-#          try:
-#            miner_stats = [stat for stat in latest_stats if stat["worker"] == miner][-1]
-#           #print("Adding stats for miner: {}, {}".format(miner, miner_stats))
-#            workers.append(miner_stats["worker"])
-#            top_workers.append({"name": obfuscate_name(miner_stats["worker"]), "gps": round(miner_stats["gps"], 2)})
-#          except Exception as e:
-#           pass
+        ##
+        # TOP WORKERS
+        latest_stats = []
+        active_miners = []
+        r = 60
+        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
+        active_miners = list(set([d['worker'] for d in active_miners]))
+        latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
+        top_workers = []
+        workers = []
+        #print("Active Miners: {}".format(active_miners))
+        #print("latest_stats: {}".format(latest_stats))
+        for miner in active_miners:
+          print("Miner: {}".format(miner))
+          try:
+            miner_stats = [stat for stat in latest_stats if stat["worker"] == miner][-1]
+           #print("Adding stats for miner: {}, {}".format(miner, miner_stats))
+            workers.append(miner_stats["worker"])
+            total_gps = sum([ms["gps"] for ms in miner_stats["gps"]])
+            top_workers.append({"name": obfuscate_name(miner_stats["worker"]), "gps": round(total_gps, 2)})
+          except Exception as e:
+           pass
 #        while len(top_workers) < 5:
 #          top_workers.append({"name": "None", "gps": 0})
 #        top_workers.sort(key=lambda s: s["gps"], reverse=True)
 #        print("Top Workers: {}".format(top_workers))
-#          
-#        workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
-#        
-#        workers = { "top": top_workers,
-#                    "graph": workers_graph.render_data_uri()
-#        }
+          
+        workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
+        
+        workers = { "top": top_workers,
+                    "graph": workers_graph.render_data_uri()
+        }
 
 
 

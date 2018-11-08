@@ -27,13 +27,70 @@ from grinlib import grin
 
 from grinbase.model.blocks import Blocks
 from grinbase.model.grin_stats import Grin_stats
-from grinbase.model.pool_stats import Pool_stats
-from grinbase.model.worker_stats import Worker_stats
+from grinbase.model.gps import Gps
+
+# MOVE TO CONFIG - Tromps magic numbers
+SECONDARY_SIZE = 29
+NUM_BLOCKS_WEEK = 10080
+BASE_EDGE_BITS = 24
+DIFFICULTY_ADJUST_WINDOW = 60
+
+
+# secondary pow ratio at a specific height
+def secondary_pow_ratio(height):
+    # I have no idea, Tromp likes secrets and/or hates documentation,
+    #   and im too slow to understand it
+    return max(0, 90 - int(height / NUM_BLOCKS_WEEK))
+
+# I have no idea
+def graph_weight(edge_bits):
+    return (2 << (edge_bits - BASE_EDGE_BITS)) * edge_bits
+
+# Calculate GPS for window[-1] for all graph sizes and return it as a list of tuples [(edge_bits, gps_estimate ,), ...]
+def estimate_all_gps(window):
+    gps = []
+    # Calcualte the gps for each graph size in the recnt blocks list
+    # Based on jaspervdm code - https://github.com/jaspervdm/grin_mining_sim
+
+    height = window[-1].height
+    # Get the difficulty of the most recent block
+    difficulty = window[-1].total_difficulty - window[-2].total_difficulty
+    # Get secondary_scaling value for the most recent block
+    secondary_scaling = window[-1].secondary_scaling
+    # Count the total number of each solution size in the window
+    counts = {}
+    counts[SECONDARY_SIZE] = 0
+    for block in window:
+        if block.edge_bits not in counts:
+            counts[block.edge_bits] = 1
+        else:
+            counts[block.edge_bits] += 1
+    # Get total counts for primary and secondary POWs
+    count_secondary = counts[SECONDARY_SIZE]
+    count_primary = sum(counts.values()) - count_secondary
+    percent_primary = int(count_primary / len(window)*100)
+    # ratios
+    q = secondary_pow_ratio(height)/100
+    r = 1 - q
+    # Calculate the GPS
+    all_gps = []
+    for edge_bits in counts:
+        gps = 0
+        if edge_bits == SECONDARY_SIZE:
+            gps = 42 * difficulty * q / secondary_scaling / 60
+        else:
+            count_ratio = counts[edge_bits] / count_primary
+            print("count_ratio={}".format(count_ratio))
+            print("gps = 42 * {} * {} * {} / {} / 60".format(difficulty, r, count_ratio, graph_weight(edge_bits)))
+            gps = 42 * difficulty * r * count_ratio / graph_weight(edge_bits) / 60
+        all_gps.append((edge_bits, gps, ))
+    return all_gps
+    
 
 # Calculate the grin stats for the specified height
 # Return a Grin_stats object
 # Raises AssertionError
-def calculate(height, avg_range):
+def calculate(height, avg_range=DIFFICULTY_ADJUST_WINDOW):
     # Get the most recent blocks from which to generate the stats
     recent_blocks = []
     previous_stats_record = Grin_stats.get_by_height(height-1)
@@ -43,10 +100,6 @@ def calculate(height, avg_range):
     if len(recent_blocks) < min(avg_range, height):
         # We dont have all of these blocks in the DB
         raise AssertionError("Missing blocks in range: {}:{}".format(height-avg_range, height))
-#    print(recent_blocks[-1])
-#    print(recent_blocks[-2])
-#    print(recent_blocks[-3])
-#    print(recent_blocks[-4])
     assert recent_blocks[-1].height == height, "Invalid height in recent_blocks[-1]" 
     assert recent_blocks[-2].height == height - 1, "Invalid height in recent_blocks[-2]: {} vs {}".format(recent_blocks[-2].height, height - 1) 
     # Calculate the stats data
@@ -54,37 +107,20 @@ def calculate(height, avg_range):
     last_block = recent_blocks[-1]
     timestamp = last_block.timestamp
     difficulty = recent_blocks[-1].total_difficulty - recent_blocks[-2].total_difficulty
-    gps = grin.calculate_graph_rate(difficulty, 29)
-    # utxo set size = sum outputs - sum inputs
-    total_utxoset_size = previous_stats_record.total_utxoset_size + last_block.num_outputs - last_block.num_inputs
-    return Grin_stats(
+    new_stats = Grin_stats(
         height = height,
         timestamp = timestamp,
-        gps = gps,
         difficulty = difficulty,
-        total_utxoset_size = total_utxoset_size,
     )
-
-
-# Re-Caclulate grin stats from the specified height and commits to DB
-# Return height of the last stat recalculated
-# Raises AssertionError
-def recalculate(start_height, avg_range):
-    database = lib.get_db()
-    height = start_height
-    while height <= grin.blocking_get_current_height():
-        old_stats = Grin_stats.get_by_height(height)
-        new_stats = calculate(height, avg_range)
-        if old_stats is None:
-            database.db.createDataObj(new_stats)
-        else:
-            old_stats.timestamp = new_stats.timestamp
-            old_stats.difficulty = new_stats.difficulty
-            old_stats.gps = new_stats.gps
-            old_stats.difficulty = new_stats.difficulty
-            old_stats.total_utxoset_size = new_stats.total_utxoset_size
-            database.db.getSession().commit()
-        height = height + 1
+    # Caclulate estimated GPS for recent edge_bits sizes
+    all_gps = estimate_all_gps(recent_blocks)
+    for gps in all_gps:
+        gps_rec = Gps(
+            edge_bits = gps[0],
+            gps = gps[1],
+        )
+        new_stats.gps.append(gps_rec)
+    return new_stats
 
 
 # Initialize Grin_stats
@@ -96,24 +132,18 @@ def initialize():
     seed_stat0 = Grin_stats(
         height=0,
         timestamp=block_zero.timestamp,
-        gps=0,
-        difficulty=block_zero.total_difficulty,
-        total_utxoset_size=block_zero.num_inputs)
+        difficulty=block_zero.total_difficulty)
     database.db.createDataObj(seed_stat0)
     block_one = Blocks.get_by_height(1)
     seed_stat1 = Grin_stats(
         height=1,
         timestamp=block_one.timestamp,
-        gps=0,
-        difficulty=block_one.total_difficulty - block_zero.total_difficulty,
-        total_utxoset_size=seed_stat0.total_utxoset_size + block_one.num_outputs - block_one.num_inputs)
+        difficulty=block_one.total_difficulty - block_zero.total_difficulty)
     database.db.createDataObj(seed_stat1)
     block_two = Blocks.get_by_height(2)
     seed_stat2 = Grin_stats(
         height=2,
         timestamp=block_two.timestamp,
-        gps=0,
-        difficulty=block_two.total_difficulty - block_one.total_difficulty,
-        total_utxoset_size=seed_stat1.total_utxoset_size + block_two.num_outputs - block_two.num_inputs)
+        difficulty=block_two.total_difficulty - block_one.total_difficulty)
     database.db.createDataObj(seed_stat2)
 

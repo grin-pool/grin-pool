@@ -8,11 +8,8 @@ from sqlalchemy.orm import relationship
 from grinbase.dbaccess import database
 from grinbase.model import Base
 
-#from grinlib import lib
-
 # This table contains worker share information per block
-
-# XXX TODO?  Consider removeing id and using height+worker as a primary unique key
+#   Note the To-Many relationship with Shares
 
 class Worker_shares(Base):
     __tablename__ = 'worker_shares'
@@ -20,34 +17,24 @@ class Worker_shares(Base):
     height = Column(BigInteger, nullable=False, index=True)
     worker = Column(String(1024), index=True)
     timestamp = Column(DateTime, index=True)
-    difficulty = Column(Integer)
-    valid = Column(Integer)
-    invalid = Column(Integer)
+    shares = relationship("Shares")
 
     def __repr__(self):
-        return "{} {} {} {} {} {}".format(
-            self.height,
-            self.worker,
-            self.timestamp,
-            self.difficulty,
-            self.valid,
-            self.invalid)
+        return str(self.to_json())
 
-    def __init__(self, height, worker, timestamp, difficulty, valid, invalid):
+    def __init__(self, height, worker, timestamp):
         self.height = height
         self.worker = worker
         self.timestamp = timestamp
-        self.difficulty = difficulty
-        self.valid = valid
-        self.invalid = invalid
 
     def to_json(self, fields=None):
+        share_data = []
+        for rec in self.shares:
+            share_data.append(rec.to_json())
         obj = { 'height': self.height,
                 'worker': self.worker,
                 'timestamp': self.timestamp.timestamp(),
-                'difficulty': self.difficulty,
-                'valid': self.valid,
-                'invalid': self.invalid,
+                'shares': share_data,
               }
         # Filter by field(s)
         if fields != None:
@@ -55,6 +42,27 @@ class Worker_shares(Base):
                 if k not in fields:
                     del obj[k]
         return obj
+
+    def num_shares(self):
+        return self.num_valid() + self.num_invalid() + self.num_stale()
+
+    def num_valid(self, edge_bits=None):
+        if edge_bits is None:
+            return sum([s.valid for s in self.shares])
+        else:
+            return sum([s.valid for s in self.shares if s.edge_bits == edge_bits])
+
+    def num_invalid(self):
+        return sum([s.invalid for s in self.shares])
+
+    def num_stale(self):
+        return sum([s.stale for s in self.shares])
+
+    def sizes(self):
+        return list(set([s.edge_bits for s in self.shares]))
+
+    def num_shares_of_size(self, edge_bits):
+        return sum([1 for s in self.shares if s == edge_bits])
 
     # Get a list of all records in the table
     # XXX Please dont call this except in testing
@@ -69,14 +77,15 @@ class Worker_shares(Base):
 
     # Get list of all worker share records by height and optionally range
     @classmethod
-    def get_by_height(cls, height, range=1):
-        h_start = height-(range-1)
+    def get_by_height(cls, height, range=0):
+        h_start = height-range
         h_end = height
         return list(database.db.getSession().query(Worker_shares).filter(and_(Worker_shares.height >= h_start, Worker_shares.height <= h_end)).order_by(Worker_shares.height))
             
     # Get all pool shares by height and user
     @classmethod
-    def get_by_user_and_height(cls, user, height, range=1):
-        h_start = height-(range-1)
+    def get_by_height_and_id(cls, height, id, range=0):
+        print("height={}, id={}, range={}".format(height, id, range))
+        h_start = height-range
         h_end = height
-        return list(database.db.getSession().query(Worker_shares).filter(and_(Worker_shares.height >= h_start, Worker_shares.height <= h_end, getattr(Worker_shares, "worker").like("%"+user))).order_by(Worker_shares.height))
+        return list(database.db.getSession().query(Worker_shares).filter(and_(Worker_shares.height >= h_start, Worker_shares.height <= h_end, getattr(Worker_shares, "worker").like("%"+id))).order_by(Worker_shares.height))

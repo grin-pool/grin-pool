@@ -15,31 +15,25 @@ class Grin_stats(Base):
     __tablename__ = 'grin_stats'
     height = Column(BigInteger, index=True, primary_key=True, autoincrement=False)
     timestamp = Column(DateTime, nullable=False, index=True)
-    gps = Column(Float)
     difficulty = Column(Integer)
-    total_utxoset_size = Column(BigInteger)
+    gps = relationship("Gps")
     
     def __repr__(self):
-        return "{} {} {} {} {}".format(
-            self.timestamp.timestamp(),
-            self.height,
-            self.gps,
-            self.difficulty,
-            self.total_utxoset_size)
+        return str(self.to_json())
 
-    def __init__(self, timestamp, height, gps, difficulty, total_utxoset_size):
+    def __init__(self, timestamp, height, difficulty):
         self.timestamp = timestamp
         self.height = height
-        self.gps = gps
         self.difficulty = difficulty
-        self.total_utxoset_size = total_utxoset_size
 
     def to_json(self, fields=None):
+        gps_data =  []
+        for rec in self.gps:
+            gps_data.append(rec.to_json())
         obj = { 'timestamp': self.timestamp.timestamp(),
                  'height': self.height,
-                 'gps': self.gps,
                  'difficulty': self.difficulty,
-                 'total_utxoset_size': self.total_utxoset_size
+                 'gps': gps_data,
               }
         # Filter by field(s)
         if fields != None:
