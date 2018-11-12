@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { connect } from 'react-redux'
 import 'bootstrap/dist/css/bootstrap.css'
 import '../scss/app.scss'
 import Router from './Router'
@@ -39,11 +40,15 @@ class App extends Component {
           </div>
         </div>}
         <div>
-          <Router/>
+          <Router account={this.props.account} />
         </div>
       </div>
     )
   }
 }
 
-export default App
+export default connect((state) => {
+  return {
+    account: state.auth.account
+  }
+})(App)
