@@ -52,11 +52,12 @@ const Pages = () => (
 )
 
 function PrivateRoute ({ component: Component, ...rest }) {
+  console.log(' , and rest are: ', rest)
   return (
     <Route
       {...rest}
       render={props =>
-        props.account ? (
+        rest.account ? (
           <Component {...props} />
         ) : (
           <Redirect

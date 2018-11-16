@@ -2,7 +2,7 @@
 import { API_URL } from '../../config.js'
 import { sha256 } from 'js-sha256'
 
-export const createUser = (username: string, password: string) => async (dispatch, getState) => {
+export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
   try {
     const url = `${API_URL}pool/users`
     const createUserResponse = await fetch(url, {
@@ -19,6 +19,7 @@ export const createUser = (username: string, password: string) => async (dispatc
     if (createUserData.username) {
       const loginData = await dispatch(login(username, password))
       dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
+      history.push('/miner')
     }
   } catch (e) {
     console.log('Error: ', e)

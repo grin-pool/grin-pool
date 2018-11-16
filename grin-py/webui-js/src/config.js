@@ -1,1 +1,1 @@
-export const API_URL = 'http://api.mwgrinpool.com/' // enter your own endpoint here
+export const API_URL = 'https://api.mwgrinpool.com/' // enter your own endpoint here
