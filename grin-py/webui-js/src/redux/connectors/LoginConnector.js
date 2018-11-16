@@ -7,9 +7,9 @@ const mapStateToProps = (state) => ({
 
 })
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = (dispatch, ownProps) => {
   return {
-    createUser: (username: string, password: string) => dispatch(createUser(username, password)),
+    createUser: (username: string, password: string) => dispatch(createUser(username, password, ownProps.history)),
     login: (username: string, password: string) => dispatch(login(username, password))
   }
 }
