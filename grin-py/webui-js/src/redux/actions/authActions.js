@@ -17,16 +17,14 @@ export const createUser = (username: string, password: string, history: any) => 
     })
     const createUserData = await createUserResponse.json()
     if (createUserData.username) {
-      const loginData = await dispatch(login(username, password))
-      dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
-      history.push('/miner')
+      dispatch(login(username, password, history))
     }
   } catch (e) {
     console.log('Error: ', e)
   }
 }
 
-export const login = (username: string, password: string) => async (dispatch, getState) => {
+export const login = (username: string, password: string, history) => async (dispatch, getState) => {
   try {
     const hashedPassword = sha256(password)
     const auth = 'Basic ' + Buffer.from(username + ':' + hashedPassword).toString('base64')
@@ -37,7 +35,8 @@ export const login = (username: string, password: string) => async (dispatch, ge
       }
     })
     const loginData = await loginResponse.json()
-    return loginData
+    dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
+    history.push('/miner')
   } catch (e) {
     console.log('Error: ', e)
   }
