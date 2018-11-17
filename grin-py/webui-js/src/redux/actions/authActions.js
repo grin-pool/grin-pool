@@ -1,19 +1,18 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { sha256 } from 'js-sha256'
+import FormData from 'form-data'
 
 export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
   try {
     const url = `${API_URL}pool/users`
+    const formData = new FormData()
+    const hashedPassword = sha256(password)
+    formData.append('username', username)
+    formData.append('password', hashedPassword)
     const createUserResponse = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8'
-      },
-      body: JSON.stringify({
-        username,
-        password: sha256(password)
-      })
+      body: formData
     })
     const createUserData = await createUserResponse.json()
     if (createUserData.username) {
@@ -32,8 +31,11 @@ export const login = (username: string, password: string, history) => async (dis
     const loginResponse = await fetch(url, {
       headers: {
         'Authorization': auth
-      }
+      },
+      method: 'GET'
     })
+    console.log('auth is: ', auth)
+    console.log('loginResponse is: ', loginResponse)
     const loginData = await loginResponse.json()
     dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
     history.push('/miner')
