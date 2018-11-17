@@ -1,8 +1,9 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { sha256 } from 'js-sha256'
+import type { Dispatch, GetState } from '../types.js'
 
-export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
+export const createUser = (username: string, password: string, history: Object) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const url = `${API_URL}pool/users`
     const createUserResponse = await fetch(url, {
@@ -24,7 +25,7 @@ export const createUser = (username: string, password: string, history: any) => 
   }
 }
 
-export const login = (username: string, password: string, history) => async (dispatch, getState) => {
+export const login = (username: string, password: string, history: Object) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const hashedPassword = sha256(password)
     const auth = 'Basic ' + Buffer.from(username + ':' + hashedPassword).toString('base64')
