@@ -1,8 +1,9 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { BLOCK_RANGE } from '../../constants/dataConstants.js'
+import type { Dispatch, GetState } from '../types.js'
 
-export const fetchGrinPoolData = (start: number = 0) => async (dispatch, getState) => {
+export const fetchGrinPoolData = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
@@ -15,7 +16,7 @@ export const fetchGrinPoolData = (start: number = 0) => async (dispatch, getStat
   }
 }
 
-export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispatch, getState) => {
+export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
@@ -28,7 +29,7 @@ export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispa
   }
 }
 
-export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch) => {
+export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch: Dispatch) => {
   try {
     const url = `${API_URL}pool/block`
     const grinPoolLastBlockDataResponse = await fetch(url)
@@ -39,7 +40,7 @@ export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch) =>
   }
 }
 
-export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispatch, getState) => {
+export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
