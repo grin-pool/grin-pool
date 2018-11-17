@@ -1,9 +1,8 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { BLOCK_RANGE } from '../../constants/dataConstants.js'
-import type { Dispatch, GetState } from '../types.js'
 
-export const fetchNetworkData = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
+export const fetchNetworkData = (start: number = 0) => async (dispatch, getState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
@@ -16,7 +15,7 @@ export const fetchNetworkData = (start: number = 0) => async (dispatch: Dispatch
   }
 }
 
-export const getLatestBlock = () => async (dispatch: Dispatch) => {
+export const getLatestBlock = () => async (dispatch) => {
   try {
     const latestBlockUrl = `${API_URL}grin/block`
     const latestBlockResponse = await fetch(latestBlockUrl)
