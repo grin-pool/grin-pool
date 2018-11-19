@@ -9,6 +9,32 @@ export const account = (state = null, action) => {
   }
 }
 
+export const isCreatingAccount = (state = false, action) => {
+  switch (action.type) {
+    case 'IS_CREATING_ACCOUNT':
+      return action.data
+    case 'ACCOUNT':
+      return false
+    case 'IS_LOGGING_IN':
+      return false
+    default:
+      return state
+  }
+}
+
+export const isLoggingIn = (state = false, action) => {
+  switch (action.type) {
+    case 'IS_LOGGING_IN':
+      return action.data
+    case 'ACCOUNT':
+      return false
+    default:
+      return state
+  }
+}
+
 export const auth = combineReducers({
-  account
+  account,
+  isCreatingAccount,
+  isLoggingIn
 })

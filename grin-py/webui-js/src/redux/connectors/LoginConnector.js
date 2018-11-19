@@ -4,7 +4,8 @@ import { LoginComponent } from '../../containers/Login/Login.js'
 import { createUser, login } from '../actions/authActions.js'
 
 const mapStateToProps = (state) => ({
-
+  isLoggingIn: state.auth.isLoggingIn,
+  isCreatingAccount: state.auth.isCreatingAccount
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => {
