@@ -1,6 +1,7 @@
 import React from 'react'
 import { Redirect } from 'react-router-dom'
 import { Form, FormGroup, Label, Input, Row, Col, Container, Card, CardBody } from 'reactstrap'
+import Spinner from 'react-spinkit'
 
 export class LoginComponent extends React.Component {
   state = { redirectToReferrer: false }
@@ -46,7 +47,12 @@ export class LoginComponent extends React.Component {
     createUser(this.state.username, this.state.password)
   }
 
+  renderSpinner = () => {
+    return <Spinner name='circle' color='white' fadeIn='none' style={{ marginLeft: 'auto', marginRight: 'auto', height: 21 }} />
+  }
+
   render () {
+    const { isCreatingAccount, isLoggingIn } = this.props
     const { from } = this.props.location.state || { from: { pathname: '/' } }
     const { redirectToReferrer } = this.state
     if (redirectToReferrer) return <Redirect to={from} />
@@ -70,7 +76,7 @@ export class LoginComponent extends React.Component {
                   </h3>
                   <h4 className="account__subhead subhead">Start mining GRIN today</h4>
                 </div>
-                <Form>
+                <Form className='login-form'>
                   <FormGroup>
                     <Label for="loginEmail">Username:</Label>
                     <Input onChange={this.onChangeUsername} type="email" name="email" id="loginEmail" placeholder="" />
@@ -80,8 +86,8 @@ export class LoginComponent extends React.Component {
                     <Input onChange={this.onChangePassword} type="password" name="password" id="loginPassword" placeholder="" />
                   </FormGroup>
                   <div style={{ textAlign: 'center' }}>
-                    <button onClick={this.login} className="btn btn-primary account__btn account__btn--small" to="/pages/one">Sign In</button>
-                    <button onClick={this.register} className="btn btn-outline-primary account__btn account__btn--small" to="/log_in">Create Account</button>
+                    <button onClick={this.login} className="btn btn-primary account__btn account__btn--small">{(isLoggingIn && !isCreatingAccount) ? this.renderSpinner() : 'Sign In'}</button>
+                    <button onClick={this.register} className="btn btn-outline-primary account__btn account__btn--small">{isCreatingAccount ? this.renderSpinner() : 'Create Account'}</button>
                   </div>
                 </Form>
               </CardBody>
