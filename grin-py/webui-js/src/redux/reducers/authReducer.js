@@ -17,6 +17,8 @@ export const isCreatingAccount = (state = false, action) => {
       return false
     case 'IS_LOGGING_IN':
       return false
+    case 'AUTH_ERROR':
+      return false
     default:
       return state
   }
@@ -28,6 +30,29 @@ export const isLoggingIn = (state = false, action) => {
       return action.data
     case 'ACCOUNT':
       return false
+    case 'AUTH_ERROR':
+      return false
+    default:
+      return state
+  }
+}
+
+const authError = (state = '', action) => {
+  switch (action.type) {
+    case 'AUTH_ERROR':
+      return action.data.authError
+    case 'IS_LOGGING_IN':
+      if (action.data === true) {
+        return ''
+      } else {
+        return state
+      }
+    case 'IS_CREATING_ACCOUNT':
+      if (action.data === true) {
+        return ''
+      } else {
+        return state
+      }
     default:
       return state
   }
@@ -36,5 +61,6 @@ export const isLoggingIn = (state = false, action) => {
 export const auth = combineReducers({
   account,
   isCreatingAccount,
-  isLoggingIn
+  isLoggingIn,
+  authError
 })

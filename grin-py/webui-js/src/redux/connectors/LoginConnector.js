@@ -5,7 +5,8 @@ import { createUser, login } from '../actions/authActions.js'
 
 const mapStateToProps = (state) => ({
   isLoggingIn: state.auth.isLoggingIn,
-  isCreatingAccount: state.auth.isCreatingAccount
+  isCreatingAccount: state.auth.isCreatingAccount,
+  authError: state.auth.authError
 })
 
 const mapDispatchToProps = (dispatch, ownProps) => {

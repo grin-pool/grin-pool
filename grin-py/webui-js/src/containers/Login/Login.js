@@ -1,6 +1,6 @@
 import React from 'react'
 import { Redirect } from 'react-router-dom'
-import { Form, FormGroup, Label, Input, Row, Col, Container, Card, CardBody } from 'reactstrap'
+import { Alert, Form, FormGroup, Label, Input, Row, Col, Container, Card, CardBody } from 'reactstrap'
 import Spinner from 'react-spinkit'
 
 export class LoginComponent extends React.Component {
@@ -85,6 +85,13 @@ export class LoginComponent extends React.Component {
                     <Label for="loginPassword">Password:</Label>
                     <Input onChange={this.onChangePassword} type="password" name="password" id="loginPassword" placeholder="" />
                   </FormGroup>
+                  <div>
+                    {this.props.authError && (
+                      <Alert color='danger' style={{ textAlign: 'center' }}>
+                        {this.props.authError}
+                      </Alert>
+                    )}
+                  </div>
                   <div style={{ textAlign: 'center' }}>
                     <button onClick={this.login} className="btn btn-primary account__btn account__btn--small">{(isLoggingIn && !isCreatingAccount) ? this.renderSpinner() : 'Sign In'}</button>
                     <button onClick={this.register} className="btn btn-outline-primary account__btn account__btn--small">{isCreatingAccount ? this.renderSpinner() : 'Create Account'}</button>
