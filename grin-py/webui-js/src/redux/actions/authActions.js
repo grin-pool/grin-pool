@@ -31,12 +31,12 @@ export const createUser = (username: string, password: string, history: any) => 
       const loginData = await loginResponse.json()
       dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
       history.push('/miner')
-    } else {
-      dispatch({ type: 'IS_CREATING_ACCOUNT', data: false })
+    } else if (createUserData.message) {
+      dispatch({ type: 'AUTH_ERROR', data: { authError: createUserData.message } })
     }
   } catch (e) {
     console.log('Error: ', e)
-    dispatch({ type: 'IS_CREATING_ACCOUNT', data: false })
+    dispatch({ type: 'AUTH_ERROR', data: { authError: e.message } })
   }
 }
 
@@ -59,6 +59,6 @@ export const login = (username: string, password: string, history) => async (dis
     history.push('/miner')
   } catch (e) {
     console.log('Error: ', e)
-    dispatch({ type: 'IS_LOGGING_IN', data: false })
+    dispatch({ type: 'AUTH_ERROR', data: { authError: 'There was a problem logging in with those credentials. Please check your credentials and try again.' } })
   }
 }
