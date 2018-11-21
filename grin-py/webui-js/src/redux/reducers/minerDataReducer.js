@@ -2,23 +2,23 @@ import { combineReducers } from 'redux'
 
 export const historical = (state = [], action) => {
   switch (action.type) {
-    case 'NETWORK_DATA':
+    case 'MINER_DATA':
       return action.data.historical
     default:
       return state
   }
 }
 
-export const latestBlock = (state = {}, action) => {
+export const totalSharesSubmitted = (state = 0, action) => {
   switch (action.type) {
-    case 'LATEST_BLOCK':
-      return action.data.latestBlock
+    case 'TOTAL_MINER_SHARES_SUBMITTED':
+      return action.data.totalSharesSubmitted
     default:
       return state
   }
 }
 
-export const networkData = combineReducers({
+export const minerData = combineReducers({
   historical,
-  latestBlock
+  totalSharesSubmitted
 })

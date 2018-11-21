@@ -4,7 +4,7 @@
   left: 0;
   z-index: 99;
   height: 100vh;
-  width: 240px;
+  width: 200px;
   box-shadow: 0 1px 30px 1px rgba(0, 0, 0, 0.11);
   padding-top: 60px;
   transition: transform 0.3s, width 0.3s;
@@ -97,7 +97,7 @@
 
   .sidebar__link {
     height: 36px;
-    width: 240px;
+    width: 200px;
     transition: all 0.3s;
     position: relative;
     cursor: pointer;
@@ -288,7 +288,7 @@
         &:hover {
 
           .sidebar__category {
-            width: 240px;
+            width: 200px;
 
             @include themify($themes) {
               background: themed('colorHover');
@@ -345,7 +345,7 @@
         }
 
         &:hover {
-          width: 240px;
+          width: 200px;
 
           @include themify($themes) {
             background: themed('colorHover');
