@@ -4,10 +4,16 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } f
 import { C29_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolSharesSubmittedComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     const { fetchGrinPoolSharesSubmitted } = this.props
     fetchGrinPoolSharesSubmitted()
-    setInterval(fetchGrinPoolSharesSubmitted, 10000)
+    this.interval = setInterval(fetchGrinPoolSharesSubmitted, 10000)
   }
 
   render () {

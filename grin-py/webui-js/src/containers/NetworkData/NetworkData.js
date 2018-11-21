@@ -7,10 +7,16 @@ const C29_COLOR = '#8884d8'
 const C30_COLOR = '#cc9438'
 
 export class NetworkDataComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
-    setInterval(fetchNetworkData, 10000)
+    this.interval = setInterval(fetchNetworkData, 10000)
   }
 
   render () {
