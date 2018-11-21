@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody } from 'reactstrap'
 import { MinerDataConnector } from '../../redux/connectors/MinerDataConnector.js'
+import { MinerSharesConnector } from '../../redux/connectors/MinerSharesConnector.js'
 
 export class MinerDetailsComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -25,6 +26,15 @@ export class MinerDetailsComponent extends Component {
             <Card>
               <CardBody>
                 <MinerDataConnector />
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={12} md={12} lg={12} xl={12}>
+            <Card>
+              <CardBody>
+                <MinerSharesConnector />
               </CardBody>
             </Card>
           </Col>

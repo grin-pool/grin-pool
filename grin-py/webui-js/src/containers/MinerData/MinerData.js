@@ -54,7 +54,7 @@ export class MinerDataComponent extends Component {
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
-          <h4 className='page-title' style={{ marginBottom: 36 }}>GRIN-Pool Stats</h4>
+          <h4 className='page-title' style={{ marginBottom: 36 }}>Miner Stats</h4>
           <Table>
             <tbody>
               <tr>
@@ -77,7 +77,7 @@ export class MinerDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <h4 className='page-title'>Miner Stats</h4>
+          <h4 className='page-title'>Graph Rate</h4>
           <ResponsiveContainer width='100%' height={270}>
             <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>

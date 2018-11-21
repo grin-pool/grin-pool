@@ -9,6 +9,16 @@ export const historical = (state = [], action) => {
   }
 }
 
+export const totalSharesSubmitted = (state = 0, action) => {
+  switch (action.type) {
+    case 'TOTAL_MINER_SHARES_SUBMITTED':
+      return action.data.totalSharesSubmitted
+    default:
+      return state
+  }
+}
+
 export const minerData = combineReducers({
-  historical
+  historical,
+  totalSharesSubmitted
 })

@@ -19,7 +19,7 @@ export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispa
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}worker/stats/${latestBlockHeight},1/worker`
+    const url = `${API_URL}workers/stats/${latestBlockHeight},1/worker`
     const activeWorkersDataResponse = await fetch(url)
     const activeWorkersData = await activeWorkersDataResponse.json()
     dispatch({ type: 'GRIN_POOL_ACTIVE_WORKERS', data: { activeWorkers: activeWorkersData.length } })
