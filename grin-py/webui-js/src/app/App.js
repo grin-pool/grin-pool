@@ -39,7 +39,7 @@ class App extends Component {
           </div>
         </div>}
         <div>
-          <Router/>
+          <Router account={this.props.account} />
         </div>
       </div>
     )

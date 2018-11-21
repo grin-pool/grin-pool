@@ -37,8 +37,8 @@ export class NetworkDataComponent extends Component {
         difficulty: block.difficulty
       })
     })
-    let c29LatestGraphRate = 'C29 = n/a gps'
-    let c30LatestGraphRate = 'C30 = n/a gps'
+    let c29LatestGraphRate = 'C29 = 0 gps'
+    let c30LatestGraphRate = 'C30 = 0 gps'
     let latestDifficulty = 'n/a'
     let latestBlockHeight = 'n/a'
     if (networkData.length > 0) {
@@ -52,8 +52,8 @@ export class NetworkDataComponent extends Component {
       latestDifficulty = lastBlock.difficulty
       latestBlockHeight = lastBlock.height
     } else {
-      c29LatestGraphRate = 'n/a gps'
-      c30LatestGraphRate = 'n/a gps'
+      c29LatestGraphRate = '0 gps'
+      c30LatestGraphRate = '0 gps'
       latestDifficulty = 'n/a'
       latestBlockHeight = 'n/a'
     }
@@ -61,7 +61,7 @@ export class NetworkDataComponent extends Component {
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
-        <Col xs={12} md={3} lg={3} xl={3}>
+        <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>Network Stats</h4>
           <Table>
             <tbody>
@@ -83,18 +83,18 @@ export class NetworkDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>
-                <td>60 grin / block</td>
+                <td>60 GRIN / block</td>
               </tr>
             </tbody>
           </Table>
         </Col>
-        <Col xs={12} md={9} lg={9} xl={9}>
-          <ResponsiveContainer width='100%' height={250}>
-            <LineChart data={graphRateData} >
-              <XAxis dataKey='height'/>
+        <Col xs={12} md={12} lg={7} xl={9}>
+          <ResponsiveContainer width='100%' height={270}>
+            <LineChart isAnimationActive={false} data={graphRateData} >
+              <XAxis interval={19} dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
-              <YAxis connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
+              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />

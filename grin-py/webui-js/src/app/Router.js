@@ -1,40 +1,75 @@
-import React from 'react'
-import { Route, Switch } from 'react-router-dom'
+import React, { Component } from 'react'
+import { connect } from 'react-redux'
+import { Route, Switch, Redirect } from 'react-router-dom'
 import Layout from '../containers/_layout/Layout'
 import MainWrapper from './MainWrapper'
-
-import LogIn from '../containers/log_in/LogIn'
-import ExamplePageOne from '../containers/example/ExamplePageOne'
-import ExamplePageTwo from '../containers/example_two/ExamplePageTwo'
+import { MinerDetailsConnector } from '../redux/connectors/MinerDetailsConnector.js'
 import { HomepageConnector } from '../redux/connectors/HomepageConnector.js'
+import { AboutComponent } from '../containers/About/About.js'
+import { GrinPoolDetailsConnector } from '../redux/connectors/GrinPoolDetailsConnector.js'
+import { LoginConnector } from '../redux/connectors/LoginConnector.js'
 
-const Router = () => (
-  <MainWrapper>
-    <main>
-      <Switch>
-        <Route exact path='/log_in' component={LogIn}/>
-        <Route path='/' component={wrappedRoutes}/>
-      </Switch>
-    </main>
-  </MainWrapper>
-)
+class Router extends Component {
+  render () {
+    return (
+      <MainWrapper>
+        <main>
+          <Switch>
+            <Route path='/' component={WrappedRoutesConnector}/>
+          </Switch>
+        </main>
+      </MainWrapper>
+    )
+  }
+}
 
-const wrappedRoutes = () => (
-  <div>
-    <Layout/>
-    <div className='container__wrap'>
-      <Route exact path='/' component={HomepageConnector}/>
-      <Route path='/pages' component={Pages}/>
-    </div>
-  </div>
-)
+class WrappedRoutes extends Component {
+  render () {
+    return (
+      <div>
+        <Layout/>
+        <div className='container__wrap'>
+          <Route exact path='/' component={HomepageConnector}/>
+          <Route path='/pages' component={Pages}/>
+          <Route path='/about' component={AboutComponent}/>
+          <Route path='/pool' component={GrinPoolDetailsConnector} />
+          <Route path="/login" component={LoginConnector} />
+          <PrivateRoute path="/miner" component={MinerDetailsConnector} account={this.props.account} />
+        </div>
+      </div>
+    )
+  }
+}
+
+export const WrappedRoutesConnector = connect((state) => ({
+  account: state.auth.account
+}))(WrappedRoutes)
 
 const Pages = () => (
   <Switch>
     <Route exact path='/' component={HomepageConnector}/>
-    <Route path='/pages/one' component={ExamplePageOne}/>
-    <Route path='/pages/two' component={ExamplePageTwo}/>
   </Switch>
 )
+
+function PrivateRoute ({ component: Component, ...rest }) {
+  console.log(' , and rest are: ', rest)
+  return (
+    <Route
+      {...rest}
+      render={props =>
+        rest.account ? (
+          <Component {...props} />
+        ) : (
+          <Redirect
+            to={{
+              pathname: '/login',
+              state: { from: props.location }
+            }}
+          />
+        )
+      }
+    />
+  )
+}
 
 export default Router

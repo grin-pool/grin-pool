@@ -1,31 +1,27 @@
 import React, { Component } from 'react'
+import { Col, Row, Table } from 'reactstrap'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { Row, Col, Table } from 'reactstrap'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
-export class GrinPoolDataComponent extends Component {
+export class MinerDataComponent extends Component {
   UNSAFE_componentWillMount () {
-    this.fetchGrinPoolData()
-    setInterval(this.fetchGrinPoolData, 10000)
+    this.fetchMinerData()
+    setInterval(this.fetchMinerData, 10000)
   }
 
-  fetchGrinPoolData = () => {
-    const { fetchNetworkData, fetchGrinPoolActiveMinerCount, fetchGrinPoolLastBlock } = this.props
-    fetchGrinPoolActiveMinerCount()
-    fetchNetworkData()
-    fetchGrinPoolLastBlock()
+  fetchMinerData = () => {
+    const { fetchMinerData } = this.props
+    fetchMinerData()
   }
 
   render () {
-    const { networkData, activeWorkers, lastBlockMined } = this.props
+    const { minerData } = this.props
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
     let maxC30Gps = 0
     let minC30Gps = 0
-
-    networkData.forEach((block) => {
+    minerData.forEach((block) => {
       if (block.gps[0]) {
         if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
         if (block.gps[0].gps < minC29Gps || !minC29Gps) minC29Gps = block.gps[0].gps
@@ -43,8 +39,8 @@ export class GrinPoolDataComponent extends Component {
     })
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c30LatestGraphRate = 'C30 = 0 gps'
-    if (networkData.length > 0) {
-      const lastBlock = networkData[networkData.length - 1]
+    if (minerData.length > 0) {
+      const lastBlock = minerData[minerData.length - 1]
       if (lastBlock.gps[0]) {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps} gps`
       }
@@ -55,44 +51,42 @@ export class GrinPoolDataComponent extends Component {
       c29LatestGraphRate = '0 gps'
       c30LatestGraphRate = '0 gps'
     }
-    const nowTimestamp = Date.now()
-    const lastBlockTimeAgo = Math.floor(nowTimestamp / 1000 - lastBlockMined)
-    const totalPoolBlocksMined = networkData[networkData.length - 1] ? networkData[networkData.length - 1].total_blocks_found : 0
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
-          <h4 className='page-title' style={{ marginBottom: 36 }}>GRIN-Pool Stats</h4>
+          <h4 className='page-title' style={{ marginBottom: 36 }}>Miner Stats</h4>
           <Table>
             <tbody>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
+                <td>Graph Rate</td>
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C30_COLOR }}>{c30LatestGraphRate}</span></td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
-                <td>{lastBlockTimeAgo} sec ago</td>
+                <td>Block Found</td>
+                <td>Test</td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'desktop'} />Active Miners</td>
-                <td>{activeWorkers}</td>
+                <td>Active Miners</td>
+                <td>Test</td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Blocks Found</td>
-                <td>{totalPoolBlocksMined}</td>
+                <td>Blocks Found</td>
+                <td>Test</td>
               </tr>
             </tbody>
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
+          <h4 className='page-title'>Graph Rate</h4>
           <ResponsiveContainer width='100%' height={270}>
             <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
-              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
+              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(4)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
+              <Line dot={false} yAxisId='left' name='C29 Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
+              <Line dot={false} yAxisId='right' name='C30 Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
             </LineChart>
           </ResponsiveContainer>
         </Col>
