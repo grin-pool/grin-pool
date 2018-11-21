@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { Route, Switch, Redirect } from 'react-router-dom'
 import Layout from '../containers/_layout/Layout'
 import MainWrapper from './MainWrapper'
-import { MinerConnector } from '../redux/connectors/MinerConnector.js'
+import { MinerDetailsConnector } from '../redux/connectors/MinerDetailsConnector.js'
 import { HomepageConnector } from '../redux/connectors/HomepageConnector.js'
 import { AboutComponent } from '../containers/About/About.js'
 import { GrinPoolDetailsConnector } from '../redux/connectors/GrinPoolDetailsConnector.js'
@@ -34,7 +34,7 @@ class WrappedRoutes extends Component {
           <Route path='/about' component={AboutComponent}/>
           <Route path='/pool' component={GrinPoolDetailsConnector} />
           <Route path="/login" component={LoginConnector} />
-          <PrivateRoute path="/miner" component={MinerConnector} account={this.props.account} />
+          <PrivateRoute path="/miner" component={MinerDetailsConnector} account={this.props.account} />
         </div>
       </div>
     )

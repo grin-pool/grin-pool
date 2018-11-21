@@ -1,6 +1,5 @@
 // @flow
 import { API_URL } from '../../config.js'
-import { sha256 } from 'js-sha256'
 import FormData from 'form-data'
 
 export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
@@ -8,17 +7,15 @@ export const createUser = (username: string, password: string, history: any) => 
   try {
     const url = `${API_URL}pool/users`
     const formData = new FormData()
-    const hashedPassword = sha256(password)
     formData.append('username', username)
-    formData.append('password', hashedPassword)
+    formData.append('password', password)
     const createUserResponse = await fetch(url, {
       method: 'POST',
       body: formData
     })
     const createUserData = await createUserResponse.json()
     if (createUserData.username) {
-      const hashedPassword = sha256(password)
-      const auth = 'Basic ' + Buffer.from(username + ':' + hashedPassword).toString('base64')
+      const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64')
       const url = `${API_URL}pool/users`
       const loginResponse = await fetch(url, {
         headers: {
@@ -29,7 +26,7 @@ export const createUser = (username: string, password: string, history: any) => 
       console.log('auth is: ', auth)
       console.log('loginResponse is: ', loginResponse)
       const loginData = await loginResponse.json()
-      dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
+      dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token, id: loginData.id } })
       history.push('/miner')
     } else if (createUserData.message) {
       dispatch({ type: 'AUTH_ERROR', data: { authError: createUserData.message } })
@@ -43,8 +40,7 @@ export const createUser = (username: string, password: string, history: any) => 
 export const login = (username: string, password: string, history) => async (dispatch, getState) => {
   dispatch({ type: 'IS_LOGGING_IN', data: true })
   try {
-    const hashedPassword = sha256(password)
-    const auth = 'Basic ' + Buffer.from(username + ':' + hashedPassword).toString('base64')
+    const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64')
     const url = `${API_URL}pool/users`
     const loginResponse = await fetch(url, {
       headers: {
@@ -55,7 +51,7 @@ export const login = (username: string, password: string, history) => async (dis
     console.log('auth is: ', auth)
     console.log('loginResponse is: ', loginResponse)
     const loginData = await loginResponse.json()
-    dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token } })
+    dispatch({ type: 'ACCOUNT', data: { username, id: loginData.id, token: loginData.token } })
     history.push('/miner')
   } catch (e) {
     console.log('Error: ', e)

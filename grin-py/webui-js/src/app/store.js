@@ -5,7 +5,8 @@ import {
   themeReducer,
   networkDataReducer,
   grinPoolDataReducer,
-  authReducer
+  authReducer,
+  minerDataReducer
 } from '../redux/reducers/index'
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
@@ -14,6 +15,7 @@ const reducer = combineReducers({
   sidebar: sidebarReducer,
   networkData: networkDataReducer,
   grinPoolData: grinPoolDataReducer,
+  minerData: minerDataReducer,
   auth: authReducer
 })
 const store = createStore(reducer, composeEnhancers(applyMiddleware(thunk)))
