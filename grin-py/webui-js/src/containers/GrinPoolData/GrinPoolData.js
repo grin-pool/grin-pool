@@ -5,9 +5,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolDataComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchGrinPoolData()
-    setInterval(this.fetchGrinPoolData, 10000)
+    this.interval = setInterval(this.fetchGrinPoolData, 10000)
   }
 
   fetchGrinPoolData = () => {
