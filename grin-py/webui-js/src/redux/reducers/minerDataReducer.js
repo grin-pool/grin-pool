@@ -11,7 +11,7 @@ export const historical = (state = [], action) => {
 
 export const totalSharesSubmitted = (state = 0, action) => {
   switch (action.type) {
-    case 'TOTAL_MINER_SHARES_SUBMITTED':
+    case 'MINER_TOAL_VALID_SHARES':
       return action.data.totalSharesSubmitted
     default:
       return state
