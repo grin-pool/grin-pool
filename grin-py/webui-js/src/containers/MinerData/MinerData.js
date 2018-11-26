@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Col, Row, Table } from 'reactstrap'
+import { Col, Row, Table, Alert } from 'reactstrap'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
@@ -22,6 +22,8 @@ export class MinerDataComponent extends Component {
 
   render () {
     const { minerData } = this.props
+    const numberOfRecordedBlocks = minerData.length
+    const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
@@ -84,6 +86,7 @@ export class MinerDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <h4 className='page-title'>Graph Rate</h4>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>{(numberOfRecordedBlocks === 0) && <Alert color='warning' style={{ textAlign: 'center', display: 'inline' }}>{noBlocksAlertSyntax}</Alert>}</div>
           <ResponsiveContainer width='100%' height={270}>
             <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>
