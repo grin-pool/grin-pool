@@ -7,7 +7,7 @@ export const fetchMinerData = () => async (dispatch, getState) => {
     const state = getState()
     const id = state.auth.account.id
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,shares_processed`
+    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,valid_shares`
     const minerDataResponse = await fetch(url)
     const minerData = await minerDataResponse.json()
     dispatch({ type: 'MINER_DATA', data: { historical: minerData } })
