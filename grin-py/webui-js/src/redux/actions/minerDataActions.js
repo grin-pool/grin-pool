@@ -20,10 +20,10 @@ export const fetchMinerShares = () => async (dispatch, getState) => {
   try {
     const state = getState()
     const id = state.auth.account.id
-    const url = `${API_URL}worker/stat/${id}/total_shares_processed`
+    const url = `${API_URL}worker/stat/${id}/total_valid_shares`
     const minerSharesResponse = await fetch(url)
     const minerShares = await minerSharesResponse.json()
-    dispatch({ type: 'TOTAL_MINER_SHARES_SUBMITTED', data: { totalSharesSubmitted: minerShares.total_shares_processed } })
+    dispatch({ type: 'MINER_TOAL_VALID_SHARES', data: { totalSharesSubmitted: minerShares.total_valid_shares } })
   } catch (e) {
     console.log('Error: ', e)
   }
