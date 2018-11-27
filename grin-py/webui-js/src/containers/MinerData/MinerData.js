@@ -50,10 +50,10 @@ export class MinerDataComponent extends Component {
     if (minerData.length > 0) {
       const lastBlock = minerData[minerData.length - 1]
       if (lastBlock.gps[0]) {
-        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps} gps`
+        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(4)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps} gps`
+        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(4)} gps`
       }
     } else {
       c29LatestGraphRate = '0 gps'
