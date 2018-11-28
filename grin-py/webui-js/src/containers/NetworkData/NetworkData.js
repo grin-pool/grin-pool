@@ -7,10 +7,16 @@ const C29_COLOR = '#8884d8'
 const C30_COLOR = '#cc9438'
 
 export class NetworkDataComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
-    setInterval(fetchNetworkData, 10000)
+    this.interval = setInterval(fetchNetworkData, 10000)
   }
 
   render () {
@@ -44,10 +50,10 @@ export class NetworkDataComponent extends Component {
     if (networkData.length > 0) {
       const lastBlock = networkData[networkData.length - 1]
       if (lastBlock.gps[0]) {
-        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps} gps`
+        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps} gps`
+        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
       latestDifficulty = lastBlock.difficulty
       latestBlockHeight = lastBlock.height
@@ -63,7 +69,7 @@ export class NetworkDataComponent extends Component {
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>Network Stats</h4>
-          <Table>
+          <Table size='sm'>
             <tbody>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>

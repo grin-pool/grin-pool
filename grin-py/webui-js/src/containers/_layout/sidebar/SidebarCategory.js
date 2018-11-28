@@ -12,7 +12,7 @@ export default class SidebarCategory extends PureComponent {
     super(props)
     this.toggle = this.toggle.bind(this)
     this.state = {
-      collapse: false
+      collapse: true
     }
   }
 

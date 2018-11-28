@@ -1,12 +1,18 @@
 import React, { Component } from 'react'
-import { Col, Row, Table } from 'reactstrap'
+import { Col, Row, Table, Alert } from 'reactstrap'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class MinerDataComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchMinerData()
-    setInterval(this.fetchMinerData, 10000)
+    this.interval = setInterval(this.fetchMinerData, 10000)
   }
 
   fetchMinerData = () => {
@@ -16,6 +22,8 @@ export class MinerDataComponent extends Component {
 
   render () {
     const { minerData } = this.props
+    const numberOfRecordedBlocks = minerData.length
+    const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
@@ -42,10 +50,10 @@ export class MinerDataComponent extends Component {
     if (minerData.length > 0) {
       const lastBlock = minerData[minerData.length - 1]
       if (lastBlock.gps[0]) {
-        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps} gps`
+        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(4)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps} gps`
+        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(4)} gps`
       }
     } else {
       c29LatestGraphRate = '0 gps'
@@ -55,7 +63,7 @@ export class MinerDataComponent extends Component {
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>Miner Stats</h4>
-          <Table>
+          <Table size='sm'>
             <tbody>
               <tr>
                 <td>Graph Rate</td>
@@ -78,6 +86,7 @@ export class MinerDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <h4 className='page-title'>Graph Rate</h4>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>{(numberOfRecordedBlocks === 0) && <Alert color='warning' style={{ textAlign: 'center', display: 'inline' }}>{noBlocksAlertSyntax}</Alert>}</div>
           <ResponsiveContainer width='100%' height={270}>
             <LineChart isAnimationActive={false} data={graphRateData} >
               <XAxis interval={19} dataKey='height'/>

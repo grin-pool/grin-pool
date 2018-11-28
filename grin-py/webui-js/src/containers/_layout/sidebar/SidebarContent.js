@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import SidebarLink from './SidebarLink'
+import SidebarCategory from './SidebarCategory'
 import { changeThemeToDark, changeThemeToLight } from '../../../redux/actions/themeActions'
 
 class SidebarContent extends PureComponent {
@@ -23,7 +24,10 @@ class SidebarContent extends PureComponent {
       <div className='sidebar__content'>
         <SidebarLink title='Home' route='/' icon='home' />
         <SidebarLink title='Pool' route='/pool' icon='chart-bars' />
-        <SidebarLink title='Miner' route='/miner' icon='screen' />
+        <SidebarCategory title="Miner" icon="screen">
+          <SidebarLink title='Stats' route='/miner' />
+          <SidebarLink title='Payment' route='/miner/payment' />
+        </SidebarCategory>
         <SidebarLink title='About' route='/about' icon='file-empty' />
         <li className='sidebar__link'>
           <span className={`sidebar__link-icon lnr lnr-code`}/>

@@ -4,36 +4,11 @@
   left: 0;
   z-index: 99;
   height: 100vh;
-  width: 200px;
+  width: 240px;
   box-shadow: 0 1px 30px 1px rgba(0, 0, 0, 0.11);
   padding-top: 60px;
   transition: transform 0.3s, width 0.3s;
   transform: translateX(calc(-100% - 20px));
-
-  &.sidebar--show {
-    transform: translateX(0);
-
-    .sidebar__back {
-      display: block;
-    }
-  }
-
-  .sidebar__back {
-    height: 100%;
-    width: 100vw;
-    position: absolute;
-    display: none;
-  }
-
-  .sidebar__link-active {
-
-    .sidebar__link {
-
-      &:before {
-        opacity: 1;
-      }
-    }
-  }
 
   @include themify($themes) {
     background: themed('colorBackground');
@@ -43,229 +18,260 @@
     display: block;
   }
 
-  .sidebar__scroll {
-    width: 240px;
+  &.sidebar--show {
+    transform: translateX(0);
 
-    & > div {
-      height: calc(100vh - 60px);
-    }
-
-    .scrollbar-track {
-
-      &.scrollbar-track-y {
-        width: 2px;
-        margin-right: 3px;
-      }
-
-      &.scrollbar-track-x {
-        display: none !important;
-      }
-    }
-
-    .scrollbar-thumb {
-      opacity: 0.3;
-      width: 5px;
+    .sidebar__back {
+      display: block;
     }
   }
+}
 
-  .sidebar__content {
-    padding-top: 15px;
-    height: 100%;
-    overflow: auto;
+.sidebar__back {
+  height: 100%;
+  width: 100vw;
+  position: absolute;
+  display: none;
+  background: transparent;
+  border: none;
+}
 
-    & > div:last-child {
-      width: 4px !important;
-
-      div {
-        transition: height 0.3s;
-        opacity: 0.52;
-      }
-    }
-  }
-
-  .sidebar__block {
-    padding: 15px 0;
-
-    @include themify($themes) {
-      border-bottom: 1px solid themed('colorBorder');
-    }
-
-    &:last-child {
-      border: none;
-    }
-  }
+.sidebar__link-active {
 
   .sidebar__link {
-    height: 36px;
-    width: 200px;
-    transition: all 0.3s;
-    position: relative;
-    cursor: pointer;
-    display: flex;
-    padding: 11px 20px;
-    overflow: hidden;
-
-    @include themify($themes) {
-      color: themed('colorText');
-    }
 
     &:before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
+      opacity: 1;
+    }
+  }
+}
+
+.sidebar__scroll {
+  width: 240px;
+
+  & > div {
+    height: calc(100vh - 60px);
+  }
+
+  .scrollbar-track {
+
+    &.scrollbar-track-y {
       width: 2px;
-      background: $color-accent;
-      opacity: 0;
-      transition: all 0.3s;
+      margin-right: 3px;
     }
 
-    p {
-      position: absolute;
-      left: 43px;
-      width: 160px;
-      transition: left 0.3s;
-    }
-
-    &:hover {
-      text-decoration: none;
-
-      @include themify($themes) {
-        background-color: themed('colorHover');
-      }
-
-      &:before {
-        opacity: 1;
-      }
+    &.scrollbar-track-x {
+      display: none !important;
     }
   }
 
-  .sidebar__link-title {
-    margin: 0;
-    font-size: 14px;
-    line-height: 16px;
-    position: relative;
-    display: flex;
+  .scrollbar-thumb {
+    opacity: 0.3;
+    width: 5px;
   }
+}
 
-  .sidebar__link-icon {
-    margin-right: 10px;
-    font-size: 13px;
-    line-height: 13px;
+.sidebar__content {
+  padding-top: 15px;
+  height: 100%;
+  overflow: auto;
 
-    @include themify($themes) {
-      color: themed('colorIcon');
+  & > div:last-child {
+    width: 4px !important;
+
+    div {
+      transition: height 0.3s;
+      opacity: 0.52;
     }
   }
+}
 
-  .sidebar__submenu {
-    transition: height 0.5s 0s, padding 0.5s 0s, opacity 0.4s 0.1s;
-    padding: 15px 0;
+.sidebar__block {
+  padding: 15px 0;
 
-    & .sidebar__submenu {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      padding-top: 0;
+  @include themify($themes) {
+    border-bottom: 1px solid themed('colorBorder');
+  }
 
-      .sidebar__link {
-        padding-left: 53px;
+  &:last-child {
+    border: none;
+  }
+}
 
-        p {
-          left: 53px;
-        }
-      }
-    }
+.sidebar__link {
+  height: 36px;
+  width: 240px;
+  transition: all 0.3s;
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  padding: 11px 20px;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+
+  @include themify($themes) {
+    color: themed('colorText');
+  }
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: $color-accent;
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  p {
+    position: absolute;
+    left: 43px;
+    width: 160px;
+    transition: left 0.3s;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  &:hover {
+    text-decoration: none;
 
     @include themify($themes) {
       background-color: themed('colorHover');
     }
 
-    .sidebar__link {
-      padding-left: 43px;
-
-      &:hover {
-        @include themify($themes) {
-          background-color: themed('colorBackground');
-        }
-      }
+    &:before {
+      opacity: 1;
     }
+  }
+}
+
+.sidebar__link-title {
+  margin: 0;
+  font-size: 14px;
+  line-height: 16px;
+  position: relative;
+  display: flex;
+}
+
+.sidebar__link-icon {
+  margin-right: 10px;
+  font-size: 13px;
+  line-height: 13px;
+  color: #b1c3c8;
+}
+
+.sidebar__submenu {
+  transition: height 0.5s 0s, padding 0.5s 0s, opacity 0.4s 0.1s;
+  padding: 15px 0;
+
+  & .sidebar__submenu {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    padding-top: 0;
 
     .sidebar__link {
-      display: block;
+      padding-left: 53px;
+
+      p {
+        left: 53px;
+      }
     }
   }
 
-  .sidebar__category-icon {
+  @include themify($themes) {
+    background-color: themed('colorHover');
+  }
+
+  .sidebar__link {
+    padding-left: 43px;
+
+    &:hover {
+      @include themify($themes) {
+        background-color: themed('colorBackground');
+      }
+    }
+  }
+
+  .sidebar__link {
+    display: block;
+  }
+}
+
+.sidebar__category-icon {
+  position: absolute;
+  right: 15px;
+  font-size: 10px;
+  line-height: 14px;
+  opacity: 1;
+  transition: opacity 0.5s 0.2s, transform 0.3s;
+  color: $color-gray;
+
+}
+
+.sidebar__link-badge {
+  width: 26px;
+  height: 14px;
+  background-color: $color-red;
+  font-size: 8px;
+  font-weight: 400;
+  padding: 2px;
+  margin-left: 5px;
+  line-height: 9px;
+  position: relative;
+  text-transform: uppercase;
+  border-radius: 7px;
+
+  span {
     position: absolute;
-    right: 15px;
-    font-size: 10px;
-    line-height: 14px;
-    opacity: 1;
-    transition: opacity 0.5s 0.2s, transform 0.3s;
-
-    @include themify($themes) {
-      color: themed('colorIcon');
-    }
-  }
-
-  .sidebar__link-badge {
+    left: 0;
+    top: 3px;
     width: 26px;
-    height: 14px;
-    background-color: $color-red;
-    font-size: 8px;
-    font-weight: 400;
-    padding: 2px;
-    margin-left: 5px;
-    line-height: 9px;
-    position: relative;
-    text-transform: uppercase;
-    border-radius: 7px;
+    text-align: center;
+  }
+}
 
-    span {
-      position: absolute;
-      left: 0;
-      top: 3px;
-      width: 26px;
-      text-align: center;
+.sidebar__wrapper--desktop {
+  display: none;
+}
+
+.sidebar__category-wrap {
+
+  &.sidebar__category-wrap--open {
+
+    .sidebar__category-icon {
+      transform: rotate(90deg);
     }
   }
+}
 
-  .sidebar__wrapper--desktop {
-    display: none;
-  }
+.sidebar__category-new {
+  height: 6px;
+  width: 6px;
+  border-radius: 50%;
+  top: -3px;
+  display: block;
+  margin-left: 5px;
+  background: $color-red;
+}
 
-  .sidebar__category-wrap {
+@media screen and (min-width: 576px) {
 
-    &.sidebar__category-wrap--open {
-
-      .sidebar__category-icon {
-        transform: rotate(90deg);
-      }
-    }
-  }
-
-  @media screen and (min-width: 576px) {
+  .sidebar {
     transform: translateX(0);
 
     &.sidebar--no-desktop {
       transform: translateX(calc(-100% - 20px));
 
-      &.sidebar--show{
+      &.sidebar--show {
         transform: translateX(0);
       }
 
       .sidebar__wrapper--mobile {
         display: block;
       }
-    }
-
-    .sidebar__wrapper--desktop {
-      display: block;
-    }
-
-    .sidebar__wrapper--mobile {
-      display: none;
     }
 
     &.sidebar--collapse {
@@ -288,7 +294,7 @@
         &:hover {
 
           .sidebar__category {
-            width: 200px;
+            width: 240px;
 
             @include themify($themes) {
               background: themed('colorHover');
@@ -345,7 +351,7 @@
         }
 
         &:hover {
-          width: 200px;
+          width: 240px;
 
           @include themify($themes) {
             background: themed('colorHover');
@@ -365,11 +371,20 @@
     }
   }
 
-  @media screen and (min-width: 992px) {
+  .sidebar__wrapper--desktop {
+    display: block;
+  }
 
-    &.sidebar--no-desktop {
-      transform: translateX(0);
-      display: none;
-    }
+  .sidebar__wrapper--mobile {
+    display: none;
+  }
+
+}
+
+@media screen and (min-width: 992px) {
+
+  .sidebar.sidebar--no-desktop {
+    transform: translateX(0);
+    display: none;
   }
 }

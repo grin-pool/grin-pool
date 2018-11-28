@@ -4,9 +4,15 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } f
 import { C29_COLOR } from '../../constants/styleConstants.js'
 
 export class MinerSharesComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchMinerData()
-    setInterval(this.fetchMinerData, 10000)
+    this.interval = setInterval(this.fetchMinerData, 10000)
   }
 
   fetchMinerData = () => {
@@ -21,11 +27,11 @@ export class MinerSharesComponent extends Component {
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
-          <h4 className='page-title' style={{ marginBottom: 36 }}>Miner Shares Submitted</h4>
-          <Table>
+          <h4 className='page-title' style={{ marginBottom: 36 }}>Miner Valid Shares Submitted</h4>
+          <Table size='sm'>
             <tbody>
               <tr>
-                <td>Total Shares Submitted</td>
+                <td>Total Valid Shares Submitted</td>
                 <td>{totalSharesSubmitted}</td>
               </tr>
             </tbody>
@@ -38,7 +44,7 @@ export class MinerSharesComponent extends Component {
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
               <YAxis connectNulls={false} yAxisId='left' orientation='left' stroke={C29_COLOR} allowDecimals={false} />
-              <Line dot={false} yAxisId='left' name='Miner Shares Submitted' dataKey='shares_processed' stroke={C29_COLOR} />
+              <Line dot={false} yAxisId='left' name='Miner Valid Shares Submitted' dataKey='valid_shares' stroke={C29_COLOR} />
             </LineChart>
           </ResponsiveContainer>
         </Col>
