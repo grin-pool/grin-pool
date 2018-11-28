@@ -1,3 +1,25 @@
 .login-form button {
   width: 180px;
 }
+
+.theme-dark {
+  span, label, p, li, td, body, th {
+    color: #dddddd;
+  }
+ 
+  .recharts-tooltip-wrapper p {
+    color: #212529;
+  }
+  .recharts-tooltip-wrapper span {
+    color: #212529;
+  }  
+}
+
+.topbar__logo span {
+  padding-left: 40px;
+  font-size: 22px;
+}
+
+.topbar .topbar__logo  {
+  width: 160px;
+}
