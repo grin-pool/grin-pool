@@ -12,7 +12,7 @@ export default class TableComponent extends PureComponent {
 
   render () {
     return (
-      <Table className={this.props.className} striped={this.props.striped} hover={this.props.hover}
+      <Table size='sm' className={this.props.className} striped={this.props.striped} hover={this.props.hover}
         responsive={this.props.responsive}>
         {this.props.children}
       </Table>

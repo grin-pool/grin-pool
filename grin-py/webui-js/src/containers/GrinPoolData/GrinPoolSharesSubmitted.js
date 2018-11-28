@@ -28,7 +28,7 @@ export class GrinPoolSharesSubmittedComponent extends Component {
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>Pool Shares Submitted</h4>
-          <Table>
+          <Table size='sm'>
             <tbody>
               <tr>
                 <td>Total Shares Submitted</td>
