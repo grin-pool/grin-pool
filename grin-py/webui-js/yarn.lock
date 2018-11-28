@@ -6667,10 +6667,10 @@ md5.js@^1.3.4:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
-mdi-react@^4.0.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/mdi-react/-/mdi-react-4.1.0.tgz#9f83f6c6ea1b8192a1291cb9353137bd349d9285"
-  integrity sha512-dWvVwPIk7TxkRTMAzYtuMIK+D//OohjjwGBOuLaJgdqnJv9mW8C7kas2OQuPx2AaB+fkU+zt7mHEGCyH3IN+WA==
+mdi-react@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/mdi-react/-/mdi-react-5.0.0.tgz#38d5e0ac15e9322c7e0ff1e1dc5e1d65748e06db"
+  integrity sha512-26rbkxWW7yHBJrdZm9J06R3/4SzkqEVyYi/e0vjuWgpv4G7s64XDRjizKry98pnkjtAkktc0/roq6oUo9KbTYQ==
 
 meant@~1.0.1:
   version "1.0.1"

@@ -4,7 +4,7 @@ import { MinerDetailsComponent } from '../../containers/MinerDetails/MinerDetail
 
 const mapStateToProps = (state) => {
   return {
-    username: state.auth.account.username
+    // username: state.auth.account.username
   }
 }
 
