@@ -28,3 +28,16 @@ export const fetchMinerShares = () => async (dispatch, getState) => {
     console.log('Error: ', e)
   }
 }
+
+export const fetchMinerPaymentData = () => async (dispatch, getState) => {
+  try {
+    const state = getState()
+    const id = state.auth.account.id
+    const url = `${API_URL}worker/utxo/${id}`
+    const minerPaymentResponse = await fetch(url)
+    const minerPaymentData = await minerPaymentResponse.json()
+    dispatch({ type: 'MINER_PAYMENT_DATA', data: minerPaymentData })
+  } catch (e) {
+    console.log('Error: ', e)
+  }
+}

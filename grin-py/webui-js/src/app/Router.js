@@ -37,7 +37,7 @@ class WrappedRoutes extends Component {
           <Route path='/pool' component={GrinPoolDetailsConnector} />
           <Route path="/login" component={LoginConnector} />
           <PrivateRoute path="/miner" exact component={MinerDetailsConnector} account={account} />
-          <Route path="/miner/payment" component={MinerPaymentConnector} account={account} />
+          <PrivateRoute path="/miner/payment" component={MinerPaymentConnector} account={account} />
         </div>
       </div>
     )
