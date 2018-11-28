@@ -9,7 +9,9 @@ export default class Topbar extends PureComponent {
       <div className='topbar'>
         <div className='topbar__wrapper'>
           <TopbarSidebarButton/>
-          <Link className='topbar__logo' to='/'/>
+          <Link className='topbar__logo' to='/'>
+            <span>GRIN-Pool</span>
+          </Link>
           <div className='topbar__right'>
             <TopbarProfileConnector/>
           </div>

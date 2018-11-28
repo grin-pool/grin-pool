@@ -2,9 +2,7 @@ import React, { Component } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-
-const C29_COLOR = '#8884d8'
-const C30_COLOR = '#cc9438'
+import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class NetworkDataComponent extends Component {
   interval = null
