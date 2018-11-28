@@ -18,7 +18,7 @@ export class MinerDetailsComponent extends Component {
       <Container className='dashboard'>
         <Row>
           <Col xs={12} md={12} lg={12} xl={12}>
-            <h3 className='page-title'>{username} Miner Details</h3>
+            <h3 className='page-title'>{username} Miner Stats</h3>
           </Col>
         </Row>
         <Row>
