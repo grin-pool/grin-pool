@@ -1,9 +1,10 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
-
+import { Link } from 'react-router-dom'
 import DownIcon from 'mdi-react/ChevronDownIcon'
 import TopbarMenuLink from './TopbarMenuLink'
 import { Collapse } from 'reactstrap'
+import { logout } from '../../../redux/actions/authActions.js'
 
 const Ava = process.env.PUBLIC_URL + '/img/ava.png'
 
@@ -20,6 +21,14 @@ class TopbarProfile extends PureComponent {
     this.setState({ collapse: !this.state.collapse })
   }
 
+  onClickLogout = () => {
+    const { logout } = this.props
+    this.setState({
+      collapse: false
+    })
+    logout()
+  }
+
   render () {
     const { account } = this.props
     return (
@@ -32,16 +41,19 @@ class TopbarProfile extends PureComponent {
           </div>
         ) : (
           <div className='topbar__avatar'>
-            <a className='topbar__avatar-name'>Log in</a>
+            <Link className='topbar__avatar-name' to='/login'>Log in</Link>
           </div>
         )}
         {this.state.collapse && <div className='topbar__back' onClick={this.toggle}/>}
         <Collapse isOpen={this.state.collapse} className='topbar__menu-wrap'>
           <div className='topbar__menu'>
-            <TopbarMenuLink title='Page One' icon='user' path='/pages/one'/>
-            <TopbarMenuLink title='Page Two' icon='calendar-full' path='/pages/two'/>
+            <TopbarMenuLink title='Stats' path='/miner'/>
+            <TopbarMenuLink title='Payment' path='/miner/payment'/>
             <div className='topbar__menu-divider'/>
-            <TopbarMenuLink title='Log Out' icon='exit' path='/log_in'/>
+            <Link className='topbar__link' to='/login' onClick={this.onClickLogout}>
+              <span className={`topbar__link-icon lnr lnr-exit`}/>
+              <p className='topbar__link-title'>Logout</p>
+            </Link>
           </div>
         </Collapse>
       </div>
@@ -50,11 +62,11 @@ class TopbarProfile extends PureComponent {
 }
 
 const mapStateToProps = (state) => ({
-  account: state.account
+  account: state.auth.account
 })
 
 const mapDispatchToProps = (dispatch) => ({
-
+  logout: () => dispatch(logout())
 })
 
 export const TopbarProfileConnector = connect(mapStateToProps, mapDispatchToProps)(TopbarProfile)

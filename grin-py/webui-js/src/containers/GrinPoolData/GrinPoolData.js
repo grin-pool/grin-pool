@@ -5,9 +5,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolDataComponent extends Component {
+  interval = null
+
+  componentWillUnmount = () => {
+    clearInterval(this.interval)
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchGrinPoolData()
-    setInterval(this.fetchGrinPoolData, 10000)
+    this.interval = setInterval(this.fetchGrinPoolData, 10000)
   }
 
   fetchGrinPoolData = () => {
@@ -46,10 +52,10 @@ export class GrinPoolDataComponent extends Component {
     if (networkData.length > 0) {
       const lastBlock = networkData[networkData.length - 1]
       if (lastBlock.gps[0]) {
-        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps} gps`
+        c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps} gps`
+        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
     } else {
       c29LatestGraphRate = '0 gps'
@@ -62,7 +68,7 @@ export class GrinPoolDataComponent extends Component {
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>GRIN-Pool Stats</h4>
-          <Table>
+          <Table size='sm'>
             <tbody>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>

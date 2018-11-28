@@ -23,8 +23,6 @@ export const createUser = (username: string, password: string, history: any) => 
         },
         method: 'GET'
       })
-      console.log('auth is: ', auth)
-      console.log('loginResponse is: ', loginResponse)
       const loginData = await loginResponse.json()
       dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token, id: loginData.id } })
       history.push('/miner')
@@ -48,8 +46,6 @@ export const login = (username: string, password: string, history) => async (dis
       },
       method: 'GET'
     })
-    console.log('auth is: ', auth)
-    console.log('loginResponse is: ', loginResponse)
     const loginData = await loginResponse.json()
     dispatch({ type: 'ACCOUNT', data: { username, id: loginData.id, token: loginData.token } })
     history.push('/miner')
@@ -57,4 +53,11 @@ export const login = (username: string, password: string, history) => async (dis
     console.log('Error: ', e)
     dispatch({ type: 'AUTH_ERROR', data: { authError: 'There was a problem logging in with those credentials. Please check your credentials and try again.' } })
   }
+}
+
+export const logout = () => (dispatch, getState) => {
+  dispatch({
+    type: 'ACCOUNT',
+    data: null
+  })
 }
