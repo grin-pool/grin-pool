@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody, Form, FormGroup, Label, Input } from 'reactstrap'
+import { MinerPaymentDataConnector } from '../../redux/connectors/MinerPaymentDataConnector.js'
 
 export class MinerPaymentComponent extends Component {
   constructor (props) {
@@ -61,6 +62,7 @@ export class MinerPaymentComponent extends Component {
           <Col xs={12} md={12} lg={6} xl={6}>
             <Card>
               <CardBody>
+                <h4>Payout</h4>
                 <p>GrinPool supports multiple methods of payment, including automatic payments and manual / on-demand payments. The list of payment methods is likely to grow, so stay tuned!</p>
                 <br />
                 <Form className='minerPaymentForm'>
@@ -77,6 +79,13 @@ export class MinerPaymentComponent extends Component {
                     {paymentType === 'manual' ? this.renderManualPayoutOptions() : this.renderAutomaticPayoutOptions()}
                   </FormGroup>
                 </Form>
+              </CardBody>
+            </Card>
+          </Col>
+          <Col xs={12} md={12} lg={6} xl={6}>
+            <Card>
+              <CardBody>
+                <MinerPaymentDataConnector />
               </CardBody>
             </Card>
           </Col>
