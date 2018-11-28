@@ -68,7 +68,7 @@ export class GrinPoolDataComponent extends Component {
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
           <h4 className='page-title' style={{ marginBottom: 36 }}>GRIN-Pool Stats</h4>
-          <Table>
+          <Table size='sm'>
             <tbody>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>

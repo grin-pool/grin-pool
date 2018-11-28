@@ -67,7 +67,7 @@ export class GrinPoolStatsTableComponent extends Component {
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <h4 className='page-title' style={{ marginBottom: 36 }}>{BLOCK_RANGE}-Block Pool Market Share</h4>
-        <Table responsive hover className='grinPoolStatsTable'>
+        <Table size='sm' responsive hover className='grinPoolStatsTable'>
           <thead>
             <tr>
               <th>Stat</th>
