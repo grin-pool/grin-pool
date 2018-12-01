@@ -70,7 +70,7 @@ export class NetworkDataComponent extends Component {
           <Table size='sm'>
             <tbody>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
+                <td id='box'><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C30_COLOR }}>{c30LatestGraphRate}</span></td>
               </tr>
               <tr>
@@ -109,6 +109,14 @@ export class NetworkDataComponent extends Component {
           </ResponsiveContainer>
         </Col>
       </Row>
+    )
+  }
+}
+
+export class AnimatedText {
+  render () {
+    return (
+      <span>{this.props.children}</span>
     )
   }
 }

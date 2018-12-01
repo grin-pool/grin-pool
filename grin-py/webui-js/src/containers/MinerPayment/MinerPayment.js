@@ -6,7 +6,8 @@ export class MinerPaymentComponent extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      paymentType: 'manual'
+      paymentType: 'manual',
+      manualPaymentMethod: ''
     }
   }
 
@@ -16,22 +17,28 @@ export class MinerPaymentComponent extends Component {
     })
   }
 
+  onManualPaymentMethodChange = (event) => {
+    this.setState({
+      manualPaymentMethod: event.target.value
+    })
+  }
+
   renderManualPayoutOptions = () => {
     return (
       <Col sm={10}>
         <FormGroup check>
           <Label check>
-            <Input type='radio' name='paymentMethod' />Online Wallet / Port
+            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='onlineWallet' name='paymentMethod' />Online Wallet / Port
           </Label>
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input type='radio' name='paymentMethod' />Form Entry
+            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='cutAndPaste' name='paymentMethod' />Payout Cut &amp; Paste
           </Label>
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input type='radio' name='paymentMethod' disabled />GrinBox (Coming Soon)
+            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='downloadScript' name='paymentMethod' />Download Payment Request Script
           </Label>
         </FormGroup>
       </Col>
@@ -46,6 +53,43 @@ export class MinerPaymentComponent extends Component {
         </FormGroup>
       </Col>
     )
+  }
+
+  renderPayoutForm = () => {
+    const { manualPaymentMethod } = this.state
+    switch (manualPaymentMethod) {
+      case 'onlineWallet':
+        return (
+          <div>
+            <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
+            <Input
+              onChange={this.onChangeOnlineWallet}
+              type="text"
+              name="onlineWallet"
+              id="onlineWallet"
+              placeholder="ex http://195.128.200.15:13415"
+              className='form-control' />
+          </div>
+        )
+      case 'cutAndPaste':
+        return (
+          <div>
+            <Label for="cutAndPaste">Copy and Paste the Following Code:</Label><br />
+            <span style={{ fontFamily: 'Courier' }}>
+              Blah blajfajlsfd;ljasdl;fjasdjf<br />
+              asdlfj;lasdjflas;fjas;d<br />
+              klasdfjlasjdf;ladfjsj Test<br />
+            </span>
+          </div>
+        )
+      case 'downloadScript':
+        return (
+          <div>
+            <Label for="downloadScript">Download the Script and Upload to Wallet:</Label><br />
+            <a href=''>Click Me</a>
+          </div>
+        )
+    }
   }
 
   render () {
@@ -78,6 +122,13 @@ export class MinerPaymentComponent extends Component {
                     <legend className='col-form-label'>Payment Method:</legend>
                     {paymentType === 'manual' ? this.renderManualPayoutOptions() : this.renderAutomaticPayoutOptions()}
                   </FormGroup>
+                  <FormGroup tag='fieldset' row>
+                    {this.renderPayoutForm()}
+                  </FormGroup>
+                  <div style={{ textAlign: 'center' }}>
+                    <button className="btn btn-outline-primary account__btn account__btn--small">{'Clear'}</button>
+                    <button className="btn btn-primary account__btn account__btn--small">{'Submit'}</button>
+                  </div>
                 </Form>
               </CardBody>
             </Card>
