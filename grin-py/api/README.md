@@ -185,13 +185,12 @@
     Form Data required:  "username=<string>", and "password=<string>"
 
 #### Get an API token:
-###### Requires ```basicauth```
+##### Requires ```basicauth```
 
 ```/pool/users```
 
     Get an API token (that expires) for user
     GET method
-    Requires BASICAUTH username and password
 
 
 
@@ -200,7 +199,7 @@
 ### Stats:
 
 #### For all active Workers:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/workers/stat```
 
@@ -237,7 +236,7 @@
 
 
 #### For one specific worker:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/stat/<int:id>```
 
@@ -276,7 +275,7 @@
 ### Shares:
 
 #### For all active Workers:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/workers/shares```
 
@@ -313,7 +312,7 @@
 
 
 #### For one specific worker:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/shares/<int:id>/<int:height>```
 
@@ -341,7 +340,7 @@
 
 
 ### Blocks:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/block/<int:id>```
 
@@ -379,7 +378,7 @@
 ### User Balance and Payments:
 
 #### Get user balance and payment method data:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/utxo/<int:id>```
 
@@ -387,7 +386,7 @@
 
 
 ### Set user payment method:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/utxo/<int:id>/<string:field>/<string:value>```
 
@@ -396,7 +395,7 @@
 
 
 #### Get user payment data:
-#####Requires ```basicauth```
+#### Requires ```basicauth```
 
 ```/worker/payment/<int:id>```
 
@@ -415,3 +414,4 @@
 
     Get the range of most recent payment records for a worker
     Filter all but specified fields
+
