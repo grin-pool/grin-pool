@@ -16,10 +16,12 @@
 ```/grin/block/<int:height>```
 
     Get a single block at specified height
+    Specify height = 0 to start at the ‘latest’ height 
 
 ```/grin/block/<int:height>/<string:fields>```
 
     Get a single block at specified height 
+    Specify height = 0 to start at the ‘latest’ height 
     Filter out all but specified fields
 
 ```/grin/blocks/<int:height>,<int:range>```
@@ -84,12 +86,12 @@
 ```/pool/block/<int:height>```
 
     Get a single pool block at specified height
-    Will return None if there is no pool-found block at that height
+    Will return null if there is no pool-found block at that height
 
 ```/pool/block/<int:height>/<string:fields>```
         
     Get a single pool block at specified height 
-    Will return None if there is no pool-found block at that height
+    Will return null if there is no pool-found block at that height
     Filter all but specified fields
 
 ```/pool/blocks/<int:height>,<int:range>```
@@ -103,6 +105,9 @@
     Get a range of pool blocks
     Will return None if there are no pool-found block in that range
     Filter all but specified fields
+
+
+### Block Counts:
 
 
 ```/pool/blocks/count```
@@ -129,11 +134,6 @@
 
 ```/pool/stat/<int:height>```
 
-    Get pool stats for the latest block
-    Filter out all but specified fields
-    
-```/pool/stat/<int:height>```
-
     Get pool stats for a single block at specified height
     
 ```/pool/stat/<int:height>/<string:fields>```
@@ -151,19 +151,48 @@
     Filter all but specified fields
 
 
+
 ### Share Counts:
 
 ```/pool/share/count```
 
-    Get the total number of shares submitted to the pool by all workers
+    Get the number of shares submitted to the pool by all workers:
+      count = for this block
+      total = for all blocks
 
 ```/pool/share/count/<int:height>```
 
-    Get the total number of shares submitted to the pool by all workers up to block height
+    Get the number of shares submitted to the pool by all workers:
+      count = for this block
+      total = for all blocks up to height
 
 ```/pool/share/counts/<int:height>,<int:range>```
 
-    Get the total number of shares submitted to the pool by all workers up to block height for a range of heights
+    Get the total number of shares submitted to the pool by all workers for a range of blocks:
+      count: for each block
+      total = for all blocks up to blocks height
+
+
+
+### User Accounts:
+
+#### Create a new account:
+
+```/pool/users```
+
+    Create a new user account given username and password as FORM data
+    POST method
+    Form Data required:  "username=<string>", and "password=<string>"
+
+#### Get an API token:
+###### Requires ```basicauth```
+
+```/pool/users```
+
+    Get an API token (that expires) for user
+    GET method
+    Requires BASICAUTH username and password
+
 
 
 ## Worker:
@@ -171,25 +200,35 @@
 ### Stats:
 
 #### For all active Workers:
+#####Requires ```basicauth```
 
-```/worker/stats/<int:height>```
+```/workers/stat```
+
+    Get the latest worker stats the pool has, for all active workers
+
+```/workers/stat/<string:fields>```
+
+    Get the latest worker stats the pool has, for all active workers
+    Filter all but specified fields
+
+```/workers/stat/<int:height>```
 
     Get worker stats for the block at specified height for all active workers
     Specify height = 0 to get stats from the ‘latest’ block height
 
-```/worker/stats/<int:height>/<string:fields>```
+```/workers/stat/<int:height>/<string:fields>```
         
     Get worker stats for the block at specified height for all active workers
     Specify height = 0 to get stats from the ‘latest’ block height
     Filter all but specified fields
 
-```/worker/stats/<int:height>,<int:range>```
+```/workers/stats/<int:height>,<int:range>```
 
     Get worker stats from a range of pool blocks for all active workers
     Starting at ‘height’ and returning the previous ‘range’ of blocks
     Specify height = 0 to start at the ‘latest’ height 
 
-```/worker/stats/<int:height>,<int:range>/<string:fields>```
+```/workers/stats/<int:height>,<int:range>/<string:fields>```
 
     Get worker stats from a range of pool blocks for all active workers
     Starting at ‘height’ and returning the previous ‘range’ of blocks
@@ -198,25 +237,34 @@
 
 
 #### For one specific worker:
+#####Requires ```basicauth```
 
-```/worker/stats/<string:id>/<int:height>```
+```/worker/stat/<int:id>```
 
-    Get worker stats for the block at the specified height for specified worker
+    Get most recent worker stat for specified worker
 
-```/worker/stats/<string:id>/<int:height>/<string:fields>```
+```/worker/stat/<int:id>/<string:fields>```
 
-    Get worker stats for the block at the specified height for specified worker
-    Starting at ‘height’ and returning the previous ‘range’ of blocks
+    Get most recent worker stat for specified worker
+    Filter all but specified fields
+
+```/worker/stat/<int:id>/<int:height>```
+
+    Get worker stat for the block at the specified height for specified worker
+
+```/worker/stat/<int:id>/<int:height>/<string:fields>```
+
+    Get worker stat for the block at the specified height for specified worker
     Specify height = 0 to start at the ‘latest’ height 
     Filter all but specified fields
 
-```/worker/stats/<string:id>/<int:height>,<int:range>```
+```/worker/stats/<int:id>/<int:height>,<int:range>```
 
     Get worker stats for a range of blocks for specified worker
     Starting at ‘height’ and returning the previous ‘range’ of blocks
     Specify height = 0 to start at the ‘latest’ height 
 
-```/worker/stats/<string:id>/<int:height>,<int:range>/<string:fields>```
+```/worker/stats/<int:id>/<int:height>,<int:range>/<string:fields>```
 
     Get worker stats for a range of blocks for specified worker
     Starting at ‘height’ and returning the previous ‘range’ of blocks
@@ -228,25 +276,35 @@
 ### Shares:
 
 #### For all active Workers:
+#####Requires ```basicauth```
 
-```/worker/shares/<int:height>```
+```/workers/shares```
+
+    Get worker shares data for the latest block height for all active workers
+
+```/workers/shares/<string:fields>```
+
+    Get worker shares data for the latest block height for all active workers
+    Filter all but specified fields
+
+```/workers/shares/<int:height>```
 
     Get worker shares data for the block at specified height for all active workers
     Specify height = 0 to get shares data from the latest block height
 
-```/worker/shares/<int:height>/<string:fields>```
+```/workers/shares/<int:height>/<string:fields>```
 
     Get worker shares data for the block at specified height for all active workers
     Specify height = 0 to get shares data from the latest block height
     Filter all but specified fields
 
-```/worker/shares/<int:height>,<int:range>```
+```/workers/shares/<int:height>,<int:range>```
 
     Get worker shares data from a range of pool blocks for all active workers
     Starting at 'height' and returning the previous 'range' of blocks
     Specify height = 0 to start at the latest height
 
-```/worker/shares/<int:height>,<int:range>/<string:fields>```
+```/workers/shares/<int:height>,<int:range>/<string:fields>```
 
     Get worker shares data from a range of pool blocks for all active workers
     Starting at 'height' and returning the previous 'range' of blocks
@@ -255,25 +313,26 @@
 
 
 #### For one specific worker:
+#####Requires ```basicauth```
 
-```/worker/shares/<string:id>/<int:height>```
+```/worker/shares/<int:id>/<int:height>```
 
     Get worker shares data for the block at the specified height for specified worker
 
-```/worker/shares/<string:id>/<int:height>/<string:fields>```
+```/worker/shares/<int:id>/<int:height>/<string:fields>```
 
     Get worker shares data for the block at the specified height for specified worker
     Starting at 'height' and returning the previous 'range' of blocks
     Specify height = 0 to start at the latest height
     Filter all but specified fields
 
-```/worker/shares/<string:id>/<int:height>,<int:range>```
+```/worker/shares/<int:id>/<int:height>,<int:range>```
 
     Get worker shares data for a range of blocks for specified worker
     Starting at 'height' and returning the previous 'range' of blocks
     Specify height = 0 to start at the latest height
 
-```/worker/shares/<string:id>/<int:height>,<int:range>/<string:fields>```
+```/worker/shares/<int:id>/<int:height>,<int:range>/<string:fields>```
 
     Get worker shares data for a range of blocks for specified worker
     Starting at 'height' and returning the previous 'range' of blocks
@@ -281,28 +340,78 @@
     Filter all but specified fields
 
 
+### Blocks:
+#####Requires ```basicauth```
+
+```/worker/block/<int:id>```
+
+    Get the latest block mined by user id
+
+```/pool/block/<int:id>/<string:fields>```
+    
+    Get the latest block mined by user id
+    Filter all but specified fields
+
+```/pool/block/<int:id>/<int:height>```
+
+    Get a single block found by user id at specified height
+    Will return null if there is no block found by user id at that height
+
+```/pool/block/<int:id>/<int:height>/<string:fields>```
+        
+    Get a single block found by user id at specified height
+    Will return null if there is no block found by user id at that height
+    Filter all but specified fields
+
+```/pool/blocks/<int:id>/<int:height>,<int:range>```
+
+    Get a range of blocks found by user id within height and range
+    Will return None if there are no blocks found by user id in that range
 
 
-## Examples:
+```/pool/blocks/<int:id>/<int:height>,<int:range>/<string:fields>```
 
-Q: How do I get the grin network current graph rate?
+    Get a range of blocks found by user id within height and range
+    Will return None if there are no blocks found by user id in that range
+    Filter all but specified fields
 
-A: ```curl grin-pool.us:13423/grin/stat/gps```
 
-Ex: ```{ "gps": 9.73408 }```
+### User Balance and Payments:
 
-Q: How do I get timestamp of the last grin block found?
+#### Get user balance and payment method data:
+#####Requires ```basicauth```
 
-A: ```curl grin-pool.us:13423/grin/block/timestamp```
+```/worker/utxo/<int:id>```
 
-Ex: ```{ "timestamp": 1533279887.0 }```
+    Get the workers outstanding balance and payment method data
 
-Q: How do I get data needed to graph the grin network graph rate over the past 60 blocks?
 
-A: ```curl grin-pool.us:13423/grin/stats/0,60/gps```
+### Set user payment method:
+#####Requires ```basicauth```
 
-Q: How do I get the pools current graph rate?
+```/worker/utxo/<int:id>/<string:field>/<string:value>```
 
-A: ```curl grin-pool.us:13423/pool/stat/gps```
+   Set the workers "address", "method", or "locked" values
+   POST method
 
-Xxx add more
+
+#### Get user payment data:
+#####Requires ```basicauth```
+
+```/worker/payment/<int:id>```
+
+    Get the most recent payment record for a worker
+
+```/worker/payment/<int:id>/<string:fields>```
+
+    Get the most recent payment record for a worker
+    Filter all but specified fields
+
+```/worker/payments/<int:id>/<int:range>```
+
+    Get the range of most recent payment records for a worker
+
+```/worker/payments/<int:id>/<int:range>/<string:fields>```
+
+    Get the range of most recent payment records for a worker
+    Filter all but specified fields
