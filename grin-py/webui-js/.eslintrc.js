@@ -1,10 +1,13 @@
 module.exports = {
   extends: ['standard', 'plugin:react/recommended'],
   globals: {
-    fetch: true
+    fetch: true,
+    "document": true,
+    "window": true    
   },
   "env": {
-    "jest": true
+    "jest": true,
+    "browser": true
   },
   parser: 'babel-eslint',
   plugins: ['standard', 'react'],
