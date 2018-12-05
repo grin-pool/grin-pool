@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react'
 import { getLatestBlock } from '../redux/actions/networkDataActions.js'
+import { attemptAutoLoginFromCookies } from '../redux/actions/authActions.js'
 import { connect } from 'react-redux'
 
 class MainWrapperComponent extends PureComponent {
   constructor (props) {
     super(props)
-    const { getLatestBlock } = this.props
+    const { getLatestBlock, attemptAutoLoginFromCookies } = this.props
+    attemptAutoLoginFromCookies()
     getLatestBlock()
     setInterval(getLatestBlock, 10000)
   }
@@ -30,6 +32,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
+    attemptAutoLoginFromCookies: () => dispatch(attemptAutoLoginFromCookies()),
     getLatestBlock: () => dispatch(getLatestBlock())
   }
 }

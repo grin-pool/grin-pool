@@ -1,6 +1,14 @@
 // @flow
+/* global document sessionStorage */
 import { API_URL } from '../../config.js'
 import FormData from 'form-data'
+
+export const attemptAutoLoginFromCookies = () => (dispatch, getState) => {
+  const username = sessionStorage.getItem('username')
+  const id = sessionStorage.getItem('id')
+  const token = sessionStorage.getItem('token')
+  dispatch({ type: 'ACCOUNT', data: { username, token, id } })
+}
 
 export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
   dispatch({ type: 'IS_CREATING_ACCOUNT', data: true })
@@ -25,6 +33,9 @@ export const createUser = (username: string, password: string, history: any) => 
       })
       const loginData = await loginResponse.json()
       dispatch({ type: 'ACCOUNT', data: { username, token: loginData.token, id: loginData.id } })
+      sessionStorage.setItem('username', username)
+      sessionStorage.setItem('id', loginData.id)
+      sessionStorage.setItem('token', loginData.token)
       history.push('/miner')
     } else if (createUserData.message) {
       dispatch({ type: 'AUTH_ERROR', data: { authError: createUserData.message } })
@@ -48,6 +59,9 @@ export const login = (username: string, password: string, history) => async (dis
     })
     const loginData = await loginResponse.json()
     dispatch({ type: 'ACCOUNT', data: { username, id: loginData.id, token: loginData.token } })
+    sessionStorage.setItem('username', username)
+    sessionStorage.setItem('id', loginData.id)
+    sessionStorage.setItem('token', loginData.token)
     history.push('/miner')
   } catch (e) {
     console.log('Error: ', e)
@@ -60,4 +74,5 @@ export const logout = () => (dispatch, getState) => {
     type: 'ACCOUNT',
     data: null
   })
+  sessionStorage.clear()
 }
