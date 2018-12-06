@@ -1,14 +1,20 @@
 import React, { Component } from 'react'
-import { Col, Container, Row, Card, CardBody, Form, FormGroup, Label, Input } from 'reactstrap'
+import { Col, Container, Row, Card, CardBody, Form, FormGroup, Label, Input, Alert } from 'reactstrap'
 import { MinerPaymentDataConnector } from '../../redux/connectors/MinerPaymentDataConnector.js'
+import Blob from 'blob'
+import Spinner from 'react-spinkit'
 
 export class MinerPaymentComponent extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      paymentType: 'manual',
+      paymentType: '',
       manualPaymentMethod: ''
     }
+  }
+
+  renderSpinner = (height) => {
+    return <Spinner name='circle' color='white' fadeIn='none' style={{ marginLeft: 'auto', marginRight: 'auto', height }} />
   }
 
   onPaymentTypeChange = (event) => {
@@ -23,22 +29,34 @@ export class MinerPaymentComponent extends Component {
     })
   }
 
+  _downloadTxtFile = () => {
+    const { minerPaymentTxSlate } = this.props
+    const element = document.createElement('a')
+    const file = new Blob([minerPaymentTxSlate], { type: 'text/plain' })
+    element.href = URL.createObjectURL(file)
+    const date = new Date()
+    const timestamp = Math.floor(date.getTime() / 1000)
+    element.download = `payoutScript-${timestamp}.txt`
+    element.click()
+  }
+
+  componentDidMount = () => {
+    const { fetchMinerPaymentTxSlate, getLatestMinerPayments } = this.props
+    getLatestMinerPayments()
+    fetchMinerPaymentTxSlate()
+  }
+
   renderManualPayoutOptions = () => {
     return (
       <Col sm={10}>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='onlineWallet' name='paymentMethod' />Online Wallet / Port
+            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
           </Label>
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='cutAndPaste' name='paymentMethod' />Payout Cut &amp; Paste
-          </Label>
-        </FormGroup>
-        <FormGroup check>
-          <Label check>
-            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='downloadScript' name='paymentMethod' />Download Payment Request Script
+            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payment Request Script
           </Label>
         </FormGroup>
       </Col>
@@ -56,6 +74,7 @@ export class MinerPaymentComponent extends Component {
   }
 
   renderPayoutForm = () => {
+    const { isPayoutScriptLoading } = this.props
     const { manualPaymentMethod } = this.state
     switch (manualPaymentMethod) {
       case 'onlineWallet':
@@ -82,19 +101,34 @@ export class MinerPaymentComponent extends Component {
             </span>
           </div>
         )
-      case 'downloadScript':
+      case 'payoutScript':
         return (
-          <div>
-            <Label for="downloadScript">Download the Script and Upload to Wallet:</Label><br />
-            <a href=''>Click Me</a>
+          <div style={{ textAlign: 'center' }}>
+            <Label for="payoutScript">Download the Script and Upload to Wallet:</Label><br />
+            {isPayoutScriptLoading ? (
+              this.renderSpinner('1.8em')
+            ) : (
+              <a href='' onClick={this._downloadTxtFile} style={{ fontWeight: 'bold' }}>Download</a>
+            )}
           </div>
         )
     }
   }
 
+  onSubmit = (e) => {
+    e.preventDefault()
+    const { manualPaymentMethod } = this.state
+    const { setPaymentMethodSetting } = this.props
+    setPaymentMethodSetting('method', manualPaymentMethod)
+  }
+
+  onClear = (e) => {
+    e.preventDefault()
+  }
+
   render () {
-    // const { username } = this.props
     const { paymentType } = this.state
+    const { isPaymentSettingProcessing, paymentFormFeedback } = this.props
     return (
       <Container className='dashboard'>
         <Row>
@@ -126,8 +160,13 @@ export class MinerPaymentComponent extends Component {
                     {this.renderPayoutForm()}
                   </FormGroup>
                   <div style={{ textAlign: 'center' }}>
-                    <button className="btn btn-outline-primary account__btn account__btn--small">{'Clear'}</button>
-                    <button className="btn btn-primary account__btn account__btn--small">{'Submit'}</button>
+                    <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button>
+                    <button className="btn btn-primary account__btn account__btn--small" style={{ width: '84px' }} onClick={this.onSubmit}>
+                      {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Save'}
+                    </button>
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                    {paymentFormFeedback && <Alert style={{ display: 'inline' }} color={paymentFormFeedback.color}>{paymentFormFeedback.message}</Alert> }
                   </div>
                 </Form>
               </CardBody>
