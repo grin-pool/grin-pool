@@ -11,7 +11,7 @@ export class MinerPaymentDataComponent extends Component {
 
   UNSAFE_componentWillMount () {
     this.fetchMinerPaymentData()
-    this.interval = setInterval(this.fetchMinerPaymentData, 10000)
+    this.interval = setInterval(this.fetchMinerPaymentData, 30000)
   }
 
   fetchMinerPaymentData = () => {

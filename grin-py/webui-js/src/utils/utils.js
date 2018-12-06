@@ -112,3 +112,8 @@ export function secondsToHms (d) {
 
   return hDisplay + mDisplay + sDisplay
 }
+
+export const basicAuth = (token) => {
+  const auth = 'Basic ' + Buffer.from(token + ':' + 'random').toString('base64')
+  return auth
+}
