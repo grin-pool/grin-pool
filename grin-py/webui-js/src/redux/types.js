@@ -1,5 +1,4 @@
-import { Dispatch as ReduxDispatch, Store as ReduxStore } from 'redux'
-console.log(ReduxStore)
+import { Dispatch as ReduxDispatch } from 'redux'
 export type Action = { type: string, data?: any }
 
 export interface State {
