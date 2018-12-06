@@ -74,10 +74,6 @@ export class MinerDataComponent extends Component {
                 <td>Test</td>
               </tr>
               <tr>
-                <td>Active Miners</td>
-                <td>Test</td>
-              </tr>
-              <tr>
                 <td>Blocks Found</td>
                 <td>Test</td>
               </tr>
