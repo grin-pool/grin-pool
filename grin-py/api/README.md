@@ -1,5 +1,30 @@
-# Grin-Pool API
 
+#### Table Of Contents
+
+* [grin](#grin)
+  * [blocks](#grinblocks)
+  * [stats](#grinstats)
+* [pool](#pool)
+  * [blocks](#poolblocks)
+  * [block count](#poolblockcount)
+  * [stats](#poolstats)
+  * [share count](#poolsharecount)
+  * [user accounts](#poolusers)
+    * [create account](#createaccount)
+    * [get api token](#getapitoken)
+* [worker](#worker)
+  * [stats](#workerstats)
+  * [shares](#workershares)
+  * [blocks](#workerblocks)
+  * [payments](#workerpayments)
+  * [settings](#workersettings)
+* [payment request](#paymentrequest)
+  * [offline](#offlinepayment)
+  * [online](#onlinepayment)
+
+
+
+# Grin-Pool API
 
 ## Grin:
 
