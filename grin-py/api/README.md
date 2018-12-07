@@ -458,6 +458,7 @@
 
 
 
+
 <a name="paymentrequest"/></a>
 #### Request Payments - Both online and offline
 #### Requires ```basicauth```
@@ -465,18 +466,19 @@
 <a name="offlinepayment"/></a>
 ```/pool/payment/<string:function>/<int:id>```
 
-   Initiate an Offline Payout for user id
-   Available functions are:
-   * ```get_tx_slate``` - Request an unsigned tx slate
-   * ```submit_tx_slate``` - Submit a signed tx slate
-   * ```payout_script``` - Get a scipt to help automate payouts
-   POST method
+    Initiate an Offline Payout for user id
+    Available functions are:
+    * ```get_tx_slate``` - Request an unsigned tx slate
+    * ```submit_tx_slate``` - Submit a signed tx slate
+    * ```payout_script``` - Get a scipt to help automate payouts
+    POST method
 
 <a name="onlinepayment"/></a>
 ```/pool/payment/<string:function>/<int:id>/<string:address>```
 
-  Initiate an Online Payout for user id to address
-  Available methds are:
-  * ```http``` - HTTP Wallet-To-Wallet tx
-  * ```grinbox``` - Coming Soon (tm)
-  * ```keybase``` - Coming Soon (tm)
+    Initiate an Online Payout for user id to address
+    Available methds are:
+    * ```http``` - HTTP Wallet-To-Wallet tx
+    * ```grinbox``` - Coming Soon (tm)
+    * ```keybase``` - Coming Soon (tm)
+
