@@ -425,6 +425,7 @@
    Available functions are:
    * ```get_tx_slate``` - Request an unsigned tx slate
    * ```submit_tx_slate``` - Submit a signed tx slate
+   * ```payout_script``` - Get a scipt to help automate payouts
    POST method
 
 ```/pool/payment/<string:function>/<int:id>/<string:address>```
