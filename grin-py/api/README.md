@@ -415,3 +415,22 @@
     Get the range of most recent payment records for a worker
     Filter all but specified fields
 
+
+#### Request Payments - Both online and offline
+#### Requires ```basicauth```
+
+```/pool/payment/<string:function>/<int:id>```
+
+   Initiate an Offline Payout for user id
+   Available functions are:
+   * ```get_tx_slate``` - Request an unsigned tx slate
+   * ```submit_tx_slate``` - Submit a signed tx slate
+   POST method
+
+```/pool/payment/<string:function>/<int:id>/<string:address>```
+
+  Initiate an Online Payout for user id to address
+  Available methds are:
+  * ```http``` - HTTP Wallet-To-Wallet tx
+  * ```grinbox``` - Coming Soon (tm)
+  * ```keybase``` - Coming Soon (tm)
