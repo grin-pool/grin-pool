@@ -1,6 +1,6 @@
+# Grin-Pool API
 
 #### Table Of Contents
-
 * [grin](#grin)
   * [blocks](#grinblocks)
   * [stats](#grinstats)
@@ -24,10 +24,10 @@
 
 
 
-# Grin-Pool API
-
+<a name="grin"></a>
 ## Grin:
 
+<a name="grinblocks"/></a>
 ### Blocks:
 ```/grin/block```
 
@@ -63,6 +63,7 @@
     Specify height = 0 to start at the ‘latest’ height 
 
 
+<a name="grinstats"/></a>
 ### Stats:
 
 ```/grin/stat```
@@ -94,9 +95,11 @@
     
 
 
+<a name="pool"/></a>
 ## Pool:
 
 
+<a name="poolblocks"/></a>
 ### Blocks:
 
 ```/pool/block```
@@ -132,6 +135,7 @@
     Filter all but specified fields
 
 
+<a name="poolblockcount"/></a>
 ### Block Counts:
 
 
@@ -146,6 +150,7 @@
 
 
 
+<a name="poolstats"/></a>
 ### Stats:
 
 ```/pool/stat```
@@ -177,6 +182,7 @@
 
 
 
+<a name="poolsharecount"/></a>
 ### Share Counts:
 
 ```/pool/share/count```
@@ -199,8 +205,10 @@
 
 
 
+<a name="poolusers"/></a>
 ### User Accounts:
 
+<a name="createaccount"/></a>
 #### Create a new account:
 
 ```/pool/users```
@@ -209,6 +217,7 @@
     POST method
     Form Data required:  "username=<string>", and "password=<string>"
 
+<a name="getapitoken"/></a>
 #### Get an API token:
 ##### Requires ```basicauth```
 
@@ -219,8 +228,10 @@
 
 
 
+<a name="worker"/></a>
 ## Worker:
 
+<a name="workerstats"/></a>
 ### Stats:
 
 #### For all active Workers:
@@ -297,6 +308,7 @@
 
 
 
+<a name="workershares"/></a>
 ### Shares:
 
 #### For all active Workers:
@@ -364,6 +376,7 @@
     Filter all but specified fields
 
 
+<a name="workerblocks"/></a>
 ### Blocks:
 #### Requires ```basicauth```
 
@@ -400,6 +413,7 @@
     Filter all but specified fields
 
 
+<a name="workerpayments"/></a>
 ### User Balance and Payments:
 
 #### Get user balance and payment method data:
@@ -410,15 +424,17 @@
     Get the workers outstanding balance and payment method data
 
 
+<a name="workersettings"/></a>
 ### Set user payment method:
 #### Requires ```basicauth```
 
 ```/worker/utxo/<int:id>/<string:field>/<string:value>```
 
-   Set the workers "address", "method", or "locked" values
+   Set the workers "address", or "method" values
    POST method
 
 
+<a name="workerpayments"/></a>
 #### Get user payment data:
 #### Requires ```basicauth```
 
@@ -441,9 +457,12 @@
     Filter all but specified fields
 
 
+
+<a name="paymentrequest"/></a>
 #### Request Payments - Both online and offline
 #### Requires ```basicauth```
 
+<a name="offlinepayment"/></a>
 ```/pool/payment/<string:function>/<int:id>```
 
    Initiate an Offline Payout for user id
@@ -453,6 +472,7 @@
    * ```payout_script``` - Get a scipt to help automate payouts
    POST method
 
+<a name="onlinepayment"/></a>
 ```/pool/payment/<string:function>/<int:id>/<string:address>```
 
   Initiate an Online Payout for user id to address
