@@ -468,9 +468,9 @@
 
     Initiate an Offline Payout for user id
     Available functions are:
-    * ```get_tx_slate``` - Request an unsigned tx slate
-    * ```submit_tx_slate``` - Submit a signed tx slate
-    * ```payout_script``` - Get a scipt to help automate payouts
+    * get_tx_slate - Request an unsigned tx slate
+    * submit_tx_slate - Submit a signed tx slate
+    * payout_script - Get a scipt to help automate payouts
     POST method
 
 <a name="onlinepayment"/></a>
@@ -478,7 +478,7 @@
 
     Initiate an Online Payout for user id to address
     Available methds are:
-    * ```http``` - HTTP Wallet-To-Wallet tx
-    * ```grinbox``` - Coming Soon (tm)
-    * ```keybase``` - Coming Soon (tm)
+    * http - HTTP Wallet-To-Wallet tx
+    * grinbox - Coming Soon (tm)
+    * keybase - Coming Soon (tm)
 
