@@ -75,7 +75,7 @@ export const getLatestMinerPayments = () => async (dispatch: Dispatch, getState:
 
 export const fetchMinerPaymentTxSlate = () => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({
-    type: 'IS_PAYOUT_SCRIPT_LOADING',
+    type: 'IS_TX_SLATE_LOADING',
     data: true
   })
   try {
@@ -97,7 +97,7 @@ export const fetchMinerPaymentTxSlate = () => async (dispatch: Dispatch, getStat
     console.log('Error: ', e)
   }
   dispatch({
-    type: 'IS_PAYOUT_SCRIPT_LOADING',
+    type: 'IS_TX_SLATE_LOADING',
     data: false
   })
 }
@@ -130,5 +130,26 @@ export const setPaymentMethodSetting = (field: string, value: string) => async (
       type: 'IS_PAYMENT_SETTING_PROCESSING',
       data: false
     })
+  }
+}
+
+export const fetchMinerPaymentScript = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const id = state.auth.account.id
+    const url = `${API_URL}pool/payment/payout_script/${id}`
+    const fetchMinerPaymentScriptResponse = await fetch(url, {
+      method: 'POST',
+      headers: {
+        authorization: basicAuth(state.auth.account.token)
+      }
+    })
+    const fetchMinerPaymentScriptData = await fetchMinerPaymentScriptResponse.json()
+    dispatch({
+      type: 'PAYOUT_SCRIPT',
+      data: fetchMinerPaymentScriptData
+    })
+  } catch (e) {
+    console.log('fetchMinerPaymentScript error: ', e)
   }
 }
