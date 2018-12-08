@@ -5,7 +5,8 @@ import { fetchGrinPoolSharesSubmitted } from '../actions/grinPoolDataActions.js'
 
 const mapStateToProps = (state) => {
   return {
-    sharesSubmitted: state.grinPoolData.sharesSubmitted
+    sharesSubmitted: state.grinPoolData.sharesSubmitted,
+    latestBlockHeight: state.networkData.latestBlock.height || 0
   }
 }
 

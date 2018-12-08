@@ -5,15 +5,15 @@ import _ from 'lodash'
 // import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolStatsTableComponent extends Component {
-  interval = null
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
   UNSAFE_componentWillMount () {
     this.fetchGrinPoolTableStats()
-    this.interval = setInterval(this.fetchGrinPoolTableStats, 10000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlockHeight } = this.props
+    if (prevProps.latestBlockHeight !== latestBlockHeight) {
+      this.fetchGrinPoolTableStats()
+    }
   }
 
   fetchGrinPoolTableStats = () => {

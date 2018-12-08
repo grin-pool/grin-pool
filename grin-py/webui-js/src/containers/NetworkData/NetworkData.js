@@ -5,16 +5,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class NetworkDataComponent extends Component {
-  interval = null
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
-    this.interval = setInterval(fetchNetworkData, 10000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlock, fetchNetworkData } = this.props
+    if (latestBlock.height !== prevProps.latestBlock.height) {
+      fetchNetworkData()
+    }
   }
 
   render () {

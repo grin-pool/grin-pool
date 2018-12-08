@@ -8,7 +8,8 @@ import {
 const mapStateToProps = (state) => {
   return {
     historicalNetworkData: state.networkData.historical || [],
-    historicalGrinPoolData: state.grinPoolData.historical || []
+    historicalGrinPoolData: state.grinPoolData.historical || [],
+    latestBlockHeight: state.networkData.latestBlock.height || 0
   }
 }
 

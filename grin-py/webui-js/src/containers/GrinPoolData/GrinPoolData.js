@@ -13,12 +13,18 @@ export class GrinPoolDataComponent extends Component {
 
   UNSAFE_componentWillMount () {
     this.fetchGrinPoolData()
-    this.interval = setInterval(this.fetchGrinPoolData, 10000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlockHeight } = this.props
+    if (prevProps.latestBlockHeight !== latestBlockHeight) {
+      this.fetchGrinPoolData()
+    }
   }
 
   fetchGrinPoolData = () => {
-    const { fetchNetworkData, fetchGrinPoolLastBlock } = this.props
-    fetchNetworkData()
+    const { fetchGrinPoolData, fetchGrinPoolLastBlock } = this.props
+    fetchGrinPoolData()
     fetchGrinPoolLastBlock()
   }
 

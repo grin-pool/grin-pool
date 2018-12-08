@@ -10,6 +10,7 @@ const mapStateToProps = (state) => {
   const grinPoolHistoricalData = state.grinPoolData.historical
   const grinPoolHistoricalDataLength = grinPoolHistoricalData.length
   const poolBlocksMined = state.grinPoolData.poolBlocksMined
+  const latestBlockHeight = state.networkData.latestBlock.height
   let activeWorkers = 0
   if (grinPoolHistoricalDataLength > 0) {
     activeWorkers = grinPoolHistoricalData[grinPoolHistoricalDataLength - 1].active_miners
@@ -18,13 +19,14 @@ const mapStateToProps = (state) => {
     networkData: state.grinPoolData.historical || [],
     activeWorkers,
     lastBlockMined: state.grinPoolData.lastBlockMined,
-    poolBlocksMined
+    poolBlocksMined,
+    latestBlockHeight
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchNetworkData: () => dispatch(fetchGrinPoolData()),
+    fetchGrinPoolData: () => dispatch(fetchGrinPoolData()),
     fetchGrinPoolLastBlock: () => dispatch(fetchGrinPoolLastBlock())
   }
 }
