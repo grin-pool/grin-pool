@@ -23,46 +23,36 @@ export class GrinPoolStatsTableComponent extends Component {
 
   render () {
     const { historicalGrinPoolData, historicalNetworkData } = this.props
-    const grinPoolC29gps = []
-    const grinPoolC30gps = []
-    historicalGrinPoolData.forEach((blockData) => {
-      let c29Stat = 0
-      let c30Stat = 0
-      blockData.gps.forEach((edgeBit) => {
-        if (edgeBit.edge_bits === 29) {
-          c29Stat = edgeBit.gps
-        } else if (edgeBit.edge_bits === 30) {
-          c30Stat = edgeBit.gps
-        }
-      })
-      grinPoolC29gps.push(c29Stat)
-      grinPoolC30gps.push(c30Stat)
-    })
+    if (historicalNetworkData.length === 0) return null
+    let c29Share = 0
+    let c30Share = 0
+    let poolBlock29Rate = 0
+    let poolBlock30Rate = 0
+    let networkBlock29Rate = 0
+    let networkBlock30Rate = 0
 
-    const networkC29gps = []
-    const networkC30gps = []
-    historicalNetworkData.forEach((blockData) => {
-      let c29Stat = 0
-      let c30Stat = 0
-      blockData.gps.forEach((edgeBit) => {
-        if (edgeBit.edge_bits === 29) {
-          c29Stat = edgeBit.gps
-        } else if (edgeBit.edge_bits === 30) {
-          c30Stat = edgeBit.gps
-        }
-      })
-      networkC29gps.push(c29Stat)
-      networkC30gps.push(c30Stat)
-    })
+    const poolBlockIndex = historicalGrinPoolData.length - 1
+    const poolBlock = historicalGrinPoolData[poolBlockIndex]
+    if (historicalGrinPoolData[poolBlockIndex]) {
+      const poolBlock29Data = _.find(poolBlock.gps, (graph) => graph.edge_bits === 29)
+      const poolBlock30Data = _.find(poolBlock.gps, (graph) => graph.edge_bits === 30)
+      if (poolBlock29Data) {
+        poolBlock29Rate = poolBlock29Data.gps.toFixed(2)
+      }
+      if (poolBlock30Data) {
+        poolBlock30Rate = poolBlock30Data.gps.toFixed(2)
+      }
 
-    const grinPoolC29Avg = (_.sum(grinPoolC29gps) / (grinPoolC29gps.length)).toFixed(4)
-    const grinPoolC30Avg = (_.sum(grinPoolC30gps) / (grinPoolC30gps.length)).toFixed(4)
-    const networkC29Avg = (_.sum(networkC29gps) / (networkC29gps.length)).toFixed(4)
-    const networkC30Avg = (_.sum(networkC30gps) / (networkC30gps.length)).toFixed(4)
-    const grinPoolC29Percentage = (grinPoolC29Avg / networkC29Avg) * 100
-    const grinPoolC30Percentage = (grinPoolC30Avg / networkC30Avg) * 100
-    const grinPoolC29Readable = grinPoolC29Percentage.toFixed(2)
-    const grinPoolC30Readable = grinPoolC30Percentage.toFixed(2)
+      const networkBlockIndex = historicalNetworkData.length - 1
+      const networkBlock = historicalNetworkData[networkBlockIndex]
+      const networkBlock29Data = _.find(networkBlock.gps, (graph) => graph.edge_bits === 29)
+      const networkBlock30Data = _.find(networkBlock.gps, (graph) => graph.edge_bits === 30)
+      networkBlock29Rate = networkBlock29Data ? networkBlock29Data.gps.toFixed(2) : 0
+      networkBlock30Rate = networkBlock30Data ? networkBlock30Data.gps.toFixed(2) : 0
+
+      c29Share = (poolBlock29Rate / networkBlock29Rate * 100).toFixed(2)
+      c30Share = (poolBlock30Rate / networkBlock30Rate * 100).toFixed(2)
+    }
 
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
@@ -79,15 +69,15 @@ export class GrinPoolStatsTableComponent extends Component {
           <tbody>
             <tr>
               <th scope='row'>Average C29 gps</th>
-              <td>{grinPoolC29Avg}</td>
-              <td>{networkC29Avg}</td>
-              <td>{`${grinPoolC29Readable}%`} <Progress color='success' value={grinPoolC29Readable} /></td>
+              <td>{poolBlock29Rate}</td>
+              <td>{networkBlock29Rate}</td>
+              <td>{`${c29Share} %`} <Progress color='success' value={c29Share} /></td>
             </tr>
             <tr>
               <th scope='row'>Average C30 gps</th>
-              <td>{grinPoolC30Avg}</td>
-              <td>{networkC30Avg}</td>
-              <td>{`${grinPoolC30Readable}%`} <Progress color='success' value={grinPoolC30Readable} /></td>
+              <td>{poolBlock30Rate}</td>
+              <td>{networkBlock30Rate}</td>
+              <td>{!isNaN(c30Share) ? `${c30Share} %` : 'n/a'} <Progress color='success' value={c30Share} /></td>
             </tr>
           </tbody>
         </Table>
