@@ -17,8 +17,7 @@ export class GrinPoolDataComponent extends Component {
   }
 
   fetchGrinPoolData = () => {
-    const { fetchNetworkData, fetchGrinPoolActiveMinerCount, fetchGrinPoolLastBlock } = this.props
-    fetchGrinPoolActiveMinerCount()
+    const { fetchNetworkData, fetchGrinPoolLastBlock } = this.props
     fetchNetworkData()
     fetchGrinPoolLastBlock()
   }
