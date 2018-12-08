@@ -2,15 +2,16 @@
 /* global document sessionStorage */
 import { API_URL } from '../../config.js'
 import FormData from 'form-data'
+import { type Dispatch, type GetState } from '../types.js'
 
-export const attemptAutoLoginFromCookies = () => (dispatch, getState) => {
+export const attemptAutoLoginFromCookies = () => (dispatch: Dispatch, getState: GetState) => {
   const username = sessionStorage.getItem('username')
   const id = sessionStorage.getItem('id')
   const token = sessionStorage.getItem('token')
   dispatch({ type: 'ACCOUNT', data: { username, token, id } })
 }
 
-export const createUser = (username: string, password: string, history: any) => async (dispatch, getState) => {
+export const createUser = (username: string, password: string, history: any) => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({ type: 'IS_CREATING_ACCOUNT', data: true })
   try {
     const url = `${API_URL}pool/users`
@@ -46,7 +47,7 @@ export const createUser = (username: string, password: string, history: any) => 
   }
 }
 
-export const login = (username: string, password: string, history) => async (dispatch, getState) => {
+export const login = (username: string, password: string, history: Object) => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({ type: 'IS_LOGGING_IN', data: true })
   try {
     const auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64')
@@ -69,7 +70,7 @@ export const login = (username: string, password: string, history) => async (dis
   }
 }
 
-export const logout = () => (dispatch, getState) => {
+export const logout = () => (dispatch: Dispatch, getState: GetState) => {
   dispatch({
     type: 'ACCOUNT',
     data: null

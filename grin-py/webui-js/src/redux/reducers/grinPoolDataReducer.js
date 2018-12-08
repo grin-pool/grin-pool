@@ -1,6 +1,8 @@
+// @flow
+
 import { combineReducers } from 'redux'
 
-export const historical = (state = [], action) => {
+export const historical = (state: Array<any> = [], action) => {
   switch (action.type) {
     case 'GRIN_POOL_DATA':
       return action.data.historical
@@ -9,25 +11,7 @@ export const historical = (state = [], action) => {
   }
 }
 
-export const sharesSubmitted = (state = [], action) => {
-  switch (action.type) {
-    case 'GRIN_POOL_SHARES_SUBMITTED':
-      return action.data.sharesSubmittedData
-    default:
-      return state
-  }
-}
-
-export const activeWorkers = (state = 0, action) => {
-  switch (action.type) {
-    case 'GRIN_POOL_ACTIVE_WORKERS':
-      return action.data.activeWorkers
-    default:
-      return state
-  }
-}
-
-export const lastBlockMined = (state = 0, action) => {
+export const lastBlockMined = (state: number = 0, action) => {
   switch (action.type) {
     case 'GRIN_POOL_LAST_BLOCK_MINED':
       return action.data.lastBlockMined
@@ -36,9 +20,27 @@ export const lastBlockMined = (state = 0, action) => {
   }
 }
 
+export const poolBlocksMined = (state: Array<any> = [], action) => {
+  switch (action.type) {
+    case 'POOL_BLOCKS_MINED':
+      return action.data
+    default:
+      return state
+  }
+}
+
+export const sharesSubmitted = (state: Array<any> = [], action) => {
+  switch (action.type) {
+    case 'GRIN_POOL_SHARES_SUBMITTED':
+      return action.data.sharesSubmittedData
+    default:
+      return state
+  }
+}
+
 export const grinPoolData = combineReducers({
   historical,
-  activeWorkers,
   lastBlockMined,
+  poolBlocksMined,
   sharesSubmitted
 })

@@ -11,7 +11,8 @@ const mapStateToProps = (state) => {
     lastSuccess: paymentData.last_success,
     failureCount: paymentData.failure_count,
     lastTry: paymentData.last_try,
-    currentTimestamp: Date.now() / 1000
+    currentTimestamp: Date.now() / 1000,
+    lastestBlockHeight: state.networkData.latestBlock.height
   }
 }
 
