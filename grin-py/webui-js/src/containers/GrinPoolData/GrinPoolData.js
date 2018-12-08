@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceDot } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
@@ -23,7 +23,7 @@ export class GrinPoolDataComponent extends Component {
   }
 
   render () {
-    const { networkData, activeWorkers, lastBlockMined } = this.props
+    const { networkData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
@@ -98,6 +98,13 @@ export class GrinPoolDataComponent extends Component {
               <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
+              {networkData.map((block) => {
+                if (poolBlocksMined.indexOf(block.height) > -1) {
+                  return <ReferenceDot key={block.height} yAxisId={'left'} r={4} isFront x={block.height} y={block.gps[0].gps} fill={C29_COLOR} stroke={C29_COLOR} />
+                } else {
+                  return null
+                }
+              })}
             </LineChart>
           </ResponsiveContainer>
         </Col>
