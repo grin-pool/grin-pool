@@ -6,9 +6,11 @@ import { fetchNetworkData } from '../actions/networkDataActions.js'
 const mapStateToProps = (state) => {
   const networkData = state.networkData.historical || []
   const latestBlock = state.networkData.latestBlock || 0
+  const poolBlocksMined = state.grinPoolData.poolBlocksMined || []
   return {
     networkData,
-    latestBlock
+    latestBlock,
+    poolBlocksMined
   }
 }
 

@@ -1,12 +1,13 @@
 // @flow
 import { API_URL } from '../../config.js'
 import { BLOCK_RANGE } from '../../constants/dataConstants.js'
+import { type Dispatch, type GetState } from '../types.js'
 
-export const fetchGrinPoolData = (start: number = 0) => async (dispatch, getState) => {
+export const fetchGrinPoolData = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}pool/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,total_blocks_found`
+    const url = `${API_URL}pool/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,total_blocks_found,active_miners`
     const grinPoolDataResponse = await fetch(url)
     const grinPoolData = await grinPoolDataResponse.json()
     dispatch({ type: 'GRIN_POOL_DATA', data: { historical: grinPoolData } })
@@ -15,20 +16,7 @@ export const fetchGrinPoolData = (start: number = 0) => async (dispatch, getStat
   }
 }
 
-export const fetchGrinPoolActiveMinerCount = (start: number = 0) => async (dispatch, getState) => {
-  try {
-    const state = getState()
-    const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}workers/stats/${latestBlockHeight},1/worker`
-    const activeWorkersDataResponse = await fetch(url)
-    const activeWorkersData = await activeWorkersDataResponse.json()
-    dispatch({ type: 'GRIN_POOL_ACTIVE_WORKERS', data: { activeWorkers: activeWorkersData.length } })
-  } catch (e) {
-    console.log('Error: ', e)
-  }
-}
-
-export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch) => {
+export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch: Dispatch) => {
   try {
     const url = `${API_URL}pool/block`
     const grinPoolLastBlockDataResponse = await fetch(url)
@@ -39,7 +27,7 @@ export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch) =>
   }
 }
 
-export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispatch, getState) => {
+export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
@@ -49,5 +37,25 @@ export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispat
     dispatch({ type: 'GRIN_POOL_SHARES_SUBMITTED', data: { sharesSubmittedData } })
   } catch (e) {
     console.log('Error: ', e)
+  }
+}
+
+export const fetchGrinPoolBlocksMined = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const latestBlockHeight = state.networkData.latestBlock.height || 0
+    const url = `${API_URL}pool/blocks/${latestBlockHeight},${BLOCK_RANGE}`
+    const grinPoolBlocksMinedResponse = await fetch(url)
+    const grinPoolBlocksMinedData = await grinPoolBlocksMinedResponse.json()
+    // turn them into a basic array
+    const blocksFound = grinPoolBlocksMinedData.map((block) => {
+      return block.height
+    })
+    dispatch({
+      type: 'POOL_BLOCKS_MINED',
+      data: blocksFound
+    })
+  } catch (e) {
+
   }
 }

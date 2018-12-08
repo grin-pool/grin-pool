@@ -1,6 +1,8 @@
+// @flow
+
 import { combineReducers } from 'redux'
 
-const historical = (state = [], action) => {
+const historical = (state: Array<any> = [], action) => {
   switch (action.type) {
     case 'MINER_DATA':
       return action.data.historical
@@ -9,7 +11,7 @@ const historical = (state = [], action) => {
   }
 }
 
-const totalSharesSubmitted = (state = 0, action) => {
+const totalSharesSubmitted = (state: number = 0, action) => {
   switch (action.type) {
     case 'MINER_TOAL_VALID_SHARES':
       return action.data.totalSharesSubmitted
@@ -18,7 +20,7 @@ const totalSharesSubmitted = (state = 0, action) => {
   }
 }
 
-const paymentData = (state = {}, action) => {
+const paymentData = (state: Object = {}, action) => {
   switch (action.type) {
     case 'MINER_PAYMENT_DATA':
       return action.data
@@ -27,7 +29,7 @@ const paymentData = (state = {}, action) => {
   }
 }
 
-const isPaymentSettingProcessing = (state = false, action) => {
+const isPaymentSettingProcessing = (state: boolean = false, action) => {
   switch (action.type) {
     case 'IS_PAYMENT_SETTING_PROCESSING':
       return action.data
@@ -38,7 +40,7 @@ const isPaymentSettingProcessing = (state = false, action) => {
   }
 }
 
-const minerPaymentTxSlate = (state = '', action) => {
+const minerPaymentTxSlate = (state: string = '', action) => {
   switch (action.type) {
     case 'MINER_PAYMENT_TX_SLATE':
       return action.data
@@ -47,16 +49,25 @@ const minerPaymentTxSlate = (state = '', action) => {
   }
 }
 
-const isPayoutScriptLoading = (state = false, action) => {
+const isTxSlateLoading = (state: boolean = false, action) => {
   switch (action.type) {
-    case 'IS_PAYOUT_SCRIPT_LOADING':
+    case 'IS_TX_SLATE_LOADING':
       return action.data
     default:
       return state
   }
 }
 
-const paymentFormFeedback = (state = null, action) => {
+const payoutScript = (state: string = '', action) => {
+  switch (action.type) {
+    case 'PAYOUT_SCRIPT':
+      return action.data
+    default:
+      return state
+  }
+}
+
+const paymentFormFeedback = (state: null | string = null, action) => {
   switch (action.type) {
     case 'PAYMENT_FORM_FEEDBACK':
       return action.data
@@ -85,6 +96,7 @@ export const minerData = combineReducers({
   paymentData,
   minerPaymentTxSlate,
   isPaymentSettingProcessing,
-  isPayoutScriptLoading,
+  isTxSlateLoading,
+  payoutScript,
   paymentFormFeedback
 })

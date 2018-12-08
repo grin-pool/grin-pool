@@ -7,9 +7,9 @@ import Spinner from 'react-spinkit'
 export class MinerPaymentComponent extends Component {
   constructor (props) {
     super(props)
+    const { paymentMethod } = props
     this.state = {
-      paymentType: '',
-      manualPaymentMethod: ''
+      paymentMethod: paymentMethod || ''
     }
   }
 
@@ -23,9 +23,9 @@ export class MinerPaymentComponent extends Component {
     })
   }
 
-  onManualPaymentMethodChange = (event) => {
+  onPaymentMethodChange = (event) => {
     this.setState({
-      manualPaymentMethod: event.target.value
+      paymentMethod: event.target.value
     })
   }
 
@@ -36,14 +36,26 @@ export class MinerPaymentComponent extends Component {
     element.href = URL.createObjectURL(file)
     const date = new Date()
     const timestamp = Math.floor(date.getTime() / 1000)
+    element.download = `txSlate-${timestamp}.txt`
+    element.click()
+  }
+
+  _downloadPayoutScriptFile = () => {
+    const { payoutScript } = this.props
+    const element = document.createElement('a')
+    const file = new Blob([payoutScript], { type: 'text/plain' })
+    element.href = URL.createObjectURL(file)
+    const date = new Date()
+    const timestamp = Math.floor(date.getTime() / 1000)
     element.download = `payoutScript-${timestamp}.txt`
     element.click()
   }
 
   componentDidMount = () => {
-    const { fetchMinerPaymentTxSlate, getLatestMinerPayments } = this.props
+    const { fetchMinerPaymentTxSlate, getLatestMinerPayments, fetchMinerPaymentScript } = this.props
     getLatestMinerPayments()
     fetchMinerPaymentTxSlate()
+    fetchMinerPaymentScript()
   }
 
   renderManualPayoutOptions = () => {
@@ -51,12 +63,17 @@ export class MinerPaymentComponent extends Component {
       <Col sm={10}>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
           </Label>
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onManualPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payment Request Script
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
+          </Label>
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='txSlate' name='paymentMethod' />Download Transaction Slate File
           </Label>
         </FormGroup>
       </Col>
@@ -74,52 +91,52 @@ export class MinerPaymentComponent extends Component {
   }
 
   renderPayoutForm = () => {
-    const { isPayoutScriptLoading } = this.props
-    const { manualPaymentMethod } = this.state
-    switch (manualPaymentMethod) {
-      case 'onlineWallet':
-        return (
-          <div>
-            <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
-            <Input
-              onChange={this.onChangeOnlineWallet}
-              type="text"
-              name="onlineWallet"
-              id="onlineWallet"
-              placeholder="ex http://195.128.200.15:13415"
-              className='form-control' />
-          </div>
-        )
-      case 'cutAndPaste':
-        return (
-          <div>
-            <Label for="cutAndPaste">Copy and Paste the Following Code:</Label><br />
-            <span style={{ fontFamily: 'Courier' }}>
-              Blah blajfajlsfd;ljasdl;fjasdjf<br />
-              asdlfj;lasdjflas;fjas;d<br />
-              klasdfjlasjdf;ladfjsj Test<br />
-            </span>
-          </div>
-        )
-      case 'payoutScript':
-        return (
-          <div style={{ textAlign: 'center' }}>
-            <Label for="payoutScript">Download the Script and Upload to Wallet:</Label><br />
-            {isPayoutScriptLoading ? (
-              this.renderSpinner('1.8em')
-            ) : (
-              <a href='' onClick={this._downloadTxtFile} style={{ fontWeight: 'bold' }}>Download</a>
-            )}
-          </div>
-        )
+    const { isTxSlateLoading } = this.props
+    const { paymentMethod, paymentType } = this.state
+    if (paymentType !== 'none') {
+      switch (paymentMethod) {
+        case 'onlineWallet':
+          return (
+            <div>
+              <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
+              <Input
+                onChange={this.onChangeOnlineWallet}
+                type="text"
+                name="onlineWallet"
+                id="onlineWallet"
+                placeholder="ex http://195.128.200.15:13415"
+                className='form-control' />
+            </div>
+          )
+        case 'payoutScript':
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <Label for="payoutScript">Download the Payout Script:</Label><br />
+              <a href='' onClick={this._downloadPayoutScriptFile} style={{ fontWeight: 'bold' }}>Download</a>
+            </div>
+          )
+        case 'txSlate':
+          return (
+            <div style={{ textAlign: 'center' }}>
+              <Label for="txSlate">Download the Transaction Slate and Upload to Wallet:</Label><br />
+              {isTxSlateLoading ? (
+                this.renderSpinner('1.8em')
+              ) : (
+                <a href='' onClick={this._downloadTxtFile} style={{ fontWeight: 'bold' }}>Download</a>
+              )}
+            </div>
+          )
+      }
+    } else {
+      return null
     }
   }
 
   onSubmit = (e) => {
     e.preventDefault()
-    const { manualPaymentMethod } = this.state
+    const { paymentMethod } = this.state
     const { setPaymentMethodSetting } = this.props
-    setPaymentMethodSetting('method', manualPaymentMethod)
+    setPaymentMethodSetting('method', paymentMethod)
   }
 
   onClear = (e) => {
@@ -147,7 +164,7 @@ export class MinerPaymentComponent extends Component {
                   <FormGroup>
                     <Label for='paymentType'>Payment Type:</Label>
                     <Input type='select' name='paymentType' id='paymentSelect' onChange={this.onPaymentTypeChange}>
-                      <option>------------</option>
+                      <option value='null'>------------</option>
                       <option value='scheduled'>Scheduled Payout</option>
                       <option value='manual'>Manual Payout</option>
                     </Input>
@@ -159,15 +176,19 @@ export class MinerPaymentComponent extends Component {
                   <FormGroup tag='fieldset' row>
                     {this.renderPayoutForm()}
                   </FormGroup>
-                  <div style={{ textAlign: 'center' }}>
-                    <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button>
-                    <button className="btn btn-primary account__btn account__btn--small" style={{ width: '84px' }} onClick={this.onSubmit}>
-                      {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Save'}
-                    </button>
-                  </div>
-                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                    {paymentFormFeedback && <Alert style={{ display: 'inline' }} color={paymentFormFeedback.color}>{paymentFormFeedback.message}</Alert> }
-                  </div>
+                  {paymentType !== 'manual' && (
+                    <div>
+                      <div style={{ textAlign: 'center' }}>
+                        <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button>
+                        <button className="btn btn-primary account__btn account__btn--small" style={{ width: '84px' }} onClick={this.onSubmit}>
+                          {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Save'}
+                        </button>
+                      </div>
+                      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                        {paymentFormFeedback && <Alert style={{ display: 'inline' }} color={paymentFormFeedback.color}>{paymentFormFeedback.message}</Alert> }
+                      </div>
+                    </div>
+                  )}
                 </Form>
               </CardBody>
             </Card>

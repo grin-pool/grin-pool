@@ -3,15 +3,15 @@ import { Table } from 'reactstrap'
 import { secondsToHms } from '../../utils/utils.js'
 
 export class MinerPaymentDataComponent extends Component {
-  interval = null
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
   UNSAFE_componentWillMount () {
     this.fetchMinerPaymentData()
-    this.interval = setInterval(this.fetchMinerPaymentData, 30000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { lastestBlockHeight } = this.props
+    if (prevProps.lastestBlockHeight !== lastestBlockHeight) {
+      this.fetchMinerPaymentData()
+    }
   }
 
   fetchMinerPaymentData = () => {
@@ -22,7 +22,7 @@ export class MinerPaymentDataComponent extends Component {
   render () {
     const { amount, address, lastSuccess, failureCount, lastTry, currentTimestamp } = this.props
     const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
-
+    const lastPayoutTimeAgo = secondsToHms(currentTimestamp - lastSuccess)
     return (
       <div>
         <h4>Payment Info</h4>
@@ -38,7 +38,7 @@ export class MinerPaymentDataComponent extends Component {
             </tr>
             <tr>
               <td>Last Payout</td>
-              <td>{lastSuccess || 'n/a'}</td>
+              <td>{lastPayoutTimeAgo || 'n/a'}</td>
             </tr>
             <tr>
               <td>Payout Attempt Failures</td>

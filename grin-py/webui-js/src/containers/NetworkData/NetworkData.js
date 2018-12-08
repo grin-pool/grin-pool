@@ -1,24 +1,24 @@
 import React, { Component } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ReferenceDot } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class NetworkDataComponent extends Component {
-  interval = null
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
-    this.interval = setInterval(fetchNetworkData, 10000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlock, fetchNetworkData } = this.props
+    if (latestBlock.height !== prevProps.latestBlock.height) {
+      fetchNetworkData()
+    }
   }
 
   render () {
-    const { networkData, latestBlock } = this.props
+    const { networkData, latestBlock, poolBlocksMined } = this.props
     const graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
@@ -102,6 +102,14 @@ export class NetworkDataComponent extends Component {
               <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
               <YAxis connectNulls={true} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
               <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
+              <ReferenceLine yAxisId={'left'} x={73048} fill='white' />
+              {networkData.map((block) => {
+                if (poolBlocksMined.indexOf(block.height) > -1) {
+                  return <ReferenceDot key={block.height} yAxisId={'left'} r={4} isFront x={block.height} y={block.gps[0].gps} fill={C29_COLOR} stroke={C29_COLOR} />
+                } else {
+                  return null
+                }
+              })}
               {/* <YAxis yAxisId='right' orientation='right' domain={[minDifficulty, maxDifficulty]} stroke='#82ca9d' />
                 <Line yAxisId='right' dataKey='difficulty' stroke='#82ca9d' />
               */}
