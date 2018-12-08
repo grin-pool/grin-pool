@@ -1,21 +1,28 @@
 
 import { connect } from 'react-redux'
 import { MinerPaymentComponent } from '../../containers/MinerPayment/MinerPayment.js'
-import { fetchMinerPaymentTxSlate, getLatestMinerPayments, setPaymentMethodSetting } from '../actions/minerDataActions.js'
+import {
+  fetchMinerPaymentTxSlate,
+  getLatestMinerPayments,
+  setPaymentMethodSetting,
+  fetchMinerPaymentScript
+} from '../actions/minerDataActions.js'
 
 const mapStateToProps = (state) => ({
-  // username: state.auth.account.username
   isPaymentSettingProcessing: state.minerData.isPaymentSettingProcessing,
-  isPayoutScriptLoading: state.minerData.isPayoutScriptLoading,
+  isTxSlateLoading: state.minerData.isTxSlateLoading,
   paymentFormFeedback: state.minerData.paymentFormFeedback,
-  minerPaymentTxSlate: state.minerData.minerPaymentTxSlate
+  minerPaymentTxSlate: state.minerData.minerPaymentTxSlate,
+  paymentMethod: state.minerData.paymentData.method,
+  payoutScript: state.minerData.payoutScript
 })
 
 const mapDispatchToProps = (dispatch) => {
   return {
     fetchMinerPaymentTxSlate: () => dispatch(fetchMinerPaymentTxSlate()),
     getLatestMinerPayments: () => dispatch(getLatestMinerPayments()),
-    setPaymentMethodSetting: (field: string, value: string) => dispatch(setPaymentMethodSetting(field, value))
+    setPaymentMethodSetting: (field: string, value: string) => dispatch(setPaymentMethodSetting(field, value)),
+    fetchMinerPaymentScript: () => dispatch(fetchMinerPaymentScript())
   }
 }
 
