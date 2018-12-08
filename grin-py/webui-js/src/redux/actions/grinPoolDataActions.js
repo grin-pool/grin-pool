@@ -39,3 +39,23 @@ export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispat
     console.log('Error: ', e)
   }
 }
+
+export const fetchGrinPoolBlocksMined = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const latestBlockHeight = state.networkData.latestBlock.height || 0
+    const url = `${API_URL}pool/blocks/${latestBlockHeight},${BLOCK_RANGE}`
+    const grinPoolBlocksMinedResponse = await fetch(url)
+    const grinPoolBlocksMinedData = await grinPoolBlocksMinedResponse.json()
+    // turn them into a basic array
+    const blocksFound = grinPoolBlocksMinedData.map((block) => {
+      return block.height
+    })
+    dispatch({
+      type: 'POOL_BLOCKS_MINED',
+      data: blocksFound
+    })
+  } catch (e) {
+
+  }
+}

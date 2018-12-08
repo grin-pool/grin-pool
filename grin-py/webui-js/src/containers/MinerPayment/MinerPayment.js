@@ -8,7 +8,6 @@ export class MinerPaymentComponent extends Component {
   constructor (props) {
     super(props)
     const { paymentMethod } = props
-
     this.state = {
       paymentMethod: paymentMethod || ''
     }
