@@ -18,15 +18,6 @@ export const sharesSubmitted = (state = [], action) => {
   }
 }
 
-export const activeWorkers = (state = 0, action) => {
-  switch (action.type) {
-    case 'GRIN_POOL_ACTIVE_WORKERS':
-      return action.data.activeWorkers
-    default:
-      return state
-  }
-}
-
 export const lastBlockMined = (state = 0, action) => {
   switch (action.type) {
     case 'GRIN_POOL_LAST_BLOCK_MINED':
@@ -38,7 +29,6 @@ export const lastBlockMined = (state = 0, action) => {
 
 export const grinPoolData = combineReducers({
   historical,
-  activeWorkers,
   lastBlockMined,
   sharesSubmitted
 })

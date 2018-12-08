@@ -3,14 +3,19 @@ import { connect } from 'react-redux'
 import { GrinPoolDataComponent } from '../../containers/GrinPoolData/GrinPoolData.js'
 import {
   fetchGrinPoolData,
-  fetchGrinPoolActiveMinerCount,
   fetchGrinPoolLastBlock
 } from '../actions/grinPoolDataActions.js'
 
 const mapStateToProps = (state) => {
+  const grinPoolHistoricalData = state.grinPoolData.historical
+  const grinPoolHistoricalDataLength = grinPoolHistoricalData.length
+  let activeWorkers = 0
+  if (grinPoolHistoricalDataLength > 0) {
+    activeWorkers = grinPoolHistoricalData[grinPoolHistoricalDataLength - 1].active_miners
+  }
   return {
     networkData: state.grinPoolData.historical || [],
-    activeWorkers: state.grinPoolData.activeWorkers,
+    activeWorkers,
     lastBlockMined: state.grinPoolData.lastBlockMined
   }
 }
@@ -18,7 +23,6 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     fetchNetworkData: () => dispatch(fetchGrinPoolData()),
-    fetchGrinPoolActiveMinerCount: () => dispatch(fetchGrinPoolActiveMinerCount()),
     fetchGrinPoolLastBlock: () => dispatch(fetchGrinPoolLastBlock())
   }
 }
