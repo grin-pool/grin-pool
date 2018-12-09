@@ -4,15 +4,15 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } f
 import { C29_COLOR } from '../../constants/styleConstants.js'
 
 export class MinerSharesComponent extends Component {
-  interval = null
-
-  componentWillUnmount = () => {
-    clearInterval(this.interval)
-  }
-
   UNSAFE_componentWillMount () {
     this.fetchMinerData()
-    this.interval = setInterval(this.fetchMinerData, 10000)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlockHeight } = this.props
+    if (prevProps.latestBlockHeight !== latestBlockHeight) {
+      this.fetchMinerData()
+    }
   }
 
   fetchMinerData = () => {
