@@ -8,7 +8,14 @@ export const attemptAutoLoginFromCookies = () => (dispatch: Dispatch, getState: 
   const username = sessionStorage.getItem('username')
   const id = sessionStorage.getItem('id')
   const token = sessionStorage.getItem('token')
-  dispatch({ type: 'ACCOUNT', data: { username, token, id } })
+  const expiration = sessionStorage.getItem('expiration')
+  const expirationTimestamp = parseInt(expiration)
+  const currentTimestamp = new Date().getTime() / 1000
+  if (expirationTimestamp && expirationTimestamp > currentTimestamp) {
+    dispatch({ type: 'ACCOUNT', data: { username, token, id } })
+  } else {
+    dispatch(logout())
+  }
 }
 
 export const createUser = (username: string, password: string, history: any) => async (dispatch: Dispatch, getState: GetState) => {
@@ -37,6 +44,8 @@ export const createUser = (username: string, password: string, history: any) => 
       sessionStorage.setItem('username', username)
       sessionStorage.setItem('id', loginData.id)
       sessionStorage.setItem('token', loginData.token)
+      const currentTimestamp = new Date().getTime()
+      sessionStorage.setItem('expiration', (currentTimestamp / 1000 + 86400).toString())
       history.push('/miner')
     } else if (createUserData.message) {
       dispatch({ type: 'AUTH_ERROR', data: { authError: createUserData.message } })
@@ -63,6 +72,10 @@ export const login = (username: string, password: string, history: Object) => as
     sessionStorage.setItem('username', username)
     sessionStorage.setItem('id', loginData.id)
     sessionStorage.setItem('token', loginData.token)
+    const currentTimestamp = new Date().getTime()
+    const currentTimestampFixed = currentTimestamp / 1000
+    const futureTimestamp = (currentTimestampFixed + 86400).toString()
+    sessionStorage.setItem('expiration', futureTimestamp)
     history.push('/miner')
   } catch (e) {
     console.log('Error: ', e)
