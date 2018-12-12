@@ -20,6 +20,15 @@ export const lastBlockMined = (state: number = 0, action) => {
   }
 }
 
+export const recentBlocks = (state: Array<Object> = [], action) => {
+  switch (action.type) {
+    case 'GRIN_POOL_RECENT_BLOCKS':
+      return action.data
+    default:
+      return state
+  }
+}
+
 export const poolBlocksMined = (state: Array<any> = [], action) => {
   switch (action.type) {
     case 'POOL_BLOCKS_MINED':
@@ -41,6 +50,7 @@ export const sharesSubmitted = (state: Array<any> = [], action) => {
 export const grinPoolData = combineReducers({
   historical,
   lastBlockMined,
+  recentBlocks,
   poolBlocksMined,
   sharesSubmitted
 })

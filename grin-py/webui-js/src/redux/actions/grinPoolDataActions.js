@@ -27,6 +27,22 @@ export const fetchGrinPoolLastBlock = (start: number = 0) => async (dispatch: Di
   }
 }
 
+export const fetchGrinPoolRecentBlocks = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const latestBlockHeight = state.networkData.latestBlock.height || 0
+    const url = `${API_URL}pool/blocks/${latestBlockHeight},86400`
+    const grinPoolRecentBlocksResponse = await fetch(url)
+    const grinPoolRecentBlocksData = await grinPoolRecentBlocksResponse.json()
+    dispatch({
+      type: 'GRIN_POOL_RECENT_BLOCKS',
+      data: grinPoolRecentBlocksData
+    })
+  } catch (e) {
+
+  }
+}
+
 export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
