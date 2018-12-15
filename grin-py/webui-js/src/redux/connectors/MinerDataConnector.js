@@ -4,7 +4,8 @@ import { MinerDataComponent } from '../../containers/MinerData/MinerData.js'
 import { fetchMinerData } from '../actions/minerDataActions.js'
 
 const mapStateToProps = (state) => ({
-  minerData: state.minerData.historical || []
+  minerData: state.minerData.historical || [],
+  latestBlockHeight: state.networkData.latestBlock.height || 0
 })
 
 const mapDispatchToProps = (dispatch) => {
