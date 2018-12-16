@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { Row, Table } from 'reactstrap'
+import { C29_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolRecentBlocks extends Component {
   componentDidMount () {
@@ -12,11 +13,11 @@ export class GrinPoolRecentBlocks extends Component {
 
     const rows = []
     if (recentBlocks.length) {
-      for (let i = 1; i <= 30; i++) {
+      for (let i = 1; i <= 20 && i <= recentBlocks.length - 1; i++) {
         const block = recentBlocks[recentBlocks.length - i]
         rows.push(
           <tr key={block.height}>
-            <td><a href={`https://grinscan.net/block/${block.height}`}>{block.height}</a></td>
+            <td><a style={{ color: C29_COLOR }} href={`https://grinscan.net/block/${block.height}`}>{block.height}</a></td>
             <td>{block.nonce}</td>
             <td>{block.hash}</td>
             <td>{block.timestamp}</td>
