@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, ReferenceLine } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
@@ -18,7 +18,7 @@ export class NetworkDataComponent extends Component {
   }
 
   render () {
-    const { networkData, latestBlock } = this.props
+    const { networkData, latestBlock, poolBlocksMined } = this.props
     const c29graphRateData = []
     const c30graphRateData = []
     let maxC29Gps = 0
@@ -117,6 +117,13 @@ export class NetworkDataComponent extends Component {
               {/* <YAxis yAxisId='right' orientation='right' domain={[minDifficulty, maxDifficulty]} stroke='#82ca9d' />
                 <Line yAxisId='right' dataKey='difficulty' stroke='#82ca9d' />
               */}
+              {networkData.map((block) => {
+                if (poolBlocksMined.indexOf(block.height) > -1) {
+                  return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
+                } else {
+                  return null
+                }
+              })}
             </ScatterChart>
           </ResponsiveContainer>
         </Col>
