@@ -7,7 +7,7 @@ export const fetchNetworkData = (start: number = 0) => async (dispatch: Dispatch
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}grin/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,difficulty`
+    const url = `${API_URL}grin/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,difficulty,timestamp`
     const networkDataResponse = await fetch(url)
     const networkData = await networkDataResponse.json()
     dispatch({ type: 'NETWORK_DATA', data: { historical: networkData } })
