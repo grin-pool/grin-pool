@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ReferenceDot } from 'recharts'
+import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
@@ -18,8 +18,9 @@ export class NetworkDataComponent extends Component {
   }
 
   render () {
-    const { networkData, latestBlock, poolBlocksMined } = this.props
-    const graphRateData = []
+    const { networkData, latestBlock } = this.props
+    const c29graphRateData = []
+    const c30graphRateData = []
     let maxC29Gps = 0
     let minC29Gps = 0
     let maxC30Gps = 0
@@ -35,10 +36,17 @@ export class NetworkDataComponent extends Component {
         if (block.gps[1].gps < minC30Gps || !minC30Gps) minC30Gps = block.gps[1].gps
       }
 
-      graphRateData.push({
+      c29graphRateData.push({
         height: block.height,
-        gps: block.gps,
-        difficulty: block.difficulty
+        gps: block.gps[0].gps,
+        difficulty: block.difficulty,
+        timestamp: block.timestamp
+      })
+      c30graphRateData.push({
+        height: block.height,
+        gps: block.gps[1].gps,
+        difficulty: block.difficulty,
+        timestamp: block.timestamp
       })
     })
     let c29LatestGraphRate = 'C29 = 0 gps'
@@ -94,26 +102,20 @@ export class NetworkDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <ResponsiveContainer width='100%' height={270}>
-            <LineChart isAnimationActive={false} data={graphRateData} >
-              <XAxis interval={19} dataKey='height'/>
-              <Tooltip />
+            <ScatterChart isAnimationActive={false}>
+              <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
               <Legend verticalAlign='top' height={36}/>
-              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
-              <YAxis connectNulls={true} tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
-              <ReferenceLine yAxisId={'left'} x={73048} fill='white' />
-              {networkData.map((block) => {
-                if (poolBlocksMined.indexOf(block.height) > -1) {
-                  return <ReferenceDot key={block.height} yAxisId={'left'} r={4} isFront x={block.height} y={block.gps[0].gps} fill={C29_COLOR} stroke={C29_COLOR} />
-                } else {
-                  return null
-                }
-              })}
+              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C29_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)}yAxisId="right" stroke={C30_COLOR} orientation='right' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+              {/* <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} /> */}
+              {/* <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} /> */}
+              <Scatter yAxisId="left" fill={C29_COLOR} name='C29 (GPU) Graph Rate' line data={c29graphRateData} />
+              <Scatter yAxisId="right" fill={C30_COLOR} name='C30 (ASIC) Graph Rate' line data={c30graphRateData} />
+              <Tooltip content={<NetworkDataCustomTooltip />} />
               {/* <YAxis yAxisId='right' orientation='right' domain={[minDifficulty, maxDifficulty]} stroke='#82ca9d' />
                 <Line yAxisId='right' dataKey='difficulty' stroke='#82ca9d' />
               */}
-            </LineChart>
+            </ScatterChart>
           </ResponsiveContainer>
         </Col>
       </Row>
@@ -126,5 +128,26 @@ export class AnimatedText {
     return (
       <span>{this.props.children}</span>
     )
+  }
+}
+
+export class NetworkDataCustomTooltip extends Component {
+  render () {
+    const { active } = this.props
+
+    if (active) {
+      const { payload } = this.props
+      console.log('payload: ', payload)
+      return (
+        <div className="custom-network-data-tooltip">
+          <p>Block: {payload[0].payload.height}</p>
+          <p>Timestamp: {payload[0].payload.timestamp}</p>
+          <p>Time: {new Date(payload[0].payload.timestamp * 1000).toLocaleTimeString()}</p>
+          <p>GPS: {payload[0].payload.gps}</p>
+        </div>
+      )
+    }
+
+    return null
   }
 }
