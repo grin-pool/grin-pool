@@ -1,8 +1,8 @@
 import React, { Component } from 'react'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, ReferenceDot } from 'recharts'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class GrinPoolDataComponent extends Component {
   interval = null
@@ -29,33 +29,12 @@ export class GrinPoolDataComponent extends Component {
   }
 
   render () {
-    const { networkData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
-    const graphRateData = []
-    let maxC29Gps = 0
-    let minC29Gps = 0
-    let maxC30Gps = 0
-    let minC30Gps = 0
+    const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
 
-    networkData.forEach((block) => {
-      if (block.gps[0]) {
-        if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
-        if (block.gps[0].gps < minC29Gps || !minC29Gps) minC29Gps = block.gps[0].gps
-      }
-      if (block.gps[1]) {
-        if (block.gps[1].gps > maxC30Gps || !maxC30Gps) maxC30Gps = block.gps[1].gps
-        if (block.gps[1].gps < minC30Gps || !minC30Gps) minC30Gps = block.gps[1].gps
-      }
-
-      graphRateData.push({
-        height: block.height,
-        gps: block.gps,
-        difficulty: block.difficulty
-      })
-    })
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c30LatestGraphRate = 'C30 = 0 gps'
-    if (networkData.length > 0) {
-      const lastBlock = networkData[networkData.length - 1]
+    if (grinPoolData.length > 0) {
+      const lastBlock = grinPoolData[grinPoolData.length - 1]
       if (lastBlock.gps[0]) {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
@@ -66,9 +45,11 @@ export class GrinPoolDataComponent extends Component {
       c29LatestGraphRate = '0 gps'
       c30LatestGraphRate = '0 gps'
     }
+
     const nowTimestamp = Date.now()
     const lastBlockTimeAgo = Math.floor(nowTimestamp / 1000 - lastBlockMined)
-    const totalPoolBlocksMined = networkData[networkData.length - 1] ? networkData[networkData.length - 1].total_blocks_found : 0
+    const totalPoolBlocksMined = grinPoolData[grinPoolData.length - 1] ? grinPoolData[grinPoolData.length - 1].total_blocks_found : 0
+
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -95,24 +76,10 @@ export class GrinPoolDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <ResponsiveContainer width='100%' height={270}>
-            <LineChart isAnimationActive={false} data={graphRateData} >
-              <XAxis interval={19} dataKey='height'/>
-              <Tooltip />
-              <Legend verticalAlign='top' height={36}/>
-              <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} connectNulls={true} yAxisId='left' orientation='left' stroke={C29_COLOR} domain={[minC29Gps, maxC29Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='left' name='C29 (GPU) Graph Rate' dataKey='gps[0].gps' stroke={C29_COLOR} />
-              <YAxis connectNulls={true} tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId='right' orientation='right' stroke={C30_COLOR} domain={[minC30Gps, maxC30Gps]} allowDecimals={true} />
-              <Line dot={false} yAxisId='right' name='C30 (ASIC) Graph Rate' dataKey='gps[1].gps' stroke={C30_COLOR} />
-              {networkData.map((block) => {
-                if (poolBlocksMined.indexOf(block.height) > -1) {
-                  return <ReferenceDot key={block.height} yAxisId={'left'} r={4} isFront x={block.height} y={block.gps[0].gps} fill={C29_COLOR} stroke={C29_COLOR} />
-                } else {
-                  return null
-                }
-              })}
-            </LineChart>
-          </ResponsiveContainer>
+          <MiningGraphConnector
+            miningData={grinPoolData}
+            poolBlocksMined={poolBlocksMined}
+          />
         </Col>
       </Row>
     )

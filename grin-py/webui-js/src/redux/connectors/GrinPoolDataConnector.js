@@ -16,7 +16,7 @@ const mapStateToProps = (state) => {
     activeWorkers = grinPoolHistoricalData[grinPoolHistoricalDataLength - 1].active_miners
   }
   return {
-    networkData: state.grinPoolData.historical || [],
+    grinPoolData: state.grinPoolData.historical || [],
     activeWorkers,
     lastBlockMined: state.grinPoolData.lastBlockMined,
     poolBlocksMined,

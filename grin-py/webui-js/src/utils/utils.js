@@ -1,3 +1,4 @@
+// @flow
 
 export const ellipsizeString = (input, length) => {
   const inputLength = input.length
@@ -116,4 +117,8 @@ export function secondsToHms (d) {
 export const basicAuth = (token) => {
   const auth = 'Basic ' + Buffer.from(token + ':' + 'random').toString('base64')
   return auth
+}
+
+export const nanoGrinToGrin = (nanoGrin: number) => {
+  return nanoGrin / 1000000000
 }
