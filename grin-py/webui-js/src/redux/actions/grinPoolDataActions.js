@@ -7,7 +7,7 @@ export const fetchGrinPoolData = (start: number = 0) => async (dispatch: Dispatc
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}pool/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,total_blocks_found,active_miners`
+    const url = `${API_URL}pool/stats/${latestBlockHeight},${BLOCK_RANGE}/gps,height,total_blocks_found,active_miners,timestamp`
     const grinPoolDataResponse = await fetch(url)
     const grinPoolData = await grinPoolDataResponse.json()
     dispatch({ type: 'GRIN_POOL_DATA', data: { historical: grinPoolData } })

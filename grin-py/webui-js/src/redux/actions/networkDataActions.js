@@ -26,3 +26,28 @@ export const getLatestBlock = () => async (dispatch: Dispatch) => {
     console.log('error: ', e)
   }
 }
+
+export const getMinedBlocksAlgos = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const latestBlockHeight = state.networkData.latestBlock.height || 0
+    const minedBlockAlgosUrl = `${API_URL}grin/blocks/${latestBlockHeight},${BLOCK_RANGE}/height,edge_bits`
+    const minedBlockAlgosResponse = await fetch(minedBlockAlgosUrl)
+    const minedBlockAlgosData = await minedBlockAlgosResponse.json()
+    const algos = {
+      c29: [],
+      c30: []
+    }
+    minedBlockAlgosData.forEach(block => {
+      if (block.edge_bits === 29) {
+        algos.c29.push(block.height)
+      }
+      if (block.edge_bits === 30) {
+        algos.c30.push(block.height)
+      }
+    })
+    dispatch({ type: 'MINED_BLOCKS_ALGOS', data: algos })
+  } catch (e) {
+    console.log('error: ', e)
+  }
+}

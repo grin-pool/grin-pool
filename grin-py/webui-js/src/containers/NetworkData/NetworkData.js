@@ -1,28 +1,10 @@
 import React, { Component } from 'react'
-import { Row, Col, Table, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
+import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
-import { MiningGraph } from '../MiningGraph/MiningGraph.js'
-import classnames from 'classnames'
+import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class NetworkDataComponent extends Component {
-  constructor (props) {
-    super(props)
-
-    this.toggle = this.toggle.bind(this)
-    this.state = {
-      activeTab: '1'
-    }
-  }
-
-  toggle (tab) {
-    if (this.state.activeTab !== tab) {
-      this.setState({
-        activeTab: tab
-      })
-    }
-  }
-
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
@@ -37,35 +19,6 @@ export class NetworkDataComponent extends Component {
 
   render () {
     const { networkData, latestBlock, poolBlocksMined } = this.props
-    const c29graphRateData = []
-    const c30graphRateData = []
-    let maxC29Gps = 0
-    let minC29Gps = 0
-    let maxC30Gps = 0
-    let minC30Gps = 0
-
-    networkData.forEach((block) => {
-      if (block.gps[0]) {
-        if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
-        if (block.gps[0].gps < minC29Gps || !minC29Gps) minC29Gps = block.gps[0].gps
-        c29graphRateData.push({
-          height: block.height,
-          gps: block.gps[0].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
-        })
-      }
-      if (block.gps[1]) {
-        if (block.gps[1].gps > maxC30Gps || !maxC30Gps) maxC30Gps = block.gps[1].gps
-        if (block.gps[1].gps < minC30Gps || !minC30Gps) minC30Gps = block.gps[1].gps
-        c30graphRateData.push({
-          height: block.height,
-          gps: block.gps[1].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
-        })
-      }
-    })
 
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c30LatestGraphRate = 'C30 = 0 gps'
@@ -89,6 +42,7 @@ export class NetworkDataComponent extends Component {
     }
     const nowTimestamp = Date.now()
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
+
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -119,41 +73,10 @@ export class NetworkDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <Nav tabs>
-            <NavItem>
-              <NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggle('1') }}>
-                C29
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggle('2') }}>
-                C30
-              </NavLink>
-            </NavItem>
-          </Nav>
-          <TabContent activeTab={this.state.activeTab}>
-            <TabPane tabId='1'>
-              <MiningGraph
-                color={C29_COLOR}
-                networkData={networkData}
-                poolBlocksMined={poolBlocksMined}
-                algorithmData={c29graphRateData}
-                algorithmNumber={'29'}
-              />
-            </TabPane>
-          </TabContent>
-          <TabContent activeTab={this.state.activeTab}>
-            <TabPane tabId='2'>
-              <MiningGraph
-                color={C30_COLOR}
-                networkData={networkData}
-                poolBlocksMined={poolBlocksMined}
-                algorithmData={c30graphRateData}
-                algorithmNumber={'30'}
-              />
-            </TabPane>
-          </TabContent>
-
+          <MiningGraphConnector
+            miningData={networkData}
+            poolBlocksMined={poolBlocksMined}
+          />
         </Col>
       </Row>
     )
@@ -165,25 +88,5 @@ export class AnimatedText {
     return (
       <span>{this.props.children}</span>
     )
-  }
-}
-
-export class NetworkDataCustomTooltip extends Component {
-  render () {
-    const { active } = this.props
-
-    if (active) {
-      const { payload } = this.props
-      return (
-        <div className="custom-network-data-tooltip">
-          <p>Block: {payload[0].payload.height}</p>
-          <p>Timestamp: {payload[0].payload.timestamp}</p>
-          <p>Time: {new Date(payload[0].payload.timestamp * 1000).toLocaleTimeString()}</p>
-          <p>GPS: {payload[0].payload.gps}</p>
-        </div>
-      )
-    }
-
-    return null
   }
 }
