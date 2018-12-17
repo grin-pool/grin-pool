@@ -1,9 +1,29 @@
 import React, { Component } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, ReferenceLine } from 'recharts'
+import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
+import classnames from 'classnames'
+import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 
 export class MiningGraph extends Component {
+  constructor (props) {
+    super(props)
+
+    this.toggle = this.toggle.bind(this)
+    this.state = {
+      activeTab: '1'
+    }
+  }
+
+  toggle (tab) {
+    if (this.state.activeTab !== tab) {
+      this.setState({
+        activeTab: tab
+      })
+    }
+  }
+
   render () {
-    const { algorithmData, miningData, poolBlocksMined, color, algorithmNumber } = this.props
+    const { miningData, poolBlocksMined } = this.props
     // calculations for graphs
     const c29graphRateData = []
     const c30graphRateData = []
@@ -34,22 +54,60 @@ export class MiningGraph extends Component {
       }
     })
     return (
-      <ResponsiveContainer width='100%' height={270}>
-        <ScatterChart isAnimationActive={false}>
-          <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
-          <Legend verticalAlign='top' height={36}/>
-          <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={color} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
-          <Scatter yAxisId="left" fill={color} name={`C${algorithmNumber} Graph Rate`} line data={algorithmData} />
-          <Tooltip content={<NetworkDataCustomTooltip />} />
-          {miningData.map((block) => {
-            if (poolBlocksMined.indexOf(block.height) > -1) {
-              return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
-            } else {
-              return null
-            }
-          })}
-        </ScatterChart>
-      </ResponsiveContainer>
+      <div>
+        <Nav tabs>
+          <NavItem>
+            <NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggle('1') }}>
+              C29
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggle('2') }}>
+              C30
+            </NavLink>
+          </NavItem>
+        </Nav>
+        <TabContent activeTab={this.state.activeTab}>
+          <TabPane tabId='1'>
+            <ResponsiveContainer width='100%' height={270}>
+              <ScatterChart isAnimationActive={false}>
+                <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
+                <Legend verticalAlign='top' height={36}/>
+                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C29_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+                <Scatter yAxisId="left" fill={C29_COLOR} name={`C29 Graph Rate`} line data={c29graphRateData} />
+                <Tooltip content={<NetworkDataCustomTooltip />} />
+                {miningData.map((block) => {
+                  if (poolBlocksMined.indexOf(block.height) > -1) {
+                    return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
+                  } else {
+                    return null
+                  }
+                })}
+              </ScatterChart>
+            </ResponsiveContainer>
+          </TabPane>
+        </TabContent>
+        <TabContent activeTab={this.state.activeTab}>
+          <TabPane tabId='2'>
+            <ResponsiveContainer width='100%' height={270}>
+              <ScatterChart isAnimationActive={false}>
+                <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
+                <Legend verticalAlign='top' height={36}/>
+                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C30_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+                <Scatter yAxisId="left" fill={C30_COLOR} name={`C30 Graph Rate`} line data={c30graphRateData} />
+                <Tooltip content={<NetworkDataCustomTooltip />} />
+                {miningData.map((block) => {
+                  if (poolBlocksMined.indexOf(block.height) > -1) {
+                    return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
+                  } else {
+                    return null
+                  }
+                })}
+              </ScatterChart>
+            </ResponsiveContainer>
+          </TabPane>
+        </TabContent>
+      </div>
     )
   }
 }
