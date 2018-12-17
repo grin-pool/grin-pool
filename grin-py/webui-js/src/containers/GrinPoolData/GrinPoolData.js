@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
-import { MiningGraph } from '../MiningGraph/MiningGraph.js'
+import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class GrinPoolDataComponent extends Component {
   interval = null
@@ -76,7 +76,7 @@ export class GrinPoolDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <MiningGraph
+          <MiningGraphConnector
             miningData={grinPoolData}
             poolBlocksMined={poolBlocksMined}
           />

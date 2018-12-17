@@ -1,26 +1,9 @@
 import React, { Component } from 'react'
 import { Row, Col, Table, Alert } from 'reactstrap'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
-import { MiningGraph } from '../MiningGraph/MiningGraph.js'
+import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class MinerDataComponent extends Component {
-  constructor (props) {
-    super(props)
-
-    this.toggle = this.toggle.bind(this)
-    this.state = {
-      activeTab: '1'
-    }
-  }
-
-  toggle (tab) {
-    if (this.state.activeTab !== tab) {
-      this.setState({
-        activeTab: tab
-      })
-    }
-  }
-
   UNSAFE_componentWillMount () {
     this.fetchMinerData()
   }
@@ -80,7 +63,7 @@ export class MinerDataComponent extends Component {
         <Col xs={12} md={12} lg={7} xl={9}>
           <h4 className='page-title'>Graph Rate</h4>
           <div style={{ textAlign: 'center', marginBottom: 12 }}>{(numberOfRecordedBlocks === 0) && <Alert color='warning' style={{ textAlign: 'center', display: 'inline' }}>{noBlocksAlertSyntax}</Alert>}</div>
-          <MiningGraph
+          <MiningGraphConnector
             miningData={minerData}
             poolBlocksMined={poolBlocksMined}
           />

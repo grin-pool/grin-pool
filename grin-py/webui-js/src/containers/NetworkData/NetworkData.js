@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
-import { MiningGraph } from '../MiningGraph/MiningGraph.js'
+import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class NetworkDataComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -73,7 +73,7 @@ export class NetworkDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <MiningGraph
+          <MiningGraphConnector
             miningData={networkData}
             poolBlocksMined={poolBlocksMined}
           />
@@ -88,25 +88,5 @@ export class AnimatedText {
     return (
       <span>{this.props.children}</span>
     )
-  }
-}
-
-export class NetworkDataCustomTooltip extends Component {
-  render () {
-    const { active } = this.props
-
-    if (active) {
-      const { payload } = this.props
-      return (
-        <div className="custom-network-data-tooltip">
-          <p>Block: {payload[0].payload.height}</p>
-          <p>Timestamp: {payload[0].payload.timestamp}</p>
-          <p>Time: {new Date(payload[0].payload.timestamp * 1000).toLocaleTimeString()}</p>
-          <p>GPS: {payload[0].payload.gps}</p>
-        </div>
-      )
-    }
-
-    return null
   }
 }

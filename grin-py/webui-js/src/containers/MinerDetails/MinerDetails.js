@@ -4,14 +4,6 @@ import { MinerDataConnector } from '../../redux/connectors/MinerDataConnector.js
 import { MinerSharesConnector } from '../../redux/connectors/MinerSharesConnector.js'
 
 export class MinerDetailsComponent extends Component {
-  UNSAFE_componentWillMount () {
-
-  }
-
-  fetchGrinPoolData = () => {
-
-  }
-
   render () {
     const { username } = this.props
     return (
