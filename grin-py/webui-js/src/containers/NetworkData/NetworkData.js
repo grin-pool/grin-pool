@@ -1,28 +1,10 @@
 import React, { Component } from 'react'
-import { Row, Col, Table, Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
+import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
 import { MiningGraph } from '../MiningGraph/MiningGraph.js'
-import classnames from 'classnames'
 
 export class NetworkDataComponent extends Component {
-  constructor (props) {
-    super(props)
-
-    this.toggle = this.toggle.bind(this)
-    this.state = {
-      activeTab: '1'
-    }
-  }
-
-  toggle (tab) {
-    if (this.state.activeTab !== tab) {
-      this.setState({
-        activeTab: tab
-      })
-    }
-  }
-
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
@@ -91,38 +73,10 @@ export class NetworkDataComponent extends Component {
           </Table>
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
-          <Nav tabs>
-            <NavItem>
-              <NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggle('1') }}>
-                C29
-              </NavLink>
-            </NavItem>
-            <NavItem>
-              <NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggle('2') }}>
-                C30
-              </NavLink>
-            </NavItem>
-          </Nav>
-          <TabContent activeTab={this.state.activeTab}>
-            <TabPane tabId='1'>
-              <MiningGraph
-                color={C29_COLOR}
-                miningData={networkData}
-                poolBlocksMined={poolBlocksMined}
-                algorithmNumber={'29'}
-              />
-            </TabPane>
-          </TabContent>
-          <TabContent activeTab={this.state.activeTab}>
-            <TabPane tabId='2'>
-              <MiningGraph
-                color={C30_COLOR}
-                miningData={networkData}
-                poolBlocksMined={poolBlocksMined}
-                algorithmNumber={'30'}
-              />
-            </TabPane>
-          </TabContent>
+          <MiningGraph
+            miningData={networkData}
+            poolBlocksMined={poolBlocksMined}
+          />
         </Col>
       </Row>
     )
