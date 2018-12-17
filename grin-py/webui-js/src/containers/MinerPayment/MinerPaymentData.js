@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Table } from 'reactstrap'
-import { secondsToHms } from '../../utils/utils.js'
+import { secondsToHms, nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerPaymentDataComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -22,7 +22,7 @@ export class MinerPaymentDataComponent extends Component {
   render () {
     const { amount, address, lastSuccess, failureCount, lastTry, currentTimestamp } = this.props
     const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
-    const lastPayoutTimeAgo = secondsToHms(currentTimestamp - lastSuccess)
+    const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
     return (
       <div>
         <h4>Payment Info</h4>
@@ -30,7 +30,7 @@ export class MinerPaymentDataComponent extends Component {
           <tbody>
             <tr>
               <td>Amount Due</td>
-              <td>{amount} GRIN</td>
+              <td>{nanoGrinToGrin(amount)} GRIN</td>
             </tr>
             <tr>
               <td>Payout Address</td>
