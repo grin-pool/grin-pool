@@ -3,8 +3,9 @@ import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Toolt
 import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import classnames from 'classnames'
 import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import _ from 'lodash'
 
-export class MiningGraph extends Component {
+export class MiningGraphComponent extends Component {
   constructor (props) {
     super(props)
 
@@ -22,11 +23,34 @@ export class MiningGraph extends Component {
     }
   }
 
+  UNSAFE_componentWillMount () {
+    const { getMinedBlocksAlgos } = this.props
+    getMinedBlocksAlgos()
+  }
+
+  componentDidUpdate (prevProps) {
+    const { latestBlockHeight, getMinedBlocksAlgos } = this.props
+    if (prevProps.latestBlockHeight !== latestBlockHeight) {
+      getMinedBlocksAlgos()
+    }
+  }
+
   render () {
-    const { miningData, poolBlocksMined } = this.props
+    const { miningData, poolBlocksMined, minedBlockAlgos } = this.props
     // calculations for graphs
     const c29graphRateData = []
     const c30graphRateData = []
+
+    const c29PoolBlocksMined = []
+    const c30PoolBlocksMined = []
+    poolBlocksMined.forEach((height) => {
+      if (_.find(minedBlockAlgos.c29, (item) => item === height)) {
+        c29PoolBlocksMined.push(height)
+      }
+      if (_.find(minedBlockAlgos.c30, (item) => item === height)) {
+        c30PoolBlocksMined.push(height)
+      }
+    })
     let maxC29Gps = 0
     let minC29Gps = 0
     let maxC30Gps = 0
@@ -53,6 +77,7 @@ export class MiningGraph extends Component {
         })
       }
     })
+
     return (
       <div>
         <Nav tabs>
@@ -77,7 +102,7 @@ export class MiningGraph extends Component {
                 <Scatter yAxisId="left" fill={C29_COLOR} name={`C29 Graph Rate`} line data={c29graphRateData} />
                 <Tooltip content={<NetworkDataCustomTooltip />} />
                 {miningData.map((block) => {
-                  if (poolBlocksMined.indexOf(block.height) > -1) {
+                  if (c29PoolBlocksMined.indexOf(block.height) > -1) {
                     return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
                   } else {
                     return null
@@ -97,7 +122,7 @@ export class MiningGraph extends Component {
                 <Scatter yAxisId="left" fill={C30_COLOR} name={`C30 Graph Rate`} line data={c30graphRateData} />
                 <Tooltip content={<NetworkDataCustomTooltip />} />
                 {miningData.map((block) => {
-                  if (poolBlocksMined.indexOf(block.height) > -1) {
+                  if (c30PoolBlocksMined.indexOf(block.height) > -1) {
                     return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
                   } else {
                     return null

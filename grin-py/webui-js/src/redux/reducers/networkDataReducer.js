@@ -1,6 +1,8 @@
-import { combineReducers } from 'redux'
+// @flow
 
-export const historical = (state = [], action) => {
+import { combineReducers } from 'redux'
+import { type Action } from '../types.js'
+export const historical = (state: Array<Object> = [], action: Action) => {
   switch (action.type) {
     case 'NETWORK_DATA':
       return action.data.historical
@@ -9,7 +11,16 @@ export const historical = (state = [], action) => {
   }
 }
 
-export const latestBlock = (state = {}, action) => {
+export const minedBlockAlgos = (state: any = { c29: [], c30: [] }, action: Action) => {
+  switch (action.type) {
+    case 'MINED_BLOCKS_ALGOS':
+      return action.data
+    default:
+      return state
+  }
+}
+
+export const latestBlock = (state: Object = {}, action: Action) => {
   switch (action.type) {
     case 'LATEST_BLOCK':
       return action.data.latestBlock
@@ -20,5 +31,6 @@ export const latestBlock = (state = {}, action) => {
 
 export const networkData = combineReducers({
   historical,
+  minedBlockAlgos,
   latestBlock
 })
