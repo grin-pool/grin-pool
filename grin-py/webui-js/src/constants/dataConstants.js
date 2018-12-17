@@ -1,1 +1,1 @@
-export const BLOCK_RANGE = 120
+export const BLOCK_RANGE = 60
