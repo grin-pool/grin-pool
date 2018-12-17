@@ -37,35 +37,6 @@ export class NetworkDataComponent extends Component {
 
   render () {
     const { networkData, latestBlock, poolBlocksMined } = this.props
-    const c29graphRateData = []
-    const c30graphRateData = []
-    let maxC29Gps = 0
-    let minC29Gps = 0
-    let maxC30Gps = 0
-    let minC30Gps = 0
-
-    networkData.forEach((block) => {
-      if (block.gps[0]) {
-        if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
-        if (block.gps[0].gps < minC29Gps || !minC29Gps) minC29Gps = block.gps[0].gps
-        c29graphRateData.push({
-          height: block.height,
-          gps: block.gps[0].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
-        })
-      }
-      if (block.gps[1]) {
-        if (block.gps[1].gps > maxC30Gps || !maxC30Gps) maxC30Gps = block.gps[1].gps
-        if (block.gps[1].gps < minC30Gps || !minC30Gps) minC30Gps = block.gps[1].gps
-        c30graphRateData.push({
-          height: block.height,
-          gps: block.gps[1].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
-        })
-      }
-    })
 
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c30LatestGraphRate = 'C30 = 0 gps'
@@ -89,6 +60,7 @@ export class NetworkDataComponent extends Component {
     }
     const nowTimestamp = Date.now()
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
+
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -135,9 +107,8 @@ export class NetworkDataComponent extends Component {
             <TabPane tabId='1'>
               <MiningGraph
                 color={C29_COLOR}
-                networkData={networkData}
+                miningData={networkData}
                 poolBlocksMined={poolBlocksMined}
-                algorithmData={c29graphRateData}
                 algorithmNumber={'29'}
               />
             </TabPane>
@@ -146,14 +117,12 @@ export class NetworkDataComponent extends Component {
             <TabPane tabId='2'>
               <MiningGraph
                 color={C30_COLOR}
-                networkData={networkData}
+                miningData={networkData}
                 poolBlocksMined={poolBlocksMined}
-                algorithmData={c30graphRateData}
                 algorithmNumber={'30'}
               />
             </TabPane>
           </TabContent>
-
         </Col>
       </Row>
     )
