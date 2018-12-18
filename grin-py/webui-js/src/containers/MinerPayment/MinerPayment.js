@@ -52,9 +52,8 @@ export class MinerPaymentComponent extends Component {
   }
 
   componentDidMount = () => {
-    const { fetchMinerPaymentTxSlate, getLatestMinerPayments, fetchMinerPaymentScript } = this.props
+    const { getLatestMinerPayments, fetchMinerPaymentScript } = this.props
     getLatestMinerPayments()
-    fetchMinerPaymentTxSlate()
     fetchMinerPaymentScript()
   }
 
