@@ -102,7 +102,7 @@ export const fetchMinerPaymentTxSlate = () => async (dispatch: Dispatch, getStat
   })
 }
 
-export const setPaymentMethodSetting = (field: string, value: string) => async (dispatch: Dispatch, getState: GetState) => {
+export const setPaymentMethodSetting = (state: any) => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({
     type: 'IS_PAYMENT_SETTING_PROCESSING',
     data: true
@@ -110,7 +110,7 @@ export const setPaymentMethodSetting = (field: string, value: string) => async (
   try {
     const state = getState()
     const id = state.auth.account.id
-    const url = `${API_URL}worker/utxo/${id}/${field}/${value}`
+    const url = `${API_URL}pool/payment/http/${id}/${state.walletAddress}`
     const setPaymentMethodSettingResponse = await fetch(url, {
       method: 'POST',
       headers: {
@@ -121,7 +121,7 @@ export const setPaymentMethodSetting = (field: string, value: string) => async (
     if (setPaymentMethodSettingData) {
       dispatch({
         type: 'UPDATE_PAYMENT_METHOD_SETTING',
-        data: { field, value }
+        data: { walletAddress: state.walletAddress }
       })
     }
   } catch (e) {
