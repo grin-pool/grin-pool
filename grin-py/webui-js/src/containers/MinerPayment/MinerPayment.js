@@ -7,9 +7,11 @@ import Spinner from 'react-spinkit'
 export class MinerPaymentComponent extends Component {
   constructor (props) {
     super(props)
-    const { paymentMethod } = props
+    const { paymentMethod, paymentType } = props
     this.state = {
-      paymentMethod: paymentMethod || ''
+      paymentMethod: paymentMethod || '',
+      paymentType: paymentType || 'null',
+      walletAddress: ''
     }
   }
 
@@ -26,6 +28,12 @@ export class MinerPaymentComponent extends Component {
   onPaymentMethodChange = (event) => {
     this.setState({
       paymentMethod: event.target.value
+    })
+  }
+
+  onChangeHTTPWalletAddress = (event) => {
+    this.setState({
+      walletAddress: event.target.value
     })
   }
 
@@ -52,15 +60,14 @@ export class MinerPaymentComponent extends Component {
   }
 
   componentDidMount = () => {
-    const { fetchMinerPaymentTxSlate, getLatestMinerPayments, fetchMinerPaymentScript } = this.props
+    const { getLatestMinerPayments, fetchMinerPaymentScript } = this.props
     getLatestMinerPayments()
-    fetchMinerPaymentTxSlate()
     fetchMinerPaymentScript()
   }
 
   renderManualPayoutOptions = () => {
     return (
-      <Col sm={10}>
+      <div>
         <FormGroup check>
           <Label check>
             <Input onChange={this.onPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
@@ -76,18 +83,45 @@ export class MinerPaymentComponent extends Component {
             <Input onChange={this.onPaymentMethodChange} type='radio' value='txSlate' name='paymentMethod' />Download Transaction Slate File
           </Label>
         </FormGroup>
-      </Col>
+      </div>
     )
   }
 
   renderAutomaticPayoutOptions = () => {
     return (
-      <Col sm={10}>
-        <FormGroup check>
-          <p>This content to be added soon!</p>
+      <div>
+        {/* <FormGroup>
+          <Label for="loginEmail">Automatic Payment Schedule:</Label>
+          <Input type='select' name='autoPaymentSchedule' id='autoPaymentSchedule' onChange={this.onAutoPaymentScheduleChange}>
+            <option value='null'>------------</option>
+            <option value='hourly'>Hourly</option>
+            <option value='daily'>Daily</option>
+            <option value='semi-weekly'>Semi-Weekly</option>
+            <option value='weekly'>Weekly</option>
+            <option value='bi-weekly'>Bi-Weely</option>
+            <option value='monthly'>Monthly</option>
+          </Input>
+        </FormGroup> */}
+        <FormGroup>
+          <Label for="loginEmail">HTTP Wallet Address:</Label>
+          <Input onChange={this.onChangeHTTPWalletAddress} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
         </FormGroup>
-      </Col>
+      </div>
     )
+  }
+
+  renderOptions = () => {
+    const { paymentType } = this.state
+    switch (paymentType) {
+      case 'manual':
+        return this.renderManualPayoutOptions()
+      case 'scheduled':
+        return this.renderAutomaticPayoutOptions()
+      case 'null':
+        return null
+      default:
+        return null
+    }
   }
 
   renderPayoutForm = () => {
@@ -110,14 +144,14 @@ export class MinerPaymentComponent extends Component {
           )
         case 'payoutScript':
           return (
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Label for="payoutScript">Download the Payout Script:</Label><br />
               <a href='' onClick={this._downloadPayoutScriptFile} style={{ fontWeight: 'bold' }}>Download</a>
             </div>
           )
         case 'txSlate':
           return (
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Label for="txSlate">Download the Transaction Slate and Upload to Wallet:</Label><br />
               {isTxSlateLoading ? (
                 this.renderSpinner('1.8em')
@@ -134,9 +168,8 @@ export class MinerPaymentComponent extends Component {
 
   onSubmit = (e) => {
     e.preventDefault()
-    const { paymentMethod } = this.state
     const { setPaymentMethodSetting } = this.props
-    setPaymentMethodSetting('method', paymentMethod)
+    setPaymentMethodSetting(this.state)
   }
 
   onClear = (e) => {
@@ -169,15 +202,11 @@ export class MinerPaymentComponent extends Component {
                       <option value='manual'>Manual Payout</option>
                     </Input>
                   </FormGroup>
-                  <FormGroup tag='fieldset' row>
-                    <legend className='col-form-label'>Payment Method:</legend>
-                    {paymentType === 'manual' ? this.renderManualPayoutOptions() : this.renderAutomaticPayoutOptions()}
-                  </FormGroup>
-                  <FormGroup tag='fieldset' row>
-                    {this.renderPayoutForm()}
-                  </FormGroup>
+                  <legend className='col-form-label' style={{ marginBottom: '10px' }}>Payment Method:</legend>
+                  {this.renderOptions()}
+                  {paymentType === 'manual' && this.renderPayoutForm()}
                   {paymentType !== 'manual' && (
-                    <div>
+                    <div style={{ marginTop: '30px' }}>
                       <div style={{ textAlign: 'center' }}>
                         <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button>
                         <button className="btn btn-primary account__btn account__btn--small" style={{ width: '84px' }} onClick={this.onSubmit}>
