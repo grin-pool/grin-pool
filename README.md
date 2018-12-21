@@ -2,13 +2,11 @@
 
 ## What it is:
 A [grin](https://github.com/mimblewimble/grin) mining pool
+* Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
 
 ## How to try it:
-* Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
-* Configure your miner to connect to: <B>stratum.mwgrinpool.com:3333</B>
-* Use your grin wallet URL as your stratum login, no password necessary
-* Point your browser at [MWGrinPool.com](http://mwgrinpool.com/)
-* Start your miner and watch your wallet fill with grin
+* [Linux CPU Instructions](https://medium.com/@blade.doyle/cpu-mining-on-mwgrinpool-com-how-to-efb9ed102bc9)
+* [Linux GPU Instructions](https://medium.com/@blade.doyle/gpu-mining-on-mwgrinpool-com-how-to-72970e550a27)
 
 ### The architecture:
 * Stateless Microservices
@@ -17,7 +15,7 @@ A [grin](https://github.com/mimblewimble/grin) mining pool
 * Pool Stratum Proxy: Rust
 * Pool data processing jobs: Python3/SQLAlchemy
 * Pool API: Python3/Flask/NGINX
-* Pool Web UI: ~~Python3/Flask/NGINX/Jinja2/PyGal~~ ?? NodeJS/Electron/Bootstrap/React
+* Pool Web UI: NodeJS/Electron/Bootstrap/React
 * Database: MariaDB
 * Build CI/CD: Docker
 * Deploy: Ansible and gcloud CLI
