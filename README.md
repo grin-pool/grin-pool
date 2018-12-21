@@ -1,7 +1,7 @@
 # grin-pool
 
 ## What it is:
-A [grin](https://github.com/mimblewimble/grin) mining pool
+A [grin](https://github.com/mimblewimble/grin) [mining pool](https://medium.com/@blade.doyle/mwgrinpool-com-a-grin-mining-pool-345d67cb8e98)
 * Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
 
 ## How to try it:
