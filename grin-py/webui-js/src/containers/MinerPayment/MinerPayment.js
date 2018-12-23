@@ -26,9 +26,16 @@ export class MinerPaymentComponent extends Component {
   }
 
   onPaymentMethodChange = (event) => {
+    const { fetchMinerPayoutScript, fetchMinerPaymentTxSlate } = this.props
+    const paymentMethod = event.target.value
     this.setState({
-      paymentMethod: event.target.value
+      paymentMethod
     })
+    if (paymentMethod === 'payoutScript') {
+      fetchMinerPayoutScript()
+    } else if (paymentMethod === 'txSlate') {
+      fetchMinerPaymentTxSlate()
+    }
   }
 
   onChangeHTTPWalletAddress = (event) => {
@@ -60,9 +67,8 @@ export class MinerPaymentComponent extends Component {
   }
 
   componentDidMount = () => {
-    const { getLatestMinerPayments, fetchMinerPaymentScript } = this.props
+    const { getLatestMinerPayments } = this.props
     getLatestMinerPayments()
-    fetchMinerPaymentScript()
   }
 
   renderManualPayoutOptions = () => {
