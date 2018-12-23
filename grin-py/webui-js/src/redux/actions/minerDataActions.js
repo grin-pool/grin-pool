@@ -50,7 +50,9 @@ export const fetchMinerPaymentData = () => async (dispatch: Dispatch, getState: 
       }
     })
     const minerPaymentData = await minerPaymentResponse.json()
-    dispatch({ type: 'MINER_PAYMENT_DATA', data: minerPaymentData })
+    if (minerPaymentData) {
+      dispatch({ type: 'MINER_PAYMENT_DATA', data: minerPaymentData })
+    }
   } catch (e) {
     console.log('Error: ', e)
   }
