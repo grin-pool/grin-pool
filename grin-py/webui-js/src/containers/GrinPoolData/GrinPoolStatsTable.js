@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { Row, Table, Progress } from 'reactstrap'
-import { BLOCK_RANGE } from '../../constants/dataConstants.js'
 import _ from 'lodash'
 // import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 
@@ -51,12 +50,12 @@ export class GrinPoolStatsTableComponent extends Component {
       networkBlock31Rate = networkBlock31Data ? networkBlock31Data.gps.toFixed(2) : 0
 
       c29Share = (poolBlock29Rate / networkBlock29Rate * 100).toFixed(2)
-      c31Share = (poolBlock31Rate / networkBlock31Rate * 100).toFixed(2)
+      c31Share = networkBlock31Rate ? (poolBlock31Rate / networkBlock31Rate * 100).toFixed(2) : 0
     }
 
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
-        <h4 className='page-title' style={{ marginBottom: 36 }}>{BLOCK_RANGE}-Block Pool Market Share</h4>
+        <h4 className='page-title' style={{ marginBottom: 36 }}>Pool Market Share</h4>
         <Table size='sm' responsive hover className='grinPoolStatsTable'>
           <thead>
             <tr>
