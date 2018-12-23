@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class GrinPoolDataComponent extends Component {
@@ -32,18 +32,18 @@ export class GrinPoolDataComponent extends Component {
     const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
 
     let c29LatestGraphRate = 'C29 = 0 gps'
-    let c30LatestGraphRate = 'C30 = 0 gps'
+    let c31LatestGraphRate = 'C31 = 0 gps'
     if (grinPoolData.length > 0) {
       const lastBlock = grinPoolData[grinPoolData.length - 1]
       if (lastBlock.gps[0]) {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
+        c31LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
     } else {
       c29LatestGraphRate = '0 gps'
-      c30LatestGraphRate = '0 gps'
+      c31LatestGraphRate = '0 gps'
     }
 
     const nowTimestamp = Date.now()
@@ -58,7 +58,7 @@ export class GrinPoolDataComponent extends Component {
             <tbody>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
-                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C30_COLOR }}>{c30LatestGraphRate}</span></td>
+                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>

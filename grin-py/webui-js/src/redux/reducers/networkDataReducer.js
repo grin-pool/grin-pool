@@ -11,7 +11,7 @@ export const historical = (state: Array<Object> = [], action: Action) => {
   }
 }
 
-export const minedBlockAlgos = (state: any = { c29: [], c30: [] }, action: Action) => {
+export const minedBlockAlgos = (state: any = { c29: [], c31: [] }, action: Action) => {
   switch (action.type) {
     case 'MINED_BLOCKS_ALGOS':
       return action.data

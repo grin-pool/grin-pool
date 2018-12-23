@@ -21,7 +21,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     fetchMinerPaymentTxSlate: () => dispatch(fetchMinerPaymentTxSlate()),
     getLatestMinerPayments: () => dispatch(getLatestMinerPayments()),
-    setPaymentMethodSetting: (state: any) => dispatch(setPaymentMethodSetting(state)),
+    setPaymentMethodSetting: (formState: any) => dispatch(setPaymentMethodSetting(formState)),
     fetchMinerPaymentScript: () => dispatch(fetchMinerPaymentScript())
   }
 }
