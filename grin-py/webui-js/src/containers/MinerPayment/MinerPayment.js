@@ -20,13 +20,16 @@ export class MinerPaymentComponent extends Component {
   }
 
   onPaymentTypeChange = (event) => {
+    const { clearPaymentFormFeedback } = this.props
+    clearPaymentFormFeedback()
     this.setState({
       paymentType: event.target.value
     })
   }
 
   onPaymentMethodChange = (event) => {
-    const { fetchMinerPayoutScript, fetchMinerPaymentTxSlate } = this.props
+    const { fetchMinerPayoutScript, fetchMinerPaymentTxSlate, clearPaymentFormFeedback } = this.props
+    clearPaymentFormFeedback()
     const paymentMethod = event.target.value
     this.setState({
       paymentMethod
@@ -40,7 +43,8 @@ export class MinerPaymentComponent extends Component {
 
   onChangeHTTPWalletAddress = (event) => {
     this.setState({
-      walletUrl: event.target.value
+      walletUrl: event.target.value,
+      paymentMethod: 'http'
     })
   }
 
@@ -111,6 +115,9 @@ export class MinerPaymentComponent extends Component {
         </FormGroup> */}
         <FormGroup>
           <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
+          <div style={{ textAlign: 'center' }}>
+            <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 GRIN</strong> minimum balance in order to be triggered.</Alert>
+          </div>
           <Label for="loginEmail">HTTP Wallet Address:</Label>
           <Input onChange={this.onChangeHTTPWalletAddress} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
         </FormGroup>
