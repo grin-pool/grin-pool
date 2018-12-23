@@ -21,6 +21,10 @@ export const getLatestBlock = () => async (dispatch: Dispatch) => {
     const latestBlockUrl = `${API_URL}grin/block`
     const latestBlockResponse = await fetch(latestBlockUrl)
     const latestBlockData = await latestBlockResponse.json()
+    // for null response
+    // const latestBlockData = {
+    //  'height': 0
+    // }
     dispatch({ type: 'LATEST_BLOCK', data: { latestBlock: latestBlockData } })
   } catch (e) {
     console.log('error: ', e)
@@ -31,19 +35,20 @@ export const getMinedBlocksAlgos = () => async (dispatch: Dispatch, getState: Ge
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const minedBlockAlgosUrl = `${API_URL}grin/blocks/${latestBlockHeight},${BLOCK_RANGE}/height,edge_bits`
+    const increasedBlockRange = 12 * BLOCK_RANGE
+    const minedBlockAlgosUrl = `${API_URL}grin/blocks/${latestBlockHeight},${increasedBlockRange}/height,edge_bits`
     const minedBlockAlgosResponse = await fetch(minedBlockAlgosUrl)
     const minedBlockAlgosData = await minedBlockAlgosResponse.json()
     const algos = {
       c29: [],
-      c30: []
+      c31: []
     }
     minedBlockAlgosData.forEach(block => {
       if (block.edge_bits === 29) {
         algos.c29.push(block.height)
       }
-      if (block.edge_bits === 30) {
-        algos.c30.push(block.height)
+      if (block.edge_bits === 31) {
+        algos.c31.push(block.height)
       }
     })
     dispatch({ type: 'MINED_BLOCKS_ALGOS', data: algos })
