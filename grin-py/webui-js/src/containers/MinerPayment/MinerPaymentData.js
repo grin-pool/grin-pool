@@ -26,8 +26,8 @@ export class MinerPaymentDataComponent extends Component {
     return (
       <div>
         <h4>Payment Info</h4>
-        <div style={{ marginTop: '24px', marginBottom: '24px' }}>
-          <Alert color='light'>Please be aware that work takes ~24 hours to be credited, as the blocks acquire sufficient confirmations.</Alert>
+        <div style={{ marginTop: '18px', marginBottom: '18px', textAlign: 'center' }}>
+          <Alert color='light' style={{ textAlign: 'center', width: '80%', display: 'inline-block' }}>Please be aware that work takes ~24 hours to be credited, as the blocks acquire sufficient confirmations.</Alert>
         </div>
         <Table size='sm'>
           <tbody>
