@@ -35,6 +35,8 @@ const isPaymentSettingProcessing = (state: boolean = false, action) => {
       return action.data
     case 'UPDATE_PAYMENT_METHOD_SETTING':
       return false
+    case 'MANUAL_PAYMENT_SUBMISSION':
+      return false
     default:
       return state
   }
@@ -72,18 +74,28 @@ const paymentFormFeedback = (state: null | string = null, action) => {
     case 'PAYMENT_FORM_FEEDBACK':
       return action.data
     case 'IS_PAYMENT_SETTING_PROCESSING':
-      if (action.data) {
-        return null
-      } else {
+      if (!action.data) {
         return {
           message: 'There has been an issue with your submission. Please try again later.',
           color: 'danger'
         }
       }
+      return state
     case 'UPDATE_PAYMENT_METHOD_SETTING':
       return {
         message: 'Form successfully submitted!',
         color: 'success'
+      }
+    case 'MANUAL_PAYMENT_SUBMISSION':
+      if (action.data) {
+        return {
+          color: 'success',
+          message: 'Payment submitted successfully, please allow a few minutes for transaction to show in wallet.'
+        }
+      }
+      return {
+        color: 'danger',
+        message: 'Payment failed, please try again later'
       }
     default:
       return state
