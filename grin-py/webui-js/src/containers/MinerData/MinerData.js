@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Row, Col, Table, Alert } from 'reactstrap'
-import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class MinerDataComponent extends Component {
@@ -26,18 +26,18 @@ export class MinerDataComponent extends Component {
     const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
 
     let c29LatestGraphRate = 'C29 = 0 gps'
-    let c30LatestGraphRate = 'C30 = 0 gps'
+    let c31LatestGraphRate = 'C31 = 0 gps'
     if (minerData.length > 0) {
       const lastBlock = minerData[minerData.length - 1]
       if (lastBlock.gps[0]) {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(4)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(4)} gps`
+        c31LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(4)} gps`
       }
     } else {
       c29LatestGraphRate = '0 gps'
-      c30LatestGraphRate = '0 gps'
+      c31LatestGraphRate = '0 gps'
     }
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
@@ -47,7 +47,7 @@ export class MinerDataComponent extends Component {
             <tbody>
               <tr>
                 <td>Graph Rate</td>
-                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C30_COLOR }}>{c30LatestGraphRate}</span></td>
+                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
                 <td>Block Found</td>

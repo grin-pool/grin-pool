@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { Row, Table, Progress } from 'reactstrap'
 import { BLOCK_RANGE } from '../../constants/dataConstants.js'
 import _ from 'lodash'
-// import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+// import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolStatsTableComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -25,33 +25,33 @@ export class GrinPoolStatsTableComponent extends Component {
     const { historicalGrinPoolData, historicalNetworkData } = this.props
     if (historicalNetworkData.length === 0) return null
     let c29Share = 0
-    let c30Share = 0
+    let c31Share = 0
     let poolBlock29Rate = 0
-    let poolBlock30Rate = 0
+    let poolBlock31Rate = 0
     let networkBlock29Rate = 0
-    let networkBlock30Rate = 0
+    let networkBlock31Rate = 0
 
     const poolBlockIndex = historicalGrinPoolData.length - 1
     const poolBlock = historicalGrinPoolData[poolBlockIndex]
     if (historicalGrinPoolData[poolBlockIndex]) {
       const poolBlock29Data = _.find(poolBlock.gps, (graph) => graph.edge_bits === 29)
-      const poolBlock30Data = _.find(poolBlock.gps, (graph) => graph.edge_bits === 30)
+      const poolBlock31Data = _.find(poolBlock.gps, (graph) => graph.edge_bits === 31)
       if (poolBlock29Data) {
         poolBlock29Rate = poolBlock29Data.gps.toFixed(2)
       }
-      if (poolBlock30Data) {
-        poolBlock30Rate = poolBlock30Data.gps.toFixed(2)
+      if (poolBlock31Data) {
+        poolBlock31Rate = poolBlock31Data.gps.toFixed(2)
       }
 
       const networkBlockIndex = historicalNetworkData.length - 1
       const networkBlock = historicalNetworkData[networkBlockIndex]
       const networkBlock29Data = _.find(networkBlock.gps, (graph) => graph.edge_bits === 29)
-      const networkBlock30Data = _.find(networkBlock.gps, (graph) => graph.edge_bits === 30)
+      const networkBlock31Data = _.find(networkBlock.gps, (graph) => graph.edge_bits === 31)
       networkBlock29Rate = networkBlock29Data ? networkBlock29Data.gps.toFixed(2) : 0
-      networkBlock30Rate = networkBlock30Data ? networkBlock30Data.gps.toFixed(2) : 0
+      networkBlock31Rate = networkBlock31Data ? networkBlock31Data.gps.toFixed(2) : 0
 
       c29Share = (poolBlock29Rate / networkBlock29Rate * 100).toFixed(2)
-      c30Share = (poolBlock30Rate / networkBlock30Rate * 100).toFixed(2)
+      c31Share = (poolBlock31Rate / networkBlock31Rate * 100).toFixed(2)
     }
 
     return (
@@ -74,10 +74,10 @@ export class GrinPoolStatsTableComponent extends Component {
               <td>{`${c29Share} %`} <Progress color='success' value={c29Share} /></td>
             </tr>
             <tr>
-              <th scope='row'>Average C30 gps</th>
-              <td>{poolBlock30Rate}</td>
-              <td>{networkBlock30Rate}</td>
-              <td>{!isNaN(c30Share) ? `${c30Share} %` : 'n/a'} <Progress color='success' value={c30Share} /></td>
+              <th scope='row'>Average C31 gps</th>
+              <td>{poolBlock31Rate}</td>
+              <td>{networkBlock31Rate}</td>
+              <td>{!isNaN(c31Share) ? `${c31Share} %` : 'n/a'} <Progress color='success' value={c31Share} /></td>
             </tr>
           </tbody>
         </Table>

@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, ReferenceLine } from 'recharts'
 import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import classnames from 'classnames'
-import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 import _ from 'lodash'
 
 export class MiningGraphComponent extends Component {
@@ -39,22 +39,22 @@ export class MiningGraphComponent extends Component {
     const { miningData, poolBlocksMined, minedBlockAlgos } = this.props
     // calculations for graphs
     const c29graphRateData = []
-    const c30graphRateData = []
+    const c31graphRateData = []
 
     const c29PoolBlocksMined = []
-    const c30PoolBlocksMined = []
+    const c31PoolBlocksMined = []
     poolBlocksMined.forEach((height) => {
       if (_.find(minedBlockAlgos.c29, (item) => item === height)) {
         c29PoolBlocksMined.push(height)
       }
-      if (_.find(minedBlockAlgos.c30, (item) => item === height)) {
-        c30PoolBlocksMined.push(height)
+      if (_.find(minedBlockAlgos.c31, (item) => item === height)) {
+        c31PoolBlocksMined.push(height)
       }
     })
     let maxC29Gps = 0
     let minC29Gps = 0
-    let maxC30Gps = 0
-    let minC30Gps = 0
+    let maxC31Gps = 0
+    let minC31Gps = 0
     miningData.forEach((block) => {
       if (block.gps[0]) {
         if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
@@ -67,9 +67,9 @@ export class MiningGraphComponent extends Component {
         })
       }
       if (block.gps[1]) {
-        if (block.gps[1].gps > maxC30Gps || !maxC30Gps) maxC30Gps = block.gps[1].gps
-        if (block.gps[1].gps < minC30Gps || !minC30Gps) minC30Gps = block.gps[1].gps
-        c30graphRateData.push({
+        if (block.gps[1].gps > maxC31Gps || !maxC31Gps) maxC31Gps = block.gps[1].gps
+        if (block.gps[1].gps < minC31Gps || !minC31Gps) minC31Gps = block.gps[1].gps
+        c31graphRateData.push({
           height: block.height,
           gps: block.gps[1].gps,
           difficulty: block.difficulty,
@@ -88,7 +88,7 @@ export class MiningGraphComponent extends Component {
           </NavItem>
           <NavItem>
             <NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggle('2') }}>
-              C30
+              C31
             </NavLink>
           </NavItem>
         </Nav>
@@ -118,11 +118,11 @@ export class MiningGraphComponent extends Component {
               <ScatterChart isAnimationActive={false}>
                 <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
                 <Legend verticalAlign='top' height={36}/>
-                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C30_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
-                <Scatter yAxisId="left" fill={C30_COLOR} name={`C30 Graph Rate`} line data={c30graphRateData} />
+                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C31_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+                <Scatter yAxisId="left" fill={C31_COLOR} name={`C31 Graph Rate`} line data={c31graphRateData} />
                 <Tooltip content={<NetworkDataCustomTooltip />} />
                 {miningData.map((block) => {
-                  if (c30PoolBlocksMined.indexOf(block.height) > -1) {
+                  if (c31PoolBlocksMined.indexOf(block.height) > -1) {
                     return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
                   } else {
                     return null
