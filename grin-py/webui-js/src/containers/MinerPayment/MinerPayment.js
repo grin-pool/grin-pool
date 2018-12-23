@@ -11,7 +11,7 @@ export class MinerPaymentComponent extends Component {
     this.state = {
       paymentMethod: paymentMethod || '',
       paymentType: paymentType || 'null',
-      walletAddress: ''
+      walletUrl: ''
     }
   }
 
@@ -33,7 +33,7 @@ export class MinerPaymentComponent extends Component {
 
   onChangeHTTPWalletAddress = (event) => {
     this.setState({
-      walletAddress: event.target.value
+      walletUrl: event.target.value
     })
   }
 
@@ -67,7 +67,8 @@ export class MinerPaymentComponent extends Component {
 
   renderManualPayoutOptions = () => {
     return (
-      <div>
+      <div style={{ marginBottom: '20px' }}>
+        <legend className='col-form-label' style={{ marginBottom: '10px' }}>Payment Method:</legend>
         <FormGroup check>
           <Label check>
             <Input onChange={this.onPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
@@ -103,6 +104,7 @@ export class MinerPaymentComponent extends Component {
           </Input>
         </FormGroup> */}
         <FormGroup>
+          <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
           <Label for="loginEmail">HTTP Wallet Address:</Label>
           <Input onChange={this.onChangeHTTPWalletAddress} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
         </FormGroup>
@@ -129,12 +131,12 @@ export class MinerPaymentComponent extends Component {
     const { paymentMethod, paymentType } = this.state
     if (paymentType !== 'none') {
       switch (paymentMethod) {
-        case 'onlineWallet':
+        case 'http':
           return (
             <div>
               <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
               <Input
-                onChange={this.onChangeOnlineWallet}
+                onChange={this.onChangeHTTPWalletAddress}
                 type="text"
                 name="onlineWallet"
                 id="onlineWallet"
@@ -172,13 +174,11 @@ export class MinerPaymentComponent extends Component {
     setPaymentMethodSetting(this.state)
   }
 
-  onClear = (e) => {
-    e.preventDefault()
-  }
-
   render () {
-    const { paymentType } = this.state
+    const { paymentType, paymentMethod } = this.state
     const { isPaymentSettingProcessing, paymentFormFeedback } = this.props
+
+    const isFormShown = paymentType !== 'manual' || (paymentType === 'manual' && paymentMethod === 'http')
     return (
       <Container className='dashboard'>
         <Row>
@@ -197,20 +197,19 @@ export class MinerPaymentComponent extends Component {
                   <FormGroup>
                     <Label for='paymentType'>Payment Type:</Label>
                     <Input type='select' name='paymentType' id='paymentSelect' onChange={this.onPaymentTypeChange}>
-                      <option value='null'>------------</option>
-                      <option value='scheduled'>Scheduled Payout</option>
-                      <option value='manual'>Manual Payout</option>
+                      <option value='null' selected={paymentType === 'null'}>------------</option>
+                      <option value='scheduled' selected={paymentType === 'scheduled'}>Scheduled Payout</option>
+                      <option value='manual' selected={paymentType === 'manual'}>Manual Payout</option>
                     </Input>
                   </FormGroup>
-                  <legend className='col-form-label' style={{ marginBottom: '10px' }}>Payment Method:</legend>
                   {this.renderOptions()}
                   {paymentType === 'manual' && this.renderPayoutForm()}
-                  {paymentType !== 'manual' && (
+                  {isFormShown && (
                     <div style={{ marginTop: '30px' }}>
                       <div style={{ textAlign: 'center' }}>
-                        <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button>
-                        <button className="btn btn-primary account__btn account__btn--small" style={{ width: '84px' }} onClick={this.onSubmit}>
-                          {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Save'}
+                        {/* <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button> */ }ß
+                        <button className="btn btn-primary account__btn account__btn--small" style={{ width: '104px' }} onClick={this.onSubmit}>
+                          {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Submit'}
                         </button>
                       </div>
                       <div style={{ textAlign: 'center', marginTop: '10px' }}>

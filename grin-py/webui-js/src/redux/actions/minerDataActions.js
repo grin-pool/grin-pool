@@ -104,7 +104,7 @@ export const fetchMinerPaymentTxSlate = () => async (dispatch: Dispatch, getStat
   })
 }
 
-export const setPaymentMethodSetting = (state: any) => async (dispatch: Dispatch, getState: GetState) => {
+export const setPaymentMethodSetting = (formState: any) => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({
     type: 'IS_PAYMENT_SETTING_PROCESSING',
     data: true
@@ -112,19 +112,31 @@ export const setPaymentMethodSetting = (state: any) => async (dispatch: Dispatch
   try {
     const state = getState()
     const id = state.auth.account.id
-    const url = `${API_URL}pool/payment/http/${id}/${state.walletAddress}`
-    const setPaymentMethodSettingResponse = await fetch(url, {
-      method: 'POST',
-      headers: {
-        authorization: basicAuth(state.auth.account.token)
-      }
-    })
-    const setPaymentMethodSettingData = await setPaymentMethodSettingResponse.json()
-    if (setPaymentMethodSettingData) {
-      dispatch({
-        type: 'UPDATE_PAYMENT_METHOD_SETTING',
-        data: { walletAddress: state.walletAddress }
+    // need to discern between automated payments and manual
+    if (formState.paymentType === 'manual') {
+      const url = `${API_URL}pool/payment/http/${id}/"${formState.walletUrl}"`
+      const requestPaymentResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          authorization: basicAuth(state.auth.account.token)
+        }
       })
+      const requestPaymentData = await requestPaymentResponse.json()
+      if (requestPaymentData) {
+        // dispatch something
+      }
+    } else { // if they are saving a setting
+      const url = `${API_URL}/worker/utxo/${id}/address/${formState.walletUrl}`
+      const setPaymentSettingResponse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          authorization: basicAuth(state.auth.account.token)
+        }
+      })
+      const setPaymentSettingData = await setPaymentSettingResponse.json()
+      if (setPaymentSettingData) {
+        // dispatch something
+      }
     }
   } catch (e) {
     console.log('Error: ', e)
