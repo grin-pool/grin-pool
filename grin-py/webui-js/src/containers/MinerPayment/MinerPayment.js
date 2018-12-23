@@ -140,7 +140,7 @@ export class MinerPaymentComponent extends Component {
                 type="text"
                 name="onlineWallet"
                 id="onlineWallet"
-                placeholder="ex http://195.128.200.15:13415"
+                placeholder="ex 195.128.200.15:13415"
                 className='form-control' />
             </div>
           )
@@ -196,10 +196,10 @@ export class MinerPaymentComponent extends Component {
                 <Form className='minerPaymentForm'>
                   <FormGroup>
                     <Label for='paymentType'>Payment Type:</Label>
-                    <Input type='select' name='paymentType' id='paymentSelect' onChange={this.onPaymentTypeChange}>
-                      <option value='null' selected={paymentType === 'null'}>------------</option>
-                      <option value='scheduled' selected={paymentType === 'scheduled'}>Scheduled Payout</option>
-                      <option value='manual' selected={paymentType === 'manual'}>Manual Payout</option>
+                    <Input defaultValue={paymentType} type='select' name='paymentType' id='paymentSelect' onChange={this.onPaymentTypeChange}>
+                      <option value='null'>------------</option>
+                      <option value='scheduled'>Scheduled Payout</option>
+                      <option value='manual'>Manual Payout</option>
                     </Input>
                   </FormGroup>
                   {this.renderOptions()}
@@ -208,7 +208,7 @@ export class MinerPaymentComponent extends Component {
                     <div style={{ marginTop: '30px' }}>
                       <div style={{ textAlign: 'center' }}>
                         {/* <button className="btn btn-outline-primary account__btn account__btn--small" onClick={this.onClear}>{'Clear'}</button> */ }ß
-                        <button className="btn btn-primary account__btn account__btn--small" style={{ width: '104px' }} onClick={this.onSubmit}>
+                        <button className="btn btn-primary account__btn account__btn--small" style={{ width: '104px' }} onClick={this.onSubmit} disabled={isPaymentSettingProcessing}>
                           {isPaymentSettingProcessing ? this.renderSpinner('21px') : 'Submit'}
                         </button>
                       </div>

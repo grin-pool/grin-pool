@@ -114,7 +114,7 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
     const id = state.auth.account.id
     // need to discern between automated payments and manual
     if (formState.paymentType === 'manual') {
-      const url = `${API_URL}pool/payment/http/${id}/"${formState.walletUrl}"`
+      const url = `${API_URL}pool/payment/http/${id}/${formState.walletUrl}`
       const requestPaymentResponse = await fetch(url, {
         method: 'POST',
         headers: {
@@ -122,8 +122,11 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
         }
       })
       const requestPaymentData = await requestPaymentResponse.json()
-      if (requestPaymentData) {
-        // dispatch something
+      if (requestPaymentData === 'ok') {
+        dispatch({
+          type: 'MANUAL_PAYMENT_SUBMISSION',
+          data: true
+        })
       }
     } else { // if they are saving a setting
       const url = `${API_URL}/worker/utxo/${id}/address/${formState.walletUrl}`
