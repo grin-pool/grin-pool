@@ -6,7 +6,7 @@ import { fetchMinerPaymentData } from '../actions/minerDataActions.js'
 const mapStateToProps = (state) => {
   const paymentData = state.minerData.paymentData
   return {
-    amount: paymentData.amount,
+    amount: paymentData.amount || 0,
     address: paymentData.address,
     lastSuccess: paymentData.last_success,
     failureCount: paymentData.failure_count,
