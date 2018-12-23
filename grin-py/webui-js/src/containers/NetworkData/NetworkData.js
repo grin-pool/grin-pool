@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { C29_COLOR, C30_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class NetworkDataComponent extends Component {
@@ -21,7 +21,7 @@ export class NetworkDataComponent extends Component {
     const { networkData, latestBlock, poolBlocksMined } = this.props
 
     let c29LatestGraphRate = 'C29 = 0 gps'
-    let c30LatestGraphRate = 'C30 = 0 gps'
+    let c31LatestGraphRate = 'C31 = 0 gps'
     let latestDifficulty = 'n/a'
     let latestBlockHeight = 'n/a'
     if (networkData.length > 0) {
@@ -30,13 +30,13 @@ export class NetworkDataComponent extends Component {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
       if (lastBlock.gps[1]) {
-        c30LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
+        c31LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
       latestDifficulty = lastBlock.difficulty
       latestBlockHeight = lastBlock.height
     } else {
       c29LatestGraphRate = '0 gps'
-      c30LatestGraphRate = '0 gps'
+      c31LatestGraphRate = '0 gps'
       latestDifficulty = 'n/a'
       latestBlockHeight = 'n/a'
     }
@@ -51,7 +51,7 @@ export class NetworkDataComponent extends Component {
             <tbody>
               <tr>
                 <td id='box'><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
-                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C30_COLOR }}>{c30LatestGraphRate}</span></td>
+                <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
