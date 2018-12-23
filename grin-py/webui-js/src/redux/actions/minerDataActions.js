@@ -122,12 +122,11 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
         }
       })
       const requestPaymentData = await requestPaymentResponse.json()
-      if (requestPaymentData === 'ok') {
-        dispatch({
-          type: 'MANUAL_PAYMENT_SUBMISSION',
-          data: true
-        })
-      }
+      const isSuccessful = requestPaymentData === 'ok'
+      dispatch({
+        type: 'MANUAL_PAYMENT_SUBMISSION',
+        data: isSuccessful
+      })
     } else { // if they are saving a setting
       const url = `${API_URL}/worker/utxo/${id}/address/${formState.walletUrl}`
       const setPaymentSettingResponse = await fetch(url, {
