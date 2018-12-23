@@ -161,7 +161,7 @@ export const fetchMinerPaymentScript = () => async (dispatch: Dispatch, getState
         authorization: basicAuth(state.auth.account.token)
       }
     })
-    const fetchMinerPaymentScriptData = await fetchMinerPaymentScriptResponse.json()
+    const fetchMinerPaymentScriptData = await fetchMinerPaymentScriptResponse.text()
     dispatch({
       type: 'PAYOUT_SCRIPT',
       data: fetchMinerPaymentScriptData
