@@ -21,6 +21,10 @@ export const getLatestBlock = () => async (dispatch: Dispatch) => {
     const latestBlockUrl = `${API_URL}grin/block`
     const latestBlockResponse = await fetch(latestBlockUrl)
     const latestBlockData = await latestBlockResponse.json()
+    // for null response
+    // const latestBlockData = {
+    //  'height': 0
+    // }
     dispatch({ type: 'LATEST_BLOCK', data: { latestBlock: latestBlockData } })
   } catch (e) {
     console.log('error: ', e)
