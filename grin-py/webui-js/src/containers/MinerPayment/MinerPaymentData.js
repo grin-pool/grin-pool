@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Table } from 'reactstrap'
+import { Table, Alert } from 'reactstrap'
 import { secondsToHms, nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerPaymentDataComponent extends Component {
@@ -26,6 +26,9 @@ export class MinerPaymentDataComponent extends Component {
     return (
       <div>
         <h4>Payment Info</h4>
+        <div style={{ marginTop: '24px', marginBottom: '24px' }}>
+          <Alert color='light'>Please be aware that work takes ~24 hours to be credited, as the blocks acquire sufficient confirmations.</Alert>
+        </div>
         <Table size='sm'>
           <tbody>
             <tr>
