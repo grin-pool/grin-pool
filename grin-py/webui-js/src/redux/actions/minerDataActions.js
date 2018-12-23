@@ -112,15 +112,16 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
   try {
     const state = getState()
     const id = state.auth.account.id
+    const authorizedPost = {
+      method: 'POST',
+      headers: {
+        authorization: basicAuth(state.auth.account.token)
+      }
+    }
     // need to discern between automated payments and manual
     if (formState.paymentType === 'manual') {
       const url = `${API_URL}pool/payment/http/${id}/${formState.walletUrl}`
-      const requestPaymentResponse = await fetch(url, {
-        method: 'POST',
-        headers: {
-          authorization: basicAuth(state.auth.account.token)
-        }
-      })
+      const requestPaymentResponse = await fetch(url, authorizedPost)
       const requestPaymentData = await requestPaymentResponse.json()
       const isSuccessful = requestPaymentData === 'ok'
       dispatch({
@@ -128,17 +129,17 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
         data: isSuccessful
       })
     } else { // if they are saving a setting
-      const url = `${API_URL}/worker/utxo/${id}/address/${formState.walletUrl}`
-      const setPaymentSettingResponse = await fetch(url, {
-        method: 'POST',
-        headers: {
-          authorization: basicAuth(state.auth.account.token)
-        }
-      })
+      const methodUrl = `${API_URL}worker/utxo/${id}/method/${formState.paymentMethod}`
+      const setPaymentMethodResponse = await fetch(methodUrl, authorizedPost)
+      const setPaymentMethodData = await setPaymentMethodResponse.json()
+      if (setPaymentMethodData.method !== formState.paymentMethod) throw new Error('Settings save failed!')
+      const addressUrl = `${API_URL}worker/utxo/${id}/address/${formState.walletUrl}`
+      const setPaymentSettingResponse = await fetch(addressUrl, authorizedPost)
       const setPaymentSettingData = await setPaymentSettingResponse.json()
-      if (setPaymentSettingData) {
-        // dispatch something
-      }
+      if (setPaymentSettingData.address !== formState.walletUrl) throw new Error('Settings save failed')
+      dispatch({
+        type: 'UPDATE_PAYMENT_METHOD_SETTING'
+      })
     }
   } catch (e) {
     console.log('Error: ', e)
