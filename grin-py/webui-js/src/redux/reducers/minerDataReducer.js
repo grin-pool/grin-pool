@@ -80,10 +80,10 @@ const paymentFormFeedback = (state: null | string = null, action) => {
           color: 'danger'
         }
       }
-      return state
+      return ''
     case 'UPDATE_PAYMENT_METHOD_SETTING':
       return {
-        message: 'Form successfully submitted!',
+        message: 'Payment setting successfully saved!',
         color: 'success'
       }
     case 'MANUAL_PAYMENT_SUBMISSION':
