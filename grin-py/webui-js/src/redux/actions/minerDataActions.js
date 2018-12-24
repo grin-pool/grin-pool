@@ -75,6 +75,27 @@ export const getLatestMinerPayments = () => async (dispatch: Dispatch, getState:
   }
 }
 
+export const getLatestMinerPaymentRange = (range?: number = 20) => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const id = state.auth.account.id
+    const url = `${API_URL}worker/payments/${id}/${range}`
+    const latestMinerPaymentResponse = await fetch(url, {
+      headers: {
+        authorization: basicAuth(state.auth.account.token)
+      }
+    })
+    const latestMinerPaymentData = await latestMinerPaymentResponse.json()
+    console.log('latestMinerPaymentData: ', latestMinerPaymentData)
+    dispatch({
+      type: 'LATEST_MINER_PAYMENTS',
+      data: latestMinerPaymentData
+    })
+  } catch (e) {
+    console.log('Error: ', e)
+  }
+}
+
 export const fetchMinerPaymentTxSlate = () => async (dispatch: Dispatch, getState: GetState) => {
   dispatch({
     type: 'IS_TX_SLATE_LOADING',
