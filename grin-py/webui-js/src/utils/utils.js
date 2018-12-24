@@ -9,22 +9,6 @@ export const ellipsizeString = (input, length) => {
   return output
 }
 
-export const getTokenInfoFromCurrencyCode = (currencyCode, state) => {
-  const tokensDirectory = state.tokens.tokensDirectory
-  if (!tokensDirectory) return null
-  const tokenInfo = tokensDirectory.find(token => token.symbol === currencyCode)
-  if (!tokenInfo) return null
-  return tokenInfo
-}
-
-export const getTokenInfoFromAddress = (address, state) => {
-  const tokensDirectory = state.tokens.tokensDirectory
-  if (!tokensDirectory) return null
-  const tokenInfo = tokensDirectory.find(token => token.address.toLowerCase() === address.toLowerCase())
-  if (!tokenInfo) return null
-  return tokenInfo
-}
-
 export const getTimeMeasurement = (inMinutes: number): string => {
   switch (true) {
     case inMinutes < 1:

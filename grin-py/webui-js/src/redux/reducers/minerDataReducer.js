@@ -102,10 +102,20 @@ const paymentFormFeedback = (state: null | string = null, action) => {
   }
 }
 
+export const latestMinerPayments = (state: Array<Object> = [], action) => {
+  switch (action.type) {
+    case 'LATEST_MINER_PAYMENTS':
+      return action.data
+    default:
+      return state
+  }
+}
+
 export const minerData = combineReducers({
   historical,
   totalSharesSubmitted,
   paymentData,
+  latestMinerPayments,
   minerPaymentTxSlate,
   isPaymentSettingProcessing,
   isTxSlateLoading,
