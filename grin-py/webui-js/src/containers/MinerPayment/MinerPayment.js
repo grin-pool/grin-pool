@@ -90,11 +90,6 @@ export class MinerPaymentComponent extends Component {
             <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
           </Label>
         </FormGroup>
-        <FormGroup check>
-          <Label check>
-            <Input onChange={this.onPaymentMethodChange} type='radio' value='txSlate' name='paymentMethod' />Download Transaction Slate File
-          </Label>
-        </FormGroup>
       </div>
     )
   }
@@ -102,18 +97,6 @@ export class MinerPaymentComponent extends Component {
   renderAutomaticPayoutOptions = () => {
     return (
       <div>
-        {/* <FormGroup>
-          <Label for="loginEmail">Automatic Payment Schedule:</Label>
-          <Input type='select' name='autoPaymentSchedule' id='autoPaymentSchedule' onChange={this.onAutoPaymentScheduleChange}>
-            <option value='null'>------------</option>
-            <option value='hourly'>Hourly</option>
-            <option value='daily'>Daily</option>
-            <option value='semi-weekly'>Semi-Weekly</option>
-            <option value='weekly'>Weekly</option>
-            <option value='bi-weekly'>Bi-Weely</option>
-            <option value='monthly'>Monthly</option>
-          </Input>
-        </FormGroup> */}
         <FormGroup>
           <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
           <div style={{ textAlign: 'center' }}>
