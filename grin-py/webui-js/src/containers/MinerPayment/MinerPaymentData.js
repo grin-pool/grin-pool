@@ -21,6 +21,7 @@ export class MinerPaymentDataComponent extends Component {
 
   render () {
     const { amount, address, lastSuccess, failureCount, lastTry, currentTimestamp } = this.props
+    const readableAmount = amount > 0 ? amount : 0
     const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
     return (
@@ -33,7 +34,7 @@ export class MinerPaymentDataComponent extends Component {
           <tbody>
             <tr>
               <td>Amount Due</td>
-              <td>{nanoGrinToGrin(amount)} GRIN</td>
+              <td>{nanoGrinToGrin(readableAmount)} GRIN</td>
             </tr>
             <tr>
               <td>Payout Address</td>
