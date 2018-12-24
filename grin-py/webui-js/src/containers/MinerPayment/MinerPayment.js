@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody, Form, FormGroup, Label, Input, Alert } from 'reactstrap'
 import { MinerPaymentDataConnector } from '../../redux/connectors/MinerPaymentDataConnector.js'
+import { LatestMinerPaymentsConnector } from '../../redux/connectors/LatestMinerPaymentsConnector.js'
 import Blob from 'blob'
 import Spinner from 'react-spinkit'
 
@@ -238,6 +239,15 @@ export class MinerPaymentComponent extends Component {
             <Card>
               <CardBody>
                 <MinerPaymentDataConnector />
+              </CardBody>
+            </Card>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs={12} md={12} lg={12} xl={12}>
+            <Card>
+              <CardBody>
+                <LatestMinerPaymentsConnector />
               </CardBody>
             </Card>
           </Col>

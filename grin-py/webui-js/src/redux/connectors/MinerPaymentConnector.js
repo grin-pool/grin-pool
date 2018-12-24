@@ -14,7 +14,9 @@ const mapStateToProps = (state) => ({
   paymentFormFeedback: state.minerData.paymentFormFeedback,
   minerPaymentTxSlate: state.minerData.minerPaymentTxSlate,
   paymentMethod: state.minerData.paymentData.method,
-  payoutScript: state.minerData.payoutScript
+  payoutScript: state.minerData.payoutScript,
+  lastestBlockHeight: state.networkData.latestBlock.height
+
 })
 
 const mapDispatchToProps = (dispatch) => {
