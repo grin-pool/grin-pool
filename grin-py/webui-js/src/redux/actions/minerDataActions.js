@@ -141,7 +141,8 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
     }
     // need to discern between automated payments and manual
     if (formState.paymentType === 'manual') {
-      const url = `${API_URL}pool/payment/http/${id}/${formState.walletUrl}`
+      const method = formState.paymentMethod
+      const url = `${API_URL}pool/payment/${method}/${id}/${formState.recipient}`
       const requestPaymentResponse = await fetch(url, authorizedPost)
       const requestPaymentData = await requestPaymentResponse.json()
       const isSuccessful = requestPaymentData === 'ok'

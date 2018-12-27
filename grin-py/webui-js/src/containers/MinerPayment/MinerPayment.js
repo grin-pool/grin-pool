@@ -12,7 +12,7 @@ export class MinerPaymentComponent extends Component {
     this.state = {
       paymentMethod: paymentMethod || '',
       paymentType: paymentType || 'null',
-      walletUrl: ''
+      recipient: ''
     }
   }
 
@@ -42,9 +42,9 @@ export class MinerPaymentComponent extends Component {
     }
   }
 
-  onChangeHTTPWalletAddress = (event) => {
+  onChangeTextInput = (event) => {
     this.setState({
-      walletUrl: event.target.value,
+      recipient: event.target.value,
       paymentMethod: 'http'
     })
   }
@@ -87,6 +87,11 @@ export class MinerPaymentComponent extends Component {
         </FormGroup>
         <FormGroup check>
           <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='keybase' name='paymentMethod' />Keybase Username
+          </Label>
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
             <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
           </Label>
         </FormGroup>
@@ -103,7 +108,7 @@ export class MinerPaymentComponent extends Component {
             <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 GRIN</strong> minimum balance in order to be triggered.</Alert>
           </div>
           <Label for="loginEmail">HTTP Wallet Address:</Label>
-          <Input onChange={this.onChangeHTTPWalletAddress} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
+          <Input onChange={this.onChangeTextInput} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
         </FormGroup>
       </div>
     )
@@ -133,11 +138,24 @@ export class MinerPaymentComponent extends Component {
             <div>
               <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
               <Input
-                onChange={this.onChangeHTTPWalletAddress}
+                onChange={this.onChangeTextInput}
                 type="text"
                 name="onlineWallet"
                 id="onlineWallet"
                 placeholder="ex 195.128.200.15:13415"
+                className='form-control' />
+            </div>
+          )
+        case 'keybase':
+          return (
+            <div>
+              <Label for="onlineWallet">Enter Keybase Username:</Label>
+              <Input
+                onChange={this.onChangeTextInput}
+                type="text"
+                name="keybase"
+                id="keybase"
+                placeholder="myKeybaseUser"
                 className='form-control' />
             </div>
           )
@@ -175,7 +193,7 @@ export class MinerPaymentComponent extends Component {
     const { paymentType, paymentMethod } = this.state
     const { isPaymentSettingProcessing, paymentFormFeedback } = this.props
 
-    const isFormShown = paymentType !== 'manual' || (paymentType === 'manual' && paymentMethod === 'http')
+    const isFormShown = paymentType !== 'manual' || (paymentType === 'manual' && (paymentMethod === 'http' || paymentMethod === 'keybase'))
     return (
       <Container className='dashboard'>
         <Row>

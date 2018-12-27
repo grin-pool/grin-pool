@@ -95,7 +95,7 @@ const paymentFormFeedback = (state: null | string = null, action) => {
       }
       return {
         color: 'danger',
-        message: 'Payment failed, please check URL and try again'
+        message: 'Payment failed, please check URL / username and try again'
       }
     default:
       return state
