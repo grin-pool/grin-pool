@@ -44,8 +44,7 @@ export class MinerPaymentComponent extends Component {
 
   onChangeTextInput = (event) => {
     this.setState({
-      recipient: event.target.value,
-      paymentMethod: 'http'
+      recipient: event.target.value
     })
   }
 
