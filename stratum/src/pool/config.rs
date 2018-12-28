@@ -20,6 +20,7 @@
 #[macro_use]
 #[macro_use]
 use serde_derive;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use toml;
@@ -57,6 +58,14 @@ pub struct NodeConfig {
     pub stratum_port: u64,
     pub login: String,
     pub password: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ProducerConfig {
+    pub brokers: Vec<String>,
+    pub topic: String,
+    pub partitions: i32,
+    pub options: Option<HashMap<String, String>>,
 }
 
 pub fn read_config() -> Config {

@@ -26,3 +26,13 @@ api_port = 13413
 stratum_port = 13416
 login = "GrinPool"
 password = ""
+
+[producer]
+brokers = ["localhost:9092"]
+topic = "test-topic"
+partitions = 1
+options = {
+    "required_acks" = "none",
+    "ack_timeout" = "1000",
+    "conn_idle_timeout" =  "500",
+}

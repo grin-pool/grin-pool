@@ -29,6 +29,9 @@ extern crate lazy_static;
 #[macro_use]
 extern crate toml;
 extern crate sha2;
+#[macro_use]
+extern crate error_chain;
+extern crate kafka;
 
 use bufstream::BufStream;
 use std::error::Error;
