@@ -12,12 +12,12 @@
 // limitations under the License.
 
 use bufstream::BufStream;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use std::{thread, time};
-use sha2::{Sha256, Digest};
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
@@ -57,7 +57,8 @@ fn accept_workers(
                 stream
                     .set_nonblocking(true)
                     .expect("set_nonblocking call failed");
-                let mut worker = Worker::new(worker_id, BufStream::new(stream));
+                let mut worker =
+                    Worker::new(worker_id, worker_addr.to_string(), BufStream::new(stream));
                 worker.set_difficulty(difficulty);
                 workers.lock().unwrap().push(worker);
                 worker_id = worker_id + 1;
@@ -105,7 +106,8 @@ impl Pool {
         for port_difficulty in &self.config.workers.port_difficulty {
             let mut workers_th = self.workers.clone();
             let id_th = self.id.clone();
-            let address_th = self.config.workers.listen_address.clone() + ":"
+            let address_th = self.config.workers.listen_address.clone()
+                + ":"
                 + &port_difficulty.port.to_string();
             let difficulty_th = port_difficulty.difficulty;
             let _listener_th = thread::spawn(move || {

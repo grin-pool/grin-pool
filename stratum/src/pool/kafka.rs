@@ -19,20 +19,22 @@ pub struct Share {
     nonce: u64,
     server_id: String,
     worker_id: usize,
+    worker_addr: String,
     message: String,
 }
 
 impl Share {
-    pub fn new(height: u64, job_id: u64, nonce: u64, server_id: String, worker_id: usize) -> Share {
+    pub fn new(height: u64, job_id: u64, nonce: u64, server_id: String, worker_id: usize, worker_addr: String) -> Share {
         Share {
             height: height,
             job_id: job_id,
             nonce: nonce,
             server_id: server_id.clone(),
+            worker_addr: worker_addr.clone(),
             worker_id: worker_id,
             message: format!(
-                "share(jobId: {}, sserver: {}, height: {}, userId: {})",
-                job_id, server_id, height, worker_id
+                "share(jobId: {}, ip: {}, sserver: {}, height: {}, userId: {})",
+                job_id, worker_addr, server_id, height, worker_id
             ),
         }
     }
@@ -65,8 +67,8 @@ impl KafkaProducerConfig {
         _batch_size: Option<&String>,
         _conn_idle_timeout: Option<&String>,
         _ack_timeout: Option<&String>,
-    ) -> Result<KafkaProducerConfig> {
-        Ok(KafkaProducerConfig {
+    ) -> KafkaProducerConfig {
+        KafkaProducerConfig {
             compression: match _compression {
                 None => Compression::NONE,
                 Some(ref s) if s.eq_ignore_ascii_case("none") => Compression::NONE,
@@ -83,16 +85,14 @@ impl KafkaProducerConfig {
                 Some(ref s) if s.eq_ignore_ascii_case("all") => RequiredAcks::All,
                 Some(s) => panic!(format!("Unknown --required-acks argument: {}", s)),
             },
-            batch_size: to_number(_batch_size, 1)?,
-            conn_idle_timeout: Duration::from_millis(to_number(
-                _conn_idle_timeout,
-                DEFAULT_CONNECTION_IDLE_TIMEOUT_MILLIS,
-            )?),
-            ack_timeout: Duration::from_millis(to_number(
-                _ack_timeout,
-                DEFAULT_ACK_TIMEOUT_MILLIS,
-            )?),
-        })
+            batch_size: to_number(_batch_size, 1).unwrap(),
+            conn_idle_timeout: Duration::from_millis(
+                to_number(_conn_idle_timeout, DEFAULT_CONNECTION_IDLE_TIMEOUT_MILLIS).unwrap(),
+            ),
+            ack_timeout: Duration::from_millis(
+                to_number(_ack_timeout, DEFAULT_ACK_TIMEOUT_MILLIS).unwrap(),
+            ),
+        }
     }
 }
 
@@ -105,7 +105,6 @@ impl Default for KafkaProducerConfig {
             None, // conn_idle_timeout DEFAULT_CONNECTION_IDLE_TIMEOUT_MILLIS
             None, // ack_timeout DEFAULT_ACK_TIMEOUT_MILLIS
         )
-        .unwrap()
     }
 }
 
@@ -114,19 +113,19 @@ fn to_number<N: FromStr>(s: Option<&String>, _default: N) -> Result<N> {
         None => Ok(_default),
         Some(s) => match s.parse::<N>() {
             Ok(n) => Ok(n),
-            Err(_) => panic!(format!("Not a number: {}", s)),
+            Err(_) => Ok(_default),
         },
     }
 }
 
 pub trait GrinProducer {
-    fn from_config(config: &ProducerConfig) -> Result<KafkaProducer>;
+    fn from_config(config: &ProducerConfig) -> KafkaProducer;
 
     fn send_data(&mut self, share: Share) -> Result<()>;
 }
 
 impl GrinProducer for KafkaProducer {
-    fn from_config(cfg: &ProducerConfig) -> Result<KafkaProducer> {
+    fn from_config(cfg: &ProducerConfig) -> KafkaProducer {
         let client = KafkaClient::new(cfg.brokers.clone());
         let producer = {
             let options: Option<HashMap<String, String>> = cfg.options.clone();
@@ -139,7 +138,7 @@ impl GrinProducer for KafkaProducer {
                     options.get("batch_size"),
                     options.get("conn_idle_timeout"),
                     options.get("ack_timeout"),
-                )?;
+                );
             } else {
                 kafka_config = KafkaProducerConfig::default();
             }
@@ -152,11 +151,11 @@ impl GrinProducer for KafkaProducer {
                 .unwrap()
         };
 
-        Ok(KafkaProducer {
+        KafkaProducer {
             topic: cfg.topic.clone(),
             partitions: cfg.partitions,
             client: producer,
-        })
+        }
     }
 
     fn send_data(&mut self, share: Share) -> Result<()> {

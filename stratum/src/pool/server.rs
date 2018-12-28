@@ -24,8 +24,11 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::{thread, time};
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
+use pool::kafka::{GrinProducer, KafkaProducer, Share};
 use pool::logger::LOGGER;
-use pool::proto::{JobTemplate, LoginParams, RpcError, StratumProtocol, SubmitParams, WorkerStatus};
+use pool::proto::{
+    JobTemplate, LoginParams, RpcError, StratumProtocol, SubmitParams, WorkerStatus,
+};
 use pool::proto::{RpcRequest, RpcResponse};
 use pool::worker::Worker;
 
@@ -40,6 +43,7 @@ pub struct Server {
     error: bool,
     pub job: JobTemplate,
     status: WorkerStatus,
+    kafka: KafkaProducer,
 }
 
 impl Server {
@@ -47,6 +51,7 @@ impl Server {
     pub fn new(cfg: Config) -> Server {
         Server {
             id: "Pool".to_string(),
+            kafka: KafkaProducer::from_config(&cfg.producer),
             config: cfg,
             stream: None,
             protocol: StratumProtocol::new(),
@@ -63,7 +68,8 @@ impl Server {
         if !self.error && self.stream.is_some() {
             return Ok(());
         }
-        let grin_stratum_url = self.config.grin_node.address.clone() + ":"
+        let grin_stratum_url = self.config.grin_node.address.clone()
+            + ":"
             + &self.config.grin_node.stratum_port.to_string();
         warn!(
             LOGGER,
@@ -73,7 +79,8 @@ impl Server {
         );
         match TcpStream::connect(grin_stratum_url.to_string()) {
             Ok(conn) => {
-                let _ = conn.set_nonblocking(true)
+                let _ = conn
+                    .set_nonblocking(true)
                     .expect("set_nonblocking call failed");
                 self.stream = Some(BufStream::new(conn));
                 self.error = false;
@@ -239,13 +246,15 @@ impl Server {
                                     match req.method.as_str() {
                                         // The upstream stratum server has sent us a new job
                                         "job" => {
-                                            let job: JobTemplate = serde_json::from_value(req.params.unwrap()).unwrap();
+                                            let job: JobTemplate =
+                                                serde_json::from_value(req.params.unwrap())
+                                                    .unwrap();
                                             debug!(
                                                 LOGGER,
                                                 "{} - Setting new job for height {} job_id {}",
                                                 self.id,
                                                 job.height,
-						job.job_id,
+                                                job.job_id,
                                             );
                                             self.job = job;
                                             return Ok(req.method.clone());
@@ -287,9 +296,8 @@ impl Server {
                                             return Err(e);
                                         }
                                     };
-                                    let w_id_o: Option<usize> = workers_l
-                                        .iter()
-                                        .position(|ref i| i.id == w_id_usz);
+                                    let w_id_o: Option<usize> =
+                                        workers_l.iter().position(|ref i| i.id == w_id_usz);
                                     let w_id: usize;
                                     match w_id_o {
                                         Some(id) => w_id = id,
@@ -310,7 +318,8 @@ impl Server {
                                             // Could be rpcerror - like "still syncing"
                                             match res.result {
                                                 Some(response) => {
-                                                    let job: JobTemplate = serde_json::from_value(response).unwrap();
+                                                    let job: JobTemplate =
+                                                        serde_json::from_value(response).unwrap();
                                                     debug!(
                                                         LOGGER,
                                                         "{} - Setting new job for height {}",
@@ -322,7 +331,9 @@ impl Server {
                                                 }
                                                 None => {
                                                     self.error = true;
-                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    let e: RpcError =
+                                                        serde_json::from_value(res.error.unwrap())
+                                                            .unwrap();
                                                     // XXX TODO: Send response to the worker
                                                     return Err(e);
                                                 }
@@ -339,7 +350,9 @@ impl Server {
                                                 None => {
                                                     // Server did NOT accept our login
                                                     self.error = true;
-                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    let e: RpcError =
+                                                        serde_json::from_value(res.error.unwrap())
+                                                            .unwrap();
                                                     return Err(e);
                                                 }
                                             }
@@ -364,6 +377,25 @@ impl Server {
                                                     workers_l[w_id].status.accepted += 1;
                                                     debug!(LOGGER, "Server accepted our share");
                                                     workers_l[w_id].send_ok(res.method.clone());
+
+                                                    // After share was accepted, send share to kafka
+                                                    // params has share informations
+                                                    // {
+                                                    //    height, job_id, nonce, edge_bits(what?),
+                                                    //    pow
+                                                    // }
+                                                    let params: SubmitParams =
+                                                        serde_json::from_value(response).unwrap();
+                                                    let share = Share::new(
+                                                        params.get_height(),
+                                                        params.job_id,
+                                                        params.nonce,
+                                                        self.id.clone(),
+                                                        w_id,
+                                                        workers_l[w_id].addr.clone(),
+                                                    );
+
+                                                    //
                                                 }
                                                 None => {
                                                     // The share was not accepted, check RpcError.code for reason
@@ -372,7 +404,9 @@ impl Server {
                                                     // -32502: Failed to validate solution
                                                     // -32503: Solution submitted too late
                                                     // XXX TODO - handle more cases?
-                                                    let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
+                                                    let e: RpcError =
+                                                        serde_json::from_value(res.error.unwrap())
+                                                            .unwrap();
                                                     match e.code {
                                                         -32503 => {
                                                             workers_l[w_id].status.stale += 1;

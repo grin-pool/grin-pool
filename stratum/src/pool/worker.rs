@@ -42,11 +42,12 @@ pub struct Worker {
     pub block_status: WorkerStatus, // Totals for current block
     shares: Vec<SubmitParams>,
     pub needs_job: bool,
+    pub addr: String,
 }
 
 impl Worker {
     /// Creates a new Stratum Worker.
-    pub fn new(id: usize, stream: BufStream<TcpStream>) -> Worker {
+    pub fn new(id: usize, addr: String, stream: BufStream<TcpStream>) -> Worker {
         Worker {
             id: id,
             login: None,
@@ -58,6 +59,7 @@ impl Worker {
             block_status: WorkerStatus::new(id.to_string()),
             shares: Vec::new(),
             needs_job: true,
+            addr: addr,
         }
     }
 

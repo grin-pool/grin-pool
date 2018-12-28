@@ -32,6 +32,7 @@ pub struct Config {
     pub grin_pool: PoolConfig,
     pub grin_node: NodeConfig,
     pub workers: WorkerConfig,
+    pub producer: ProducerConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
