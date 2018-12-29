@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react'
 import { connect } from 'react-redux'
 import SidebarLink from './SidebarLink'
-import { changeThemeToDark, changeThemeToLight } from '../../../redux/actions/themeActions'
 
 class SidebarContent extends PureComponent {
   changeToDark = () => {
@@ -41,8 +40,7 @@ const mapStateToProps = (state) => ({
 })
 
 const mapDispatchToProps = (dispatch) => ({
-  changeThemeToDark: () => dispatch(changeThemeToDark()),
-  changeThemeToLight: () => dispatch(changeThemeToLight())
+
 })
 
 export const SidebarContentConnector = connect(mapStateToProps, mapDispatchToProps)(SidebarContent)
