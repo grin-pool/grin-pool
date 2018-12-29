@@ -10,6 +10,32 @@
   transition: transform 0.3s, width 0.3s;
   transform: translateX(calc(-100% - 20px));
 
+  &.sidebar-show {
+      transform: translateX(0);
+  
+      .sidebar__back {
+        display: block;
+      }
+    }
+  
+    .sidebar__back {
+      height: 100%;
+      width: 100vw;
+      position: absolute;
+      display: none;
+    }
+  
+    .sidebar__link-active {
+  
+      .sidebar__link {
+  
+        &:before {
+          opacity: 1;
+        }
+      }
+    }
+    
+
   @include themify($themes) {
     background: themed('colorBackground');
   }

@@ -12,7 +12,7 @@ export class MinerPaymentComponent extends Component {
     this.state = {
       paymentMethod: paymentMethod || '',
       paymentType: paymentType || 'null',
-      walletUrl: ''
+      recipient: ''
     }
   }
 
@@ -42,10 +42,9 @@ export class MinerPaymentComponent extends Component {
     }
   }
 
-  onChangeHTTPWalletAddress = (event) => {
+  onChangeTextInput = (event) => {
     this.setState({
-      walletUrl: event.target.value,
-      paymentMethod: 'http'
+      recipient: event.target.value
     })
   }
 
@@ -87,12 +86,12 @@ export class MinerPaymentComponent extends Component {
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='keybase' name='paymentMethod' />Keybase Username
           </Label>
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onPaymentMethodChange} type='radio' value='txSlate' name='paymentMethod' />Download Transaction Slate File
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
           </Label>
         </FormGroup>
       </div>
@@ -101,26 +100,23 @@ export class MinerPaymentComponent extends Component {
 
   renderAutomaticPayoutOptions = () => {
     return (
-      <div>
-        {/* <FormGroup>
-          <Label for="loginEmail">Automatic Payment Schedule:</Label>
-          <Input type='select' name='autoPaymentSchedule' id='autoPaymentSchedule' onChange={this.onAutoPaymentScheduleChange}>
-            <option value='null'>------------</option>
-            <option value='hourly'>Hourly</option>
-            <option value='daily'>Daily</option>
-            <option value='semi-weekly'>Semi-Weekly</option>
-            <option value='weekly'>Weekly</option>
-            <option value='bi-weekly'>Bi-Weely</option>
-            <option value='monthly'>Monthly</option>
-          </Input>
-        </FormGroup> */}
+      <div style={{ marginBottom: '20px' }}>
+        <legend className='col-form-label' style={{ marginBottom: '10px' }}>Payment Method:</legend>
         <FormGroup>
           <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
           <div style={{ textAlign: 'center' }}>
             <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 GRIN</strong> minimum balance in order to be triggered.</Alert>
           </div>
-          <Label for="loginEmail">HTTP Wallet Address:</Label>
-          <Input onChange={this.onChangeHTTPWalletAddress} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
+          </Label>
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='keybase' name='paymentMethod' />Keybase Username
+          </Label>
         </FormGroup>
       </div>
     )
@@ -150,11 +146,24 @@ export class MinerPaymentComponent extends Component {
             <div>
               <Label for="onlineWallet">Enter Wallet &amp; Port:</Label>
               <Input
-                onChange={this.onChangeHTTPWalletAddress}
+                onChange={this.onChangeTextInput}
                 type="text"
                 name="onlineWallet"
                 id="onlineWallet"
-                placeholder="ex 195.128.200.15:13415"
+                placeholder="195.128.200.15:13415"
+                className='form-control' />
+            </div>
+          )
+        case 'keybase':
+          return (
+            <div>
+              <Label for="onlineWallet">Enter Keybase Username:</Label>
+              <Input
+                onChange={this.onChangeTextInput}
+                type="text"
+                name="keybase"
+                id="keybase"
+                placeholder="myKeybaseUser"
                 className='form-control' />
             </div>
           )
@@ -192,7 +201,7 @@ export class MinerPaymentComponent extends Component {
     const { paymentType, paymentMethod } = this.state
     const { isPaymentSettingProcessing, paymentFormFeedback } = this.props
 
-    const isFormShown = paymentType !== 'manual' || (paymentType === 'manual' && paymentMethod === 'http')
+    const isFormShown = paymentType !== 'manual' || (paymentType === 'manual' && (paymentMethod === 'http' || paymentMethod === 'keybase'))
     return (
       <Container className='dashboard'>
         <Row>
@@ -217,7 +226,7 @@ export class MinerPaymentComponent extends Component {
                     </Input>
                   </FormGroup>
                   {this.renderOptions()}
-                  {paymentType === 'manual' && this.renderPayoutForm()}
+                  {this.renderPayoutForm()}
                   {isFormShown && (
                     <div style={{ marginTop: '30px' }}>
                       <div style={{ textAlign: 'center' }}>
