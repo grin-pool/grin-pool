@@ -155,10 +155,10 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
       const setPaymentMethodResponse = await fetch(methodUrl, authorizedPost)
       const setPaymentMethodData = await setPaymentMethodResponse.json()
       if (setPaymentMethodData.method !== formState.paymentMethod) throw new Error('Settings save failed!')
-      const addressUrl = `${API_URL}worker/utxo/${id}/address/${formState.walletUrl}`
+      const addressUrl = `${API_URL}worker/utxo/${id}/address/${formState.recipient}`
       const setPaymentSettingResponse = await fetch(addressUrl, authorizedPost)
       const setPaymentSettingData = await setPaymentSettingResponse.json()
-      if (setPaymentSettingData.address !== formState.walletUrl) throw new Error('Settings save failed')
+      if (setPaymentSettingData.address !== formState.recipient) throw new Error('Settings save failed')
       dispatch({
         type: 'UPDATE_PAYMENT_METHOD_SETTING'
       })

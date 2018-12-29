@@ -100,14 +100,23 @@ export class MinerPaymentComponent extends Component {
 
   renderAutomaticPayoutOptions = () => {
     return (
-      <div>
+      <div style={{ marginBottom: '20px' }}>
+        <legend className='col-form-label' style={{ marginBottom: '10px' }}>Payment Method:</legend>
         <FormGroup>
           <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
           <div style={{ textAlign: 'center' }}>
             <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 GRIN</strong> minimum balance in order to be triggered.</Alert>
           </div>
-          <Label for="loginEmail">HTTP Wallet Address:</Label>
-          <Input onChange={this.onChangeTextInput} type="text" name="HTTPWalletAddress" id="HTTPWalletAddress" placeholder="http://123.456.789.101:13415" />
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='http' name='paymentMethod' />Online Wallet / Port
+          </Label>
+        </FormGroup>
+        <FormGroup check>
+          <Label check>
+            <Input onChange={this.onPaymentMethodChange} type='radio' value='keybase' name='paymentMethod' />Keybase Username
+          </Label>
         </FormGroup>
       </div>
     )
@@ -141,7 +150,7 @@ export class MinerPaymentComponent extends Component {
                 type="text"
                 name="onlineWallet"
                 id="onlineWallet"
-                placeholder="ex 195.128.200.15:13415"
+                placeholder="195.128.200.15:13415"
                 className='form-control' />
             </div>
           )
@@ -217,7 +226,7 @@ export class MinerPaymentComponent extends Component {
                     </Input>
                   </FormGroup>
                   {this.renderOptions()}
-                  {paymentType === 'manual' && this.renderPayoutForm()}
+                  {this.renderPayoutForm()}
                   {isFormShown && (
                     <div style={{ marginTop: '30px' }}>
                       <div style={{ textAlign: 'center' }}>
