@@ -21,3 +21,6 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 ../template
+
+# theme customizations
+src/custom
