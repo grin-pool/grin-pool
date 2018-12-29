@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { C29_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR } from '../../custom/custom.js'
 
 export class GrinPoolSharesSubmittedComponent extends Component {
   UNSAFE_componentWillMount () {

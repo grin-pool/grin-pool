@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Col, Table } from 'reactstrap'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class NetworkDataComponent extends Component {
@@ -50,7 +50,7 @@ export class NetworkDataComponent extends Component {
           <Table size='sm'>
             <tbody>
               <tr>
-                <td id='box'><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'chart-line'} /> Graph Rate</td>
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>

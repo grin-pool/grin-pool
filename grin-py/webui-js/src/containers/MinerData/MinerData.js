@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Row, Col, Table, Alert } from 'reactstrap'
-import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class MinerDataComponent extends Component {
