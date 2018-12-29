@@ -141,7 +141,8 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
     }
     // need to discern between automated payments and manual
     if (formState.paymentType === 'manual') {
-      const url = `${API_URL}pool/payment/http/${id}/${formState.walletUrl}`
+      const method = formState.paymentMethod
+      const url = `${API_URL}pool/payment/${method}/${id}/${formState.recipient}`
       const requestPaymentResponse = await fetch(url, authorizedPost)
       const requestPaymentData = await requestPaymentResponse.json()
       const isSuccessful = requestPaymentData === 'ok'
@@ -154,10 +155,10 @@ export const setPaymentMethodSetting = (formState: any) => async (dispatch: Disp
       const setPaymentMethodResponse = await fetch(methodUrl, authorizedPost)
       const setPaymentMethodData = await setPaymentMethodResponse.json()
       if (setPaymentMethodData.method !== formState.paymentMethod) throw new Error('Settings save failed!')
-      const addressUrl = `${API_URL}worker/utxo/${id}/address/${formState.walletUrl}`
+      const addressUrl = `${API_URL}worker/utxo/${id}/address/${formState.recipient}`
       const setPaymentSettingResponse = await fetch(addressUrl, authorizedPost)
       const setPaymentSettingData = await setPaymentSettingResponse.json()
-      if (setPaymentSettingData.address !== formState.walletUrl) throw new Error('Settings save failed')
+      if (setPaymentSettingData.address !== formState.recipient) throw new Error('Settings save failed')
       dispatch({
         type: 'UPDATE_PAYMENT_METHOD_SETTING'
       })

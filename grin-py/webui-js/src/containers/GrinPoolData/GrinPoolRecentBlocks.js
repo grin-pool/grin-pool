@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Row, Table } from 'reactstrap'
 import { C29_COLOR } from '../../constants/styleConstants.js'
-
+import { secondsToHms } from '../../utils/utils.js'
 export class GrinPoolRecentBlocks extends Component {
   componentDidMount () {
     const { fetchGrinPoolRecentBlocks } = this.props
@@ -15,12 +15,15 @@ export class GrinPoolRecentBlocks extends Component {
     if (recentBlocks.length) {
       for (let i = 1; i <= 20 && i <= recentBlocks.length - 1; i++) {
         const block = recentBlocks[recentBlocks.length - i]
+        const currentTimestamp = new Date().getTime()
+        const paymentSecondsAgo = currentTimestamp / 1000 - block.timestamp
+        const readableTimeAgo = secondsToHms(paymentSecondsAgo)
         rows.push(
           <tr key={block.height}>
             <td><a style={{ color: C29_COLOR }} href={`https://grinscan.net/block/${block.height}`}>{block.height}</a></td>
             <td>{block.nonce}</td>
             <td>{block.hash}</td>
-            <td>{block.timestamp}</td>
+            <td>{readableTimeAgo} ago</td>
             <td>{block.state}</td>
             <td style={{ textAlign: 'right' }}>{block.actual_difficulty}</td>
           </tr>
@@ -37,7 +40,7 @@ export class GrinPoolRecentBlocks extends Component {
               <th>Height</th>
               <th>Nonce</th>
               <th>Hash</th>
-              <th>Timestamp</th>
+              <th>Time</th>
               <th>State</th>
               <th style={{ textAlign: 'right' }}>Difficulty</th>
             </tr>

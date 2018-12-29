@@ -35,10 +35,12 @@ export class GrinPoolDataComponent extends Component {
     let c31LatestGraphRate = 'C31 = 0 gps'
     if (grinPoolData.length > 0) {
       const lastBlock = grinPoolData[grinPoolData.length - 1]
-      if (lastBlock.gps[0]) {
+      const c29 = lastBlock.gps.find(gps => gps.edge_bits === 29)
+      if (c29) {
         c29LatestGraphRate = `C${lastBlock.gps[0].edge_bits} = ${lastBlock.gps[0].gps.toFixed(2)} gps`
       }
-      if (lastBlock.gps[1]) {
+      const c31 = lastBlock.gps.find(gps => gps.edge_bits === 31)
+      if (c31) {
         c31LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
     } else {
