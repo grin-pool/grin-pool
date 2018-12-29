@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Row, Table } from 'reactstrap'
-import { C29_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR } from '../../custom/custom.js'
 import { secondsToHms } from '../../utils/utils.js'
 export class GrinPoolRecentBlocks extends Component {
   componentDidMount () {

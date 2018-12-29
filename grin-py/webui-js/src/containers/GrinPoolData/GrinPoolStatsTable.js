@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import { Row, Table, Progress } from 'reactstrap'
 import _ from 'lodash'
-// import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
 
 export class GrinPoolStatsTableComponent extends Component {
   UNSAFE_componentWillMount () {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Col, Row, Table } from 'reactstrap'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { C29_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR } from '../../custom/custom.js'
 
 export class MinerSharesComponent extends Component {
   UNSAFE_componentWillMount () {
