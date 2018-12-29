@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Tooltip, ReferenceLine } from 'recharts'
 import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import classnames from 'classnames'
-import { C29_COLOR, C31_COLOR } from '../../constants/styleConstants.js'
+import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
 import _ from 'lodash'
 
 export class MiningGraphComponent extends Component {
@@ -118,7 +118,7 @@ export class MiningGraphComponent extends Component {
               <ScatterChart isAnimationActive={false}>
                 <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
                 <Legend verticalAlign='top' height={36}/>
-                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C31_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
                 <Scatter yAxisId="left" fill={C31_COLOR} name={`C31 Graph Rate`} line data={c31graphRateData} />
                 <Tooltip content={<NetworkDataCustomTooltip />} />
                 {miningData.map((block) => {
