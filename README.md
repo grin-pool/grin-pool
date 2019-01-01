@@ -1,7 +1,7 @@
 # grin-pool
 
 ## What it is:
-An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin), a MimbleWimble Cryptocurrency Implementation
+An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin) MimbleWimble Cryptocurrency Implementation
 * Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
 
 ## How to try it:
