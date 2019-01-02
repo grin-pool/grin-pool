@@ -61,16 +61,23 @@ export const fetchGrinPoolSharesSubmitted = (start: number = 0) => async (dispat
 export const fetchGrinPoolBlocksMined = () => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()
+    const minedBlockAlgos = state.networkData.minedBlockAlgos
     const latestBlockHeight = state.networkData.latestBlock.height || 0
     const url = `${API_URL}pool/blocks/${latestBlockHeight},${BLOCK_RANGE}`
     const grinPoolBlocksMinedResponse = await fetch(url)
     const grinPoolBlocksMinedData = await grinPoolBlocksMinedResponse.json()
     // turn them into a basic array
-    const blocksFound = []
+    const c29BlocksFound = []
+    const c31BlocksFound = []
     const blocksOrphaned = []
     grinPoolBlocksMinedData.forEach((block) => {
       if (block.state === 'new') {
-        blocksFound.push(block.height)
+        if (minedBlockAlgos.c29.includes(block.height)) {
+          c29BlocksFound.push(block.height)
+        }
+        if (minedBlockAlgos.c31.includes(block.height)) {
+          c31BlocksFound.push(block.height)
+        }
       } else if (block.state === 'orphan') {
         blocksOrphaned.push(block.height)
       }
@@ -79,11 +86,12 @@ export const fetchGrinPoolBlocksMined = () => async (dispatch: Dispatch, getStat
     dispatch({
       type: 'POOL_BLOCKS_MINED',
       data: {
-        blocksFound,
+        c29BlocksFound,
+        c31BlocksFound,
         blocksOrphaned
       }
     })
   } catch (e) {
-
+    console.log('getchGrinPoolBlocksMined error: ', e)
   }
 }
