@@ -3,7 +3,6 @@ import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, Legend, Toolt
 import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap'
 import classnames from 'classnames'
 import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
-import _ from 'lodash'
 
 export class MiningGraphComponent extends Component {
   constructor (props) {
@@ -36,21 +35,14 @@ export class MiningGraphComponent extends Component {
   }
 
   render () {
-    const { miningData, poolBlocksMined, minedBlockAlgos } = this.props
+    const { miningData, poolBlocksMined } = this.props
     // calculations for graphs
     const c29graphRateData = []
     const c31graphRateData = []
 
-    const c29PoolBlocksMined = []
-    const c31PoolBlocksMined = []
-    poolBlocksMined.forEach((height) => {
-      if (_.find(minedBlockAlgos.c29, (item) => item === height)) {
-        c29PoolBlocksMined.push(height)
-      }
-      if (_.find(minedBlockAlgos.c31, (item) => item === height)) {
-        c31PoolBlocksMined.push(height)
-      }
-    })
+    const c29PoolBlocksMined = poolBlocksMined.c29
+    const c31PoolBlocksMined = poolBlocksMined.c31
+
     let maxC29Gps = 0
     let minC29Gps = 0
     let maxC31Gps = 0
