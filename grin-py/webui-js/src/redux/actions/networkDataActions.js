@@ -2,6 +2,7 @@
 import { API_URL } from '../../config.js'
 import { BLOCK_RANGE } from '../../constants/dataConstants.js'
 import { type Dispatch, type GetState } from '../types.js'
+import { fetchGrinPoolBlocksMined } from './grinPoolDataActions.js'
 
 export const fetchNetworkData = (start: number = 0) => async (dispatch: Dispatch, getState: GetState) => {
   try {
@@ -52,6 +53,7 @@ export const getMinedBlocksAlgos = () => async (dispatch: Dispatch, getState: Ge
       }
     })
     dispatch({ type: 'MINED_BLOCKS_ALGOS', data: algos })
+    dispatch(fetchGrinPoolBlocksMined())
   } catch (e) {
     console.log('error: ', e)
   }

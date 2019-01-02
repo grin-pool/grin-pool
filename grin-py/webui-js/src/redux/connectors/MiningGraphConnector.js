@@ -4,7 +4,9 @@ import { MiningGraphComponent } from '../../containers/MiningGraph/MiningGraph.j
 import { getMinedBlocksAlgos } from '../actions/networkDataActions'
 
 const mapStateToProps = (state) => ({
-  minedBlockAlgos: state.networkData.minedBlockAlgos
+  minedBlockAlgos: state.networkData.minedBlockAlgos,
+  poolBlocksMined: state.grinPoolData.poolBlocksMined,
+  latestBlockHeight: state.networkData.latestBlock.height || 0
 })
 
 const mapDispatchToProps = (dispatch) => {

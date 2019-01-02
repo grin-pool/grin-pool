@@ -20,6 +20,7 @@ export const lastBlockMined = (state: number = 0, action) => {
   }
 }
 
+// recent blocks found by pool with info
 export const recentBlocks = (state: Array<Object> = [], action) => {
   switch (action.type) {
     case 'GRIN_POOL_RECENT_BLOCKS':
@@ -29,10 +30,15 @@ export const recentBlocks = (state: Array<Object> = [], action) => {
   }
 }
 
-export const poolBlocksMined = (state: Array<any> = [], action) => {
+// basic array of recent blocks found by pool
+export const poolBlocksMined = (state: {c29: Array<string>, c31: Array<string>} = { c29: [], c31: [] }, action) => {
   switch (action.type) {
     case 'POOL_BLOCKS_MINED':
-      return action.data.blocksFound
+      const blocksFound = {
+        c29: action.data.c29BlocksFound,
+        c31: action.data.c31BlocksFound
+      }
+      return blocksFound
     default:
       return state
   }

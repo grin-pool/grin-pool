@@ -11,8 +11,9 @@ export class NetworkDataComponent extends Component {
   }
 
   componentDidUpdate (prevProps) {
-    const { latestBlock, fetchNetworkData } = this.props
+    const { latestBlock, fetchNetworkData, fetchGrinPoolRecentBlocks } = this.props
     if (latestBlock.height !== prevProps.latestBlock.height) {
+      fetchGrinPoolRecentBlocks()
       fetchNetworkData()
     }
   }
