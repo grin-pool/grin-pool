@@ -64,10 +64,13 @@ export class MinerPaymentComponent extends Component {
     const element = document.createElement('a')
     const file = new Blob([payoutScript], { type: 'text/plain' })
     element.href = URL.createObjectURL(file)
-    const date = new Date()
-    const timestamp = Math.floor(date.getTime() / 1000)
-    element.download = `payoutScript-${timestamp}.txt`
+    element.download = `MWGP_payout.py`
+    document.body.appendChild(element)
     element.click()
+    setTimeout(() => {
+      document.body.removeChild(element)
+      window.URL.revokeObjectURL(element.href)
+    }, 100)
   }
 
   componentDidMount = () => {
@@ -171,7 +174,7 @@ export class MinerPaymentComponent extends Component {
           return (
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
               <Label for="payoutScript">Download the Payout Script:</Label><br />
-              <a href='' onClick={this._downloadPayoutScriptFile} style={{ fontWeight: 'bold' }}>Download</a>
+              <a href='#' onClick={this._downloadPayoutScriptFile} style={{ fontWeight: 'bold' }}>Download</a>
             </div>
           )
         case 'txSlate':
@@ -181,7 +184,7 @@ export class MinerPaymentComponent extends Component {
               {isTxSlateLoading ? (
                 this.renderSpinner('1.8em')
               ) : (
-                <a href='' onClick={this._downloadTxtFile} style={{ fontWeight: 'bold' }}>Download</a>
+                <a href='#' onClick={this._downloadTxtFile} style={{ fontWeight: 'bold' }}>Download</a>
               )}
             </div>
           )
