@@ -24,6 +24,7 @@ class SidebarContent extends PureComponent {
         <SidebarLink title='Pool' route='/pool' icon='chart-bars' />
         <SidebarLink title='Miner Stats' route='/miner' icon="screen" />
         <SidebarLink title='Payments' route='/miner/payment' icon="thumbs-up" />
+        <SidebarLink title='Instructions' route='/instructions' />
         <SidebarLink title='About' route='/about' icon='file-empty' />
         <li className='sidebar__link'>
           <span className={`sidebar__link-icon lnr lnr-code`}/>
