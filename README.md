@@ -17,14 +17,14 @@ An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin) Mimb
 ### The components:
 * Pool Stratum Proxy: Rust
 * Pool data processing jobs: Python3/SQLAlchemy
-* Pool API: Python3/Flask/gunicorn/NGINX/redis
+* Pool API: Python3/Flask/gunicorn/redis
 * Pool Web UI: NodeJS/Electron/Bootstrap/React
 * Database: MariaDB
-* Build CI/CD: Docker
-* Deploy: Ansible and gcloud CLI
+* Build/Packaging: Docker
+* Deploy: gcloud Kuberntests CLI
 * Orchestration: Kubernetes
 * Log collection: Splunk
-* Certificates: LetsEncrypt
+* Load Balancer/Certificates: NGINS/LetsEncrypt
 * Monitoring & Alerting: ?? NotYet (Icinga?)
 
 #### To run the pool yourself: [ansible/roles/pool/files/README.md](ansible/roles/pool/files/README.md)
