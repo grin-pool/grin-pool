@@ -32,7 +32,7 @@ An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin) Mimb
 #### To build use the Dockerfile in: [stratum](stratum/) and [grin-py](grin-py/)
 
 ### Current Status:
-* This project is under development, <B>~75%</B> complete, and will be ready by grin mainnet launch
+* This project is under development, <B>~75%</B> complete, and will be ready soon after grin mainnet launch
 * Please contribute!
 * Join the discussion on [Gitter](https://gitter.im/grin-pool/Lobby)
 
