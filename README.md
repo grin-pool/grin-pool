@@ -24,7 +24,7 @@ An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin) Mimb
 * Deploy: gcloud Kuberntests CLI
 * Orchestration: Kubernetes
 * Log collection: Splunk
-* Load Balancer/Certificates: NGINS/LetsEncrypt
+* Load Balancer/Certificates: NGINX/LetsEncrypt
 * Monitoring & Alerting: ?? NotYet (Icinga?)
 
 #### To run the pool yourself: [ansible/roles/pool/files/README.md](ansible/roles/pool/files/README.md)
