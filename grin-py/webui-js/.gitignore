@@ -24,3 +24,8 @@ package-lock.json
 
 # theme customizations
 /src/custom/*
+src/custom
+/src/custom
+/config/env.js
+/config/
+/config/*
