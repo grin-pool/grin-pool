@@ -28,12 +28,12 @@ class Router extends Component {
 
 class WrappedRoutes extends Component {
   render () {
-    const { account } = this.props
+    const { account, history } = this.props
     return (
       <div>
         <Layout/>
         <div className='container__wrap'>
-          {!account && <Alert color='success' style={{ textAlign: 'center', position: 'relative' }}>To start mining GRIN, please check out our <NavLink to='/instructions' style={{ fontWeight: 'bold', color: '#155724' }}>instructions</NavLink> page.</Alert>}
+          {(!account && (history.location.pathname !== '/instructions')) && <Alert color='success' style={{ textAlign: 'center', position: 'relative' }}>To start mining GRIN, please check out our <NavLink to='/instructions' style={{ fontWeight: 'bold', color: '#155724' }}>instructions</NavLink> page.</Alert>}
           <Route exact path='/' component={HomepageConnector}/>
           <Route path='/pages' component={Pages}/>
           <Route path='/about' component={AboutComponent}/>
