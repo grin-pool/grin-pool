@@ -1,7 +1,3 @@
-
-
-
-
 # Deploy Grin-Pool to Google Cloud via Kubernetes
 
 ## Log into gcloud 
@@ -12,7 +8,7 @@ gcloud config configurations activate default
 gcloud config set compute/zone us-west1-c
 ```
 
-## Create a k8s cluster
+## Create a K8S cluster
 ```
 gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c  
 ```
@@ -51,11 +47,6 @@ kubectl create -f grinwallet.yaml
 kubectl create -f poolAPI.yaml
 ```
 
-## Start grin stats
-```
-kubectl create -f grinStats.yaml
-```
-
 ## Start pool stats
 ```
 kubectl create -f poolStats.yaml
@@ -83,7 +74,7 @@ kubectl create -f webui.yaml
 
 
 ----------
+More info:
 https://kubernetes.io/docs/setup/turnkey/gce/
-
 https://cloud.google.com/kubernetes-engine/docs/quickstart
 https://kubernetes.io/docs/tasks/run-application/run-replicated-stateful-application/
