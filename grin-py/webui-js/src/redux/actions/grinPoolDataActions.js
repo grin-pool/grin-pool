@@ -31,7 +31,7 @@ export const fetchGrinPoolRecentBlocks = () => async (dispatch: Dispatch, getSta
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}pool/blocks/${latestBlockHeight},86400`
+    const url = `${API_URL}pool/blocks/${latestBlockHeight},960`
     const grinPoolRecentBlocksResponse = await fetch(url)
     const grinPoolRecentBlocksData = await grinPoolRecentBlocksResponse.json()
     // const blocksOrphaned = grinPoolRecentBlocksData.filter((block) => block.state === 'orphan')
