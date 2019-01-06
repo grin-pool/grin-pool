@@ -15,6 +15,7 @@ export class MiningGraphComponent extends Component {
   }
 
   toggle (tab) {
+    console.log('this.state.activeTab is: ', this.state.activeTab, ' and tab is: ', tab)
     if (this.state.activeTab !== tab) {
       this.setState({
         activeTab: tab
@@ -37,93 +38,79 @@ export class MiningGraphComponent extends Component {
   render () {
     const { miningData, poolBlocksMined } = this.props
     // calculations for graphs
-    const c29graphRateData = []
-    const c31graphRateData = []
+    const graphRateData = {}
 
-    const c29PoolBlocksMined = poolBlocksMined.c29
-    const c31PoolBlocksMined = poolBlocksMined.c31
-
-    let maxC29Gps = 0
-    let minC29Gps = 0
-    let maxC31Gps = 0
-    let minC31Gps = 0
     miningData.forEach((block) => {
-      if (block.gps[0]) {
-        if (block.gps[0].gps > maxC29Gps || !maxC29Gps) maxC29Gps = block.gps[0].gps
-        if (block.gps[0].gps < minC29Gps || !minC29Gps) minC29Gps = block.gps[0].gps
-        c29graphRateData.push({
-          height: block.height,
-          gps: block.gps[0].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
-        })
-      }
-      if (block.gps[1]) {
-        if (block.gps[1].gps > maxC31Gps || !maxC31Gps) maxC31Gps = block.gps[1].gps
-        if (block.gps[1].gps < minC31Gps || !minC31Gps) minC31Gps = block.gps[1].gps
-        c31graphRateData.push({
-          height: block.height,
-          gps: block.gps[1].gps,
-          difficulty: block.difficulty,
-          timestamp: block.timestamp
+      if (block.gps) {
+        block.gps.forEach((algo) => {
+          if (!graphRateData[`C${algo.edge_bits}`]) {
+            graphRateData[`C${algo.edge_bits}`] = []
+          }
+          graphRateData[`C${algo.edge_bits}`].push({
+            difficulty: block.difficulty,
+            gps: algo.gps,
+            height: block.height,
+            timestamp: block.timestamp
+          })
         })
       }
     })
-
+    const COLORS = {
+      C29: C29_COLOR,
+      C31: C31_COLOR
+    }
+    const algos = Object.keys(graphRateData)
+    let graphIterator = 0
+    let tabIterator = 0
     return (
       <div>
         <Nav tabs>
-          <NavItem>
-            <NavLink className={classnames({ active: this.state.activeTab === '1' })} onClick={() => { this.toggle('1') }}>
-              C29
-            </NavLink>
-          </NavItem>
-          <NavItem>
-            <NavLink className={classnames({ active: this.state.activeTab === '2' })} onClick={() => { this.toggle('2') }}>
-              C31
-            </NavLink>
-          </NavItem>
+          {algos.map((algo, iterator) => {
+            tabIterator++
+            console.log('algo is: ', algo, ' tabIterator is: ', iterator + 1)
+            if (tabIterator === 1) {
+              if (algo !== 'C29') console.log('p[roblem')
+            } else {
+              if (algo !== 'C31') console.log('problem')
+            }
+            return (
+              <NavItem key={algo}>
+                <NavLink
+                  className={classnames({ active: this.state.activeTab === `${iterator + 1}` })}
+                  onClick={() => { this.toggle(`${iterator + 1}`) }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {algo}
+                </NavLink>
+              </NavItem>
+            )
+          })}
         </Nav>
-        <TabContent activeTab={this.state.activeTab}>
-          <TabPane tabId='1'>
-            <ResponsiveContainer width='100%' height={270}>
-              <ScatterChart isAnimationActive={false}>
-                <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
-                <Legend verticalAlign='top' height={36}/>
-                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={C29_COLOR} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
-                <Scatter yAxisId="left" fill={C29_COLOR} name={`C29 Graph Rate`} line data={c29graphRateData} />
-                <Tooltip content={<NetworkDataCustomTooltip />} />
-                {miningData.map((block) => {
-                  if (c29PoolBlocksMined.indexOf(block.height) > -1) {
-                    return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
-                  } else {
-                    return null
-                  }
-                })}
-              </ScatterChart>
-            </ResponsiveContainer>
-          </TabPane>
-        </TabContent>
-        <TabContent activeTab={this.state.activeTab}>
-          <TabPane tabId='2'>
-            <ResponsiveContainer width='100%' height={270}>
-              <ScatterChart isAnimationActive={false}>
-                <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
-                <Legend verticalAlign='top' height={36}/>
-                <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
-                <Scatter yAxisId="left" fill={C31_COLOR} name={`C31 Graph Rate`} line data={c31graphRateData} />
-                <Tooltip content={<NetworkDataCustomTooltip />} />
-                {miningData.map((block) => {
-                  if (c31PoolBlocksMined.indexOf(block.height) > -1) {
-                    return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
-                  } else {
-                    return null
-                  }
-                })}
-              </ScatterChart>
-            </ResponsiveContainer>
-          </TabPane>
-        </TabContent>
+        {algos.map((algo, index) => {
+          graphIterator++
+          return (
+            <TabContent activeTab={this.state.activeTab} key={graphIterator}>
+              <TabPane tabId={`${graphIterator}`}>
+                <ResponsiveContainer width='100%' height={270}>
+                  <ScatterChart isAnimationActive={false}>
+                    <XAxis tickCount={7} tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()} dataKey='timestamp' type={'number'} domain={['dataMin', 'dataMax']} />
+                    <Legend verticalAlign='top' height={36}/>
+                    <YAxis tickFormatter={(value) => parseFloat(value).toFixed(2)} yAxisId="left" stroke={COLORS[algo]} orientation='left' dataKey={'gps'} type={'number'} domain={['dataMin', 'dataMax']} />
+                    <Scatter yAxisId="left" fill={COLORS[algo]} name={`${algo} Graph Rate`} line data={graphRateData[algo]} />
+                    <Tooltip content={<NetworkDataCustomTooltip />} />
+                    {miningData.map((block) => {
+                      if (poolBlocksMined[`${algo.toLowerCase()}`].indexOf(block.height) > -1) {
+                        return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
+                      } else {
+                        return null
+                      }
+                    })}
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </TabPane>
+            </TabContent>
+          )
+        })}
       </div>
     )
   }
