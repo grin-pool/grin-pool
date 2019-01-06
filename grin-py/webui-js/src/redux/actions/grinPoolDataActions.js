@@ -82,7 +82,6 @@ export const fetchGrinPoolBlocksMined = () => async (dispatch: Dispatch, getStat
         blocksOrphaned.push(block.height)
       }
     })
-    console.log('fetchGrinPoolBlocksMined blocksOrphaned: ', blocksOrphaned)
     dispatch({
       type: 'POOL_BLOCKS_MINED',
       data: {

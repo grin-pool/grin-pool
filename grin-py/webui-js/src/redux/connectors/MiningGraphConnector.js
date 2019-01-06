@@ -6,6 +6,7 @@ import { getMinedBlocksAlgos } from '../actions/networkDataActions'
 const mapStateToProps = (state) => ({
   minedBlockAlgos: state.networkData.minedBlockAlgos,
   poolBlocksMined: state.grinPoolData.poolBlocksMined,
+  poolBlocksOrphaned: state.grinPoolData.poolBlocksOrphaned,
   latestBlockHeight: state.networkData.latestBlock.height || 0
 })
 

@@ -15,7 +15,6 @@ export class MiningGraphComponent extends Component {
   }
 
   toggle (tab) {
-    console.log('this.state.activeTab is: ', this.state.activeTab, ' and tab is: ', tab)
     if (this.state.activeTab !== tab) {
       this.setState({
         activeTab: tab
@@ -36,7 +35,7 @@ export class MiningGraphComponent extends Component {
   }
 
   render () {
-    const { miningData, poolBlocksMined } = this.props
+    const { miningData, poolBlocksMined, poolBlocksOrphaned } = this.props
     // calculations for graphs
     const graphRateData = {}
 
@@ -61,18 +60,10 @@ export class MiningGraphComponent extends Component {
     }
     const algos = Object.keys(graphRateData)
     let graphIterator = 0
-    let tabIterator = 0
     return (
       <div>
         <Nav tabs>
           {algos.map((algo, iterator) => {
-            tabIterator++
-            console.log('algo is: ', algo, ' tabIterator is: ', iterator + 1)
-            if (tabIterator === 1) {
-              if (algo !== 'C29') console.log('p[roblem')
-            } else {
-              if (algo !== 'C31') console.log('problem')
-            }
             return (
               <NavItem key={algo}>
                 <NavLink
@@ -101,6 +92,8 @@ export class MiningGraphComponent extends Component {
                     {miningData.map((block) => {
                       if (poolBlocksMined[`${algo.toLowerCase()}`].indexOf(block.height) > -1) {
                         return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} />
+                      } else if (poolBlocksOrphaned.indexOf(block.height) > -1) {
+                        return <ReferenceLine key={block.height} yAxisId={'left'} isFront x={block.timestamp} stroke={'#777'} strokeDasharray="7 7" />
                       } else {
                         return null
                       }
