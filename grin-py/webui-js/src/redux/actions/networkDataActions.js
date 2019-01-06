@@ -36,7 +36,7 @@ export const getMinedBlocksAlgos = () => async (dispatch: Dispatch, getState: Ge
   try {
     const state = getState()
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const increasedBlockRange = 12 * BLOCK_RANGE
+    const increasedBlockRange = 4 * BLOCK_RANGE
     const minedBlockAlgosUrl = `${API_URL}grin/blocks/${latestBlockHeight},${increasedBlockRange}/height,edge_bits`
     const minedBlockAlgosResponse = await fetch(minedBlockAlgosUrl)
     const minedBlockAlgosData = await minedBlockAlgosResponse.json()
