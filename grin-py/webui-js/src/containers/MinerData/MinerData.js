@@ -62,6 +62,7 @@ export class MinerDataComponent extends Component {
         </Col>
         <Col xs={12} md={12} lg={7} xl={9}>
           <h4 className='page-title'>Graph Rate</h4>
+          <div style={{ textAlign: 'center', marginBottom: '12px' }}><Alert color='danger' style={{ display: 'inline' }}>Recent changes to share calculations may have caused your mining data to drop. If so, please restart your grin-miner.</Alert></div>
           <div style={{ textAlign: 'center', marginBottom: 12 }}>{(numberOfRecordedBlocks === 0) && <Alert color='warning' style={{ textAlign: 'center', display: 'inline' }}>{noBlocksAlertSyntax}</Alert>}</div>
           <MiningGraphConnector
             miningData={minerData}
