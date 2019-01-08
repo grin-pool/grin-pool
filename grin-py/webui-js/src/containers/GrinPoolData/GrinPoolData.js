@@ -29,7 +29,7 @@ export class GrinPoolDataComponent extends Component {
   }
 
   render () {
-    const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
+    const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined, latestBlockHeight } = this.props
 
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c31LatestGraphRate = 'C31 = 0 gps'
@@ -63,7 +63,11 @@ export class GrinPoolDataComponent extends Component {
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
+                <td>Latest Block Height</td>
+                <td>{latestBlockHeight}</td>
+              </tr>
+              <tr>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Latest Pool Block</td>
                 <td>{lastBlockTimeAgo} sec ago</td>
               </tr>
               <tr>
