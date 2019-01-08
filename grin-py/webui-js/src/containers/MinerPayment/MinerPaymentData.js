@@ -32,7 +32,7 @@ export class MinerPaymentDataComponent extends Component {
       estimatedHourlyReturn
     } = this.props
     const readableAmount = amount > 0 ? amount : 0
-    const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
+    const lastTryTimeAgo = lastTry ? secondsToHms(currentTimestamp - lastTry) : 'n/a'
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
     return (
       <div>
