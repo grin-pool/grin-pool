@@ -22,7 +22,7 @@ export class MinerDataComponent extends Component {
   }
 
   render () {
-    const { minerData, poolBlocksMined, estimatedHourlyReturn } = this.props
+    const { minerData, poolBlocksMined, estimatedHourlyReturn, latestBlock } = this.props
     const numberOfRecordedBlocks = minerData.length
     const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
 
@@ -40,6 +40,9 @@ export class MinerDataComponent extends Component {
       c29LatestGraphRate = '0 gps'
       c31LatestGraphRate = '0 gps'
     }
+    const nowTimestamp = Date.now()
+    const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
+
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -52,11 +55,15 @@ export class MinerDataComponent extends Component {
               </tr>
               <tr>
                 <td>Hourly Return</td>
-                <td>~{nanoGrinToGrin(estimatedHourlyReturn)} GRIN</td>
+                <td>~ {nanoGrinToGrin(estimatedHourlyReturn)} GRIN</td>
               </tr>
               <tr>
-                <td>Blocks Found</td>
-                <td>Test</td>
+                <td>Last Block Height</td>
+                <td>{latestBlock.height}</td>
+              </tr>
+              <tr>
+                <td>Last Block Found</td>
+                <td>{latestBlockTimeAgo} sec ago</td>
               </tr>
             </tbody>
           </Table>
