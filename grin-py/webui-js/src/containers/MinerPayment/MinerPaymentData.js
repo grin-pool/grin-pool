@@ -15,12 +15,22 @@ export class MinerPaymentDataComponent extends Component {
   }
 
   fetchMinerPaymentData = () => {
-    const { fetchMinerPaymentData } = this.props
+    const { fetchMinerPaymentData, fetchMinerImmatureBalance } = this.props
     fetchMinerPaymentData()
+    fetchMinerImmatureBalance()
   }
 
   render () {
-    const { amount, address, lastSuccess, failureCount, lastTry, currentTimestamp } = this.props
+    const {
+      amount,
+      address,
+      lastSuccess,
+      failureCount,
+      lastTry,
+      currentTimestamp,
+      minerImmatureBalance,
+      estimatedHourlyReturn
+    } = this.props
     const readableAmount = amount > 0 ? amount : 0
     const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
@@ -35,6 +45,14 @@ export class MinerPaymentDataComponent extends Component {
             <tr>
               <td>Amount Due</td>
               <td>{nanoGrinToGrin(readableAmount)} GRIN</td>
+            </tr>
+            <tr>
+              <td>Immature Balance</td>
+              <td>{nanoGrinToGrin(minerImmatureBalance)} GRIN</td>
+            </tr>
+            <tr>
+              <td>Current Estimated Hourly Return</td>
+              <td>{nanoGrinToGrin(estimatedHourlyReturn)} GRIN</td>
             </tr>
             <tr>
               <td>Payout Address</td>

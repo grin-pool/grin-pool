@@ -192,3 +192,24 @@ export const fetchMinerPaymentScript = () => async (dispatch: Dispatch, getState
     console.log('fetchMinerPaymentScript error: ', e)
   }
 }
+
+export const fetchMinerImmatureBalance = (range?: number = 60) => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const id = state.auth.account.id
+    const url = `${API_URL}worker/estimate/payment/${id}/${range}`
+    const fetchMinerImmatureBalanceResponse = await fetch(url, {
+      headers: {
+        authorization: basicAuth(state.auth.account.token)
+      }
+    })
+    const fetchMinerImmatureBalanceData = await fetchMinerImmatureBalanceResponse.json()
+    console.log('latestMinerPaymentData: ', fetchMinerImmatureBalanceData)
+    dispatch({
+      type: 'MINER_IMMATURE_BALANCE',
+      data: fetchMinerImmatureBalanceData
+    })
+  } catch (e) {
+    console.log('Error: ', e)
+  }
+}

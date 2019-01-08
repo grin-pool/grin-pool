@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Row, Col, Table, Alert } from 'reactstrap'
 import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
+import { nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerDataComponent extends Component {
   UNSAFE_componentWillMount () {
@@ -21,7 +22,7 @@ export class MinerDataComponent extends Component {
   }
 
   render () {
-    const { minerData, poolBlocksMined } = this.props
+    const { minerData, poolBlocksMined, estimatedHourlyReturn } = this.props
     const numberOfRecordedBlocks = minerData.length
     const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
 
@@ -50,8 +51,8 @@ export class MinerDataComponent extends Component {
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
-                <td>Block Found</td>
-                <td>Test</td>
+                <td>Hourly Return</td>
+                <td>~{nanoGrinToGrin(estimatedHourlyReturn)} GRIN</td>
               </tr>
               <tr>
                 <td>Blocks Found</td>
