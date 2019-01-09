@@ -5,22 +5,32 @@ import { C29_COLOR, C31_COLOR } from '../../custom/custom.js'
 import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnector.js'
 
 export class NetworkDataComponent extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'blockHeight1'
+    }
+  }
   UNSAFE_componentWillMount () {
     const { fetchNetworkData } = this.props
     fetchNetworkData()
   }
 
   componentDidUpdate (prevProps) {
+    const { faderStyleId } = this.state
     const { latestBlock, fetchNetworkData, fetchGrinPoolRecentBlocks } = this.props
     if (latestBlock.height !== prevProps.latestBlock.height) {
       fetchGrinPoolRecentBlocks()
       fetchNetworkData()
+      this.setState({
+        faderStyleId: faderStyleId === 'blockHeight1' ? 'blockHeight2' : 'blockHeight1'
+      })
     }
   }
 
   render () {
     const { networkData, latestBlock, poolBlocksMined } = this.props
-
+    const { faderStyleId } = this.state
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c31LatestGraphRate = 'C31 = 0 gps'
     let latestDifficulty = 'n/a'
@@ -64,7 +74,7 @@ export class NetworkDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Chain Height</td>
-                <td>{latestBlockHeight}</td>
+                <td id={faderStyleId}>{latestBlockHeight}</td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>

@@ -24,24 +24,36 @@
   width: 160px;
 }
 
-@keyframes fader {
+@keyframes fader1 {
   0% {
-    color: white;
+    color: #fbf730;
   }
   100% {
-    color: red;
+    color: C29_COLOR;
   }
 }
 
-#box {
-   animation: fader 2s 1;
+@keyframes fader2 {
+  0% {
+    color: #fbf730;
+  }
+  100% {
+    color: C29_COLOR;
+  }
+}
+
+#blockHeight1 {
+   animation: fader1 10s 1;
+}
+
+#blockHeight2 {
+  animation: fader2 9s 1
 }
 
 .custom-network-data-tooltip {
   padding: 10px;
   background-color: #cccccc;
 }
-
 
 .instructions {
   p {
