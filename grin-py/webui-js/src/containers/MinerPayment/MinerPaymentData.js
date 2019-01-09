@@ -1,16 +1,27 @@
 import React, { Component } from 'react'
-import { Table, Alert } from 'reactstrap'
+import { Table } from 'reactstrap'
 import { secondsToHms, nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerPaymentDataComponent extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'balanceChange1'
+    }
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchMinerPaymentData()
   }
 
   componentDidUpdate (prevProps) {
     const { lastestBlockHeight } = this.props
+    const { faderStyleId } = this.state
     if (prevProps.lastestBlockHeight !== lastestBlockHeight) {
       this.fetchMinerPaymentData()
+      this.setState({
+        faderStyleId: faderStyleId === 'balanceChange1' ? 'balanceChange2' : 'balanceChange1'
+      })
     }
   }
 
@@ -31,15 +42,13 @@ export class MinerPaymentDataComponent extends Component {
       minerImmatureBalance,
       estimatedHourlyReturn
     } = this.props
+    const { faderStyleId } = this.state
     const readableAmount = amount > 0 ? amount : 0
     const lastTryTimeAgo = lastTry ? secondsToHms(currentTimestamp - lastTry) : 'n/a'
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
     return (
       <div>
         <h4>Payment Info</h4>
-        <div style={{ marginTop: '18px', marginBottom: '18px', textAlign: 'center' }}>
-          <Alert color='light' style={{ textAlign: 'center', width: '80%', display: 'inline-block' }}>Please be aware that work takes ~24 hours to be credited, as the blocks acquire sufficient confirmations.</Alert>
-        </div>
         <Table size='sm'>
           <tbody>
             <tr>
@@ -48,7 +57,7 @@ export class MinerPaymentDataComponent extends Component {
             </tr>
             <tr>
               <td>Immature Balance</td>
-              <td>{nanoGrinToGrin(minerImmatureBalance)} GRIN</td>
+              <td id={faderStyleId}>{nanoGrinToGrin(minerImmatureBalance)} GRIN</td>
             </tr>
             <tr>
               <td>Current Estimated Hourly Return</td>
