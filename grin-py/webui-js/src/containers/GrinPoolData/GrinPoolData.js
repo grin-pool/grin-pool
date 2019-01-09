@@ -62,7 +62,7 @@ export class GrinPoolDataComponent extends Component {
     const nowTimestamp = Date.now()
     const lastBlockTimeAgo = Math.floor(nowTimestamp / 1000 - lastBlockMined)
     const totalPoolBlocksMined = grinPoolData[grinPoolData.length - 1] ? grinPoolData[grinPoolData.length - 1].total_blocks_found : 0
-
+    const cumulativeBlockShare = latestBlockHeight ? (100 * totalPoolBlocksMined / latestBlockHeight).toFixed(2) : 'n/a'
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -87,7 +87,7 @@ export class GrinPoolDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Blocks Found</td>
-                <td>{totalPoolBlocksMined}</td>
+                <td>{totalPoolBlocksMined} ({`${cumulativeBlockShare} %`})</td>
               </tr>
             </tbody>
           </Table>
