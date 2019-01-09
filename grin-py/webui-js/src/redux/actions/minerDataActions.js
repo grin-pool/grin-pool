@@ -9,7 +9,7 @@ export const fetchMinerData = () => async (dispatch: Dispatch, getState: GetStat
     const state = getState()
     const id = state.auth.account.id
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,valid_shares,timestamp`
+    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,valid_shares,timestamp,invalid_shares,stale_shares,`
     const minerDataResponse = await fetch(url, {
       headers: {
         'Authorization': basicAuth(state.auth.account.token)
