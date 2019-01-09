@@ -77,7 +77,6 @@ export class LoginComponent extends React.Component {
                   <h4 className="account__subhead subhead">Start mining GRIN today</h4>
                 </div>
                 <Form className='login-form'>
-                  <Alert color='danger' style={{ textAlign: 'center' }}>Please be aware that some testnet accounts have been deleted as we upgrade our account system <strong>before</strong> mainnet launch. No changes are expected after mainnet launch.</Alert>
                   <FormGroup>
                     <Label for="loginEmail">Username:</Label>
                     <Input onChange={this.onChangeUsername} type="email" name="email" id="loginEmail" placeholder="" />
