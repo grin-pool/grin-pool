@@ -5,14 +5,25 @@ import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnecto
 import { nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerDataComponent extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'blockHeight1'
+    }
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchMinerData()
   }
 
   componentDidUpdate (prevProps) {
+    const { faderStyleId } = this.state
     const { latestBlockHeight } = this.props
     if (prevProps.latestBlockHeight !== latestBlockHeight) {
       this.fetchMinerData()
+      this.setState({
+        faderStyleId: faderStyleId === 'blockHeight1' ? 'blockHeight2' : 'blockHeight1'
+      })
     }
   }
 
@@ -23,6 +34,7 @@ export class MinerDataComponent extends Component {
 
   render () {
     const { minerData, poolBlocksMined, estimatedHourlyReturn, latestBlock } = this.props
+    const { faderStyleId } = this.state
     const numberOfRecordedBlocks = minerData.length
     const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
 
@@ -59,7 +71,7 @@ export class MinerDataComponent extends Component {
               </tr>
               <tr>
                 <td>Last Block Height</td>
-                <td>{latestBlock.height}</td>
+                <td id={faderStyleId}>{latestBlock.height}</td>
               </tr>
               <tr>
                 <td>Last Block Found</td>

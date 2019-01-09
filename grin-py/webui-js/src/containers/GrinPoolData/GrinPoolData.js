@@ -6,6 +6,12 @@ import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnecto
 
 export class GrinPoolDataComponent extends Component {
   interval = null
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'blockHeight1'
+    }
+  }
 
   componentWillUnmount = () => {
     clearInterval(this.interval)
@@ -17,8 +23,12 @@ export class GrinPoolDataComponent extends Component {
 
   componentDidUpdate (prevProps) {
     const { latestBlockHeight } = this.props
+    const { faderStyleId } = this.state
     if (prevProps.latestBlockHeight !== latestBlockHeight) {
       this.fetchGrinPoolData()
+      this.setState({
+        faderStyleId: faderStyleId === 'blockHeight1' ? 'blockHeight2' : 'blockHeight1'
+      })
     }
   }
 
@@ -29,6 +39,7 @@ export class GrinPoolDataComponent extends Component {
   }
 
   render () {
+    const { faderStyleId } = this.state
     const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined, latestBlockHeight } = this.props
 
     let c29LatestGraphRate = 'C29 = 0 gps'
@@ -64,7 +75,7 @@ export class GrinPoolDataComponent extends Component {
               </tr>
               <tr>
                 <td>Latest Block Height</td>
-                <td>{latestBlockHeight}</td>
+                <td id={faderStyleId}>{latestBlockHeight}</td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Latest Pool Block</td>
