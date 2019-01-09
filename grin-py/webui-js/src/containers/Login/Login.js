@@ -95,7 +95,7 @@ export class LoginComponent extends React.Component {
                       </Alert>
                     )}
                   </div>
-                  <div style={{ textAlign: 'center' }}>
+                  <div style={{ textAlign: 'center' }} className={'login-form'}>
                     <button onClick={this.login} className="btn btn-primary account__btn account__btn--small">{(isLoggingIn && !isCreatingAccount) ? this.renderSpinner() : 'Sign In'}</button>
                     <button onClick={this.register} className="btn btn-outline-primary account__btn account__btn--small">{isCreatingAccount ? this.renderSpinner() : 'Create Account'}</button>
                   </div>
