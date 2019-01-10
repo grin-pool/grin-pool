@@ -44,7 +44,9 @@ export class MinerSharesComponent extends Component {
               <Tooltip />
               <Legend verticalAlign='top' height={36}/>
               <YAxis connectNulls={false} yAxisId='left' orientation='left' stroke={C29_COLOR} allowDecimals={false} />
-              <Line dot={false} yAxisId='left' name='Miner Valid Shares Submitted' dataKey='valid_shares' stroke={C29_COLOR} />
+              <Line dot={false} yAxisId='left' name='Valid' dataKey='valid_shares' stroke={C29_COLOR} />
+              <Line dot={false} yAxisId='left' name='Invalid' dataKey='invalid_shares' stroke={'red'} />
+              <Line dot={false} yAxisId='left' name='Stale' dataKey='stale_shares' stroke={'orange'} />
             </LineChart>
           </ResponsiveContainer>
         </Col>

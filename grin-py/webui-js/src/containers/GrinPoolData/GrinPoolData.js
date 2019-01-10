@@ -6,6 +6,12 @@ import { MiningGraphConnector } from '../../redux/connectors/MiningGraphConnecto
 
 export class GrinPoolDataComponent extends Component {
   interval = null
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'blockHeight1'
+    }
+  }
 
   componentWillUnmount = () => {
     clearInterval(this.interval)
@@ -17,8 +23,12 @@ export class GrinPoolDataComponent extends Component {
 
   componentDidUpdate (prevProps) {
     const { latestBlockHeight } = this.props
+    const { faderStyleId } = this.state
     if (prevProps.latestBlockHeight !== latestBlockHeight) {
       this.fetchGrinPoolData()
+      this.setState({
+        faderStyleId: faderStyleId === 'blockHeight1' ? 'blockHeight2' : 'blockHeight1'
+      })
     }
   }
 
@@ -29,7 +39,8 @@ export class GrinPoolDataComponent extends Component {
   }
 
   render () {
-    const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined } = this.props
+    const { faderStyleId } = this.state
+    const { grinPoolData, activeWorkers, lastBlockMined, poolBlocksMined, latestBlockHeight } = this.props
 
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c31LatestGraphRate = 'C31 = 0 gps'
@@ -51,7 +62,7 @@ export class GrinPoolDataComponent extends Component {
     const nowTimestamp = Date.now()
     const lastBlockTimeAgo = Math.floor(nowTimestamp / 1000 - lastBlockMined)
     const totalPoolBlocksMined = grinPoolData[grinPoolData.length - 1] ? grinPoolData[grinPoolData.length - 1].total_blocks_found : 0
-
+    const cumulativeBlockShare = latestBlockHeight ? (100 * totalPoolBlocksMined / latestBlockHeight).toFixed(2) : 'n/a'
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -63,7 +74,11 @@ export class GrinPoolDataComponent extends Component {
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
+                <td>Chain Height</td>
+                <td id={faderStyleId}>{latestBlockHeight}</td>
+              </tr>
+              <tr>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Latest Pool Block</td>
                 <td>{lastBlockTimeAgo} sec ago</td>
               </tr>
               <tr>
@@ -72,7 +87,7 @@ export class GrinPoolDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Blocks Found</td>
-                <td>{totalPoolBlocksMined}</td>
+                <td>{totalPoolBlocksMined} ({`${cumulativeBlockShare} %`})</td>
               </tr>
             </tbody>
           </Table>

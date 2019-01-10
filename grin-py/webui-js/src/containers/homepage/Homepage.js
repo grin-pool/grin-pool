@@ -2,8 +2,15 @@ import React, { Component } from 'react'
 import { Col, Container, Row, Card, CardBody } from 'reactstrap'
 import { NetworkDataConnector } from '../../redux/connectors/NetworkDataConnector.js'
 import { GrinPoolDataConnector } from '../../redux/connectors/GrinPoolDataConnector.js'
+import ReactGA from 'react-ga'
 
 export class HomepageComponent extends Component {
+  constructor (props) {
+    super(props)
+    ReactGA.initialize('UA-132063819-1')
+    ReactGA.pageview(window.location.pathname + window.location.search)
+  }
+
   render () {
     return (
       <Container className='dashboard'>

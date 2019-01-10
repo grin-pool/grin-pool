@@ -4,8 +4,15 @@ import { GrinPoolDataConnector } from '../../redux/connectors/GrinPoolDataConnec
 import { GrinPoolSharesSubmittedConnector } from '../../redux/connectors/GrinPoolSharesSubmittedConnector.js'
 import { GrinPoolStatsTableConnector } from '../../redux/connectors/GrinPoolStatsTableConnector.js'
 import { GrinPoolRecentBlocksConnector } from '../../redux/connectors/GrinPoolRecentBlocksConnector.js'
+import ReactGA from 'react-ga'
 
 export class GrinPoolDetailsComponent extends Component {
+  constructor (props) {
+    super(props)
+    ReactGA.initialize('UA-132063819-1')
+    ReactGA.pageview(window.location.pathname + window.location.search)
+  }
+
   UNSAFE_componentWillMount () {
 
   }
