@@ -197,14 +197,14 @@ export const fetchMinerImmatureBalance = (range?: number = 60) => async (dispatc
   try {
     const state = getState()
     const id = state.auth.account.id
-    const url = `${API_URL}worker/estimate/payment/${id}/${range}`
+    const url = `${API_URL}worker/estimate/payment/${id}`
     const fetchMinerImmatureBalanceResponse = await fetch(url, {
       headers: {
         authorization: basicAuth(state.auth.account.token)
       }
     })
     const fetchMinerImmatureBalanceData = await fetchMinerImmatureBalanceResponse.json()
-    console.log('latestMinerPaymentData: ', fetchMinerImmatureBalanceData)
+    console.log('fetchMinerImmatureBalance: ', fetchMinerImmatureBalanceData)
     dispatch({
       type: 'MINER_IMMATURE_BALANCE',
       data: fetchMinerImmatureBalanceData
