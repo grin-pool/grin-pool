@@ -2,6 +2,7 @@ import React from 'react'
 import { Redirect } from 'react-router-dom'
 import { Alert, Form, FormGroup, Label, Input, Row, Col, Container, Card, CardBody } from 'reactstrap'
 import Spinner from 'react-spinkit'
+import ReactGA from 'react-ga'
 
 export class LoginComponent extends React.Component {
   state = { redirectToReferrer: false }
@@ -12,6 +13,8 @@ export class LoginComponent extends React.Component {
       username: '',
       password: ''
     }
+    ReactGA.initialize('UA-132063819-1')
+    ReactGA.pageview(window.location.pathname + window.location.search)
   }
 
   showPassword = (e) => {
@@ -92,7 +95,7 @@ export class LoginComponent extends React.Component {
                       </Alert>
                     )}
                   </div>
-                  <div style={{ textAlign: 'center' }}>
+                  <div style={{ textAlign: 'center' }} className={'login-form'}>
                     <button onClick={this.login} className="btn btn-primary account__btn account__btn--small">{(isLoggingIn && !isCreatingAccount) ? this.renderSpinner() : 'Sign In'}</button>
                     <button onClick={this.register} className="btn btn-outline-primary account__btn account__btn--small">{isCreatingAccount ? this.renderSpinner() : 'Create Account'}</button>
                   </div>

@@ -4,6 +4,7 @@ import { MinerPaymentDataConnector } from '../../redux/connectors/MinerPaymentDa
 import { LatestMinerPaymentsConnector } from '../../redux/connectors/LatestMinerPaymentsConnector.js'
 import Blob from 'blob'
 import Spinner from 'react-spinkit'
+import ReactGA from 'react-ga'
 
 export class MinerPaymentComponent extends Component {
   constructor (props) {
@@ -14,6 +15,8 @@ export class MinerPaymentComponent extends Component {
       paymentType: paymentType || 'null',
       recipient: ''
     }
+    ReactGA.initialize('UA-132063819-1')
+    ReactGA.pageview(window.location.pathname + window.location.search)
   }
 
   renderSpinner = (height) => {

@@ -1,39 +1,55 @@
 import React, { Component } from 'react'
-import { Table, Alert } from 'reactstrap'
+import { Table } from 'reactstrap'
 import { secondsToHms, nanoGrinToGrin } from '../../utils/utils.js'
 
 export class MinerPaymentDataComponent extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      faderStyleId: 'balanceChange1'
+    }
+  }
+
   UNSAFE_componentWillMount () {
     this.fetchMinerPaymentData()
   }
 
   componentDidUpdate (prevProps) {
     const { lastestBlockHeight } = this.props
+    const { faderStyleId } = this.state
     if (prevProps.lastestBlockHeight !== lastestBlockHeight) {
       this.fetchMinerPaymentData()
+      this.setState({
+        faderStyleId: faderStyleId === 'balanceChange1' ? 'balanceChange2' : 'balanceChange1'
+      })
     }
   }
 
   fetchMinerPaymentData = () => {
-    const { fetchMinerPaymentData } = this.props
+    const { fetchMinerPaymentData, fetchMinerImmatureBalance } = this.props
     fetchMinerPaymentData()
+    fetchMinerImmatureBalance()
   }
 
   render () {
-    const { amount, address, lastSuccess, failureCount, lastTry, currentTimestamp } = this.props
+    const {
+      amount,
+      address,
+      lastSuccess,
+      failureCount,
+      lastTry,
+      currentTimestamp
+    } = this.props
     const readableAmount = amount > 0 ? amount : 0
-    const lastTryTimeAgo = secondsToHms(currentTimestamp - lastTry)
+    const lastTryTimeAgo = lastTry ? secondsToHms(currentTimestamp - lastTry) : 'n/a'
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
     return (
       <div>
         <h4>Payment Info</h4>
-        <div style={{ marginTop: '18px', marginBottom: '18px', textAlign: 'center' }}>
-          <Alert color='light' style={{ textAlign: 'center', width: '80%', display: 'inline-block' }}>Please be aware that work takes ~24 hours to be credited, as the blocks acquire sufficient confirmations.</Alert>
-        </div>
         <Table size='sm'>
           <tbody>
             <tr>
-              <td>Amount Due</td>
+              <td>Available Balance</td>
               <td>{nanoGrinToGrin(readableAmount)} GRIN</td>
             </tr>
             <tr>

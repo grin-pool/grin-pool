@@ -29,6 +29,15 @@ const paymentData = (state: Object = {}, action) => {
   }
 }
 
+const minerImmatureBalance = (state: Object = {}, action) => {
+  switch (action.type) {
+    case 'MINER_IMMATURE_BALANCE':
+      return action.data
+    default:
+      return state
+  }
+}
+
 const isPaymentSettingProcessing = (state: boolean = false, action) => {
   switch (action.type) {
     case 'IS_PAYMENT_SETTING_PROCESSING':
@@ -115,6 +124,7 @@ export const minerData = combineReducers({
   historical,
   totalSharesSubmitted,
   paymentData,
+  minerImmatureBalance,
   latestMinerPayments,
   minerPaymentTxSlate,
   isPaymentSettingProcessing,
