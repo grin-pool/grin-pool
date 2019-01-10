@@ -29,7 +29,7 @@ export class InstructionsComponent extends Component {
           <Card>
             <CardBody>
               <h2>How to Configure Pool Payouts</h2>
-              <p>To learn how to properly inititate pool payments, please read our tutorial <a href='https://medium.com/@blade.doyle/gpu-mining-on-mwgrinpool-com-how-to-72970e550a27' rel='noopener noreferrer' target='_blank'>here</a></p>
+              <p>To learn how to properly inititate pool payments, please read our tutorial <a href='https://medium.com/@blade.doyle/configure-payments-on-mwgrinpool-com-how-to-7b84163ec467' rel='noopener noreferrer' target='_blank'>here</a></p>
             </CardBody>
           </Card>
         </Row>
