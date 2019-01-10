@@ -52,7 +52,7 @@ export class MinerPaymentDataComponent extends Component {
         <Table size='sm'>
           <tbody>
             <tr>
-              <td>Amount Due</td>
+              <td>Available Balance</td>
               <td>{nanoGrinToGrin(readableAmount)} GRIN</td>
             </tr>
             <tr>

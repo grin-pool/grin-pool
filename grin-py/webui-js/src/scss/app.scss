@@ -34,4 +34,12 @@
   margin-right: 8px;
 }
 
+.article-tutorial-thumbnail, .video-tutorial-thumbnail {
+  border: 2px white solid;
+
+  &:hover {
+    opacity: 0.8
+  }
+}
+
 @import '../custom/custom.scss';
