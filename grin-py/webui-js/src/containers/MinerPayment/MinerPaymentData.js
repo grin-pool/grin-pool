@@ -38,8 +38,10 @@ export class MinerPaymentDataComponent extends Component {
       lastSuccess,
       failureCount,
       lastTry,
+      minerImmatureBalance,
       currentTimestamp
     } = this.props
+    const { faderStyleId } = this.state
     const readableAmount = amount > 0 ? amount : 0
     const lastTryTimeAgo = lastTry ? secondsToHms(currentTimestamp - lastTry) : 'n/a'
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
@@ -51,6 +53,10 @@ export class MinerPaymentDataComponent extends Component {
             <tr>
               <td>Available Balance</td>
               <td>{nanoGrinToGrin(readableAmount)} GRIN</td>
+            </tr>
+            <tr>
+              <td>Immature Balance</td>
+              <td id={faderStyleId}>{nanoGrinToGrin(minerImmatureBalance)} GRIN</td>
             </tr>
             <tr>
               <td>Payout Address</td>
