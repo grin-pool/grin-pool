@@ -65,16 +65,16 @@ export class NetworkDataComponent extends Component {
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
+                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Latest Block Height</td>
+                <td id={faderStyleId}>{latestBlockHeight}</td>
+              </tr>
+              <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'clock'} /> Block Found</td>
                 <td>{latestBlockTimeAgo} sec ago</td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'desktop'} />Difficulty</td>
                 <td>{latestDifficulty}</td>
-              </tr>
-              <tr>
-                <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'link'} />Chain Height</td>
-                <td id={faderStyleId}>{latestBlockHeight}</td>
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>
