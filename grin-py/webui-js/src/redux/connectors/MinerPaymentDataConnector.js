@@ -13,8 +13,7 @@ const mapStateToProps = (state) => {
     lastTry: paymentData.last_try,
     currentTimestamp: Date.now() / 1000,
     lastestBlockHeight: state.networkData.latestBlock.height,
-    minerImmatureBalance: state.minerData.minerImmatureBalance.est_immature_balance || 0,
-    estimatedHourlyReturn: state.minerData.minerImmatureBalance.est_hour_return || 0
+    minerImmatureBalance: state.minerData.minerImmatureBalance || 0
   }
 }
 
