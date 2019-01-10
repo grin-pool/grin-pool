@@ -29,7 +29,7 @@ const paymentData = (state: Object = {}, action) => {
   }
 }
 
-const minerImmatureBalance = (state: Object = {}, action) => {
+const minerImmatureBalance = (state: number = 0, action) => {
   switch (action.type) {
     case 'MINER_IMMATURE_BALANCE':
       return action.data

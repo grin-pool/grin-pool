@@ -204,12 +204,11 @@ export const fetchMinerImmatureBalance = (range?: number = 60) => async (dispatc
       }
     })
     const fetchMinerImmatureBalanceData = await fetchMinerImmatureBalanceResponse.json()
-    console.log('fetchMinerImmatureBalance: ', fetchMinerImmatureBalanceData)
     dispatch({
       type: 'MINER_IMMATURE_BALANCE',
       data: fetchMinerImmatureBalanceData
     })
   } catch (e) {
-    console.log('Error: ', e)
+    console.log('fetchMinerImmatureBalance error: ', e)
   }
 }
