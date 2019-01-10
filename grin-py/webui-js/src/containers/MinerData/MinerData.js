@@ -66,7 +66,7 @@ export class MinerDataComponent extends Component {
                 <td><span style={{ color: C29_COLOR }}>{c29LatestGraphRate}</span><br /><span style={{ color: C31_COLOR }}>{c31LatestGraphRate}</span></td>
               </tr>
               <tr>
-                <td>Last Block Height</td>
+                <td>Chain Height</td>
                 <td id={faderStyleId}>{latestBlock.height}</td>
               </tr>
               <tr>
