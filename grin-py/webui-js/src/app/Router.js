@@ -33,7 +33,7 @@ class WrappedRoutes extends Component {
       <div>
         <Layout/>
         <div className='container__wrap'>
-          {(!account && (history.location.pathname !== '/instructions')) && <Alert color='success' style={{ textAlign: 'center', position: 'relative' }}>To start mining GRIN, please check out our <NavLink to='/instructions' style={{ fontWeight: 'bold', color: '#155724' }}>instructions</NavLink> page.</Alert>}
+          {(!account && (history.location.pathname !== '/instructions')) && <Alert color='success' style={{ fontSize: '1.1rem', textAlign: 'center', position: 'relative' }}>MWGrinPool is currently offering <strong>zero fees</strong> for the first month immediately following mainnet launch. To start mining GRIN, please check out our <NavLink to='/instructions' style={{ fontWeight: 'bold', color: '#155724' }}>instructions</NavLink> page.</Alert>}
           <Route exact path='/' component={HomepageConnector}/>
           <Route path='/pages' component={Pages}/>
           <Route path='/about' component={AboutComponent}/>
