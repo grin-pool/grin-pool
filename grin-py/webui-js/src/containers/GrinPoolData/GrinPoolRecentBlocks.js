@@ -20,7 +20,7 @@ export class GrinPoolRecentBlocks extends Component {
         const readableTimeAgo = secondsToHms(paymentSecondsAgo)
         rows.push(
           <tr key={block.height}>
-            <td><a style={{ color: C29_COLOR }} href={`https://grinscan.net/block/${block.height}`}>{block.height}</a></td>
+            <td><a style={{ color: C29_COLOR }} href={`https://floonet.grinexplorer.net/block/${block.height}`} rel='noopener noreferrer' target='_blank' >{block.height}</a></td>
             <td>{block.nonce}</td>
             <td>{block.hash}</td>
             <td>{readableTimeAgo} ago</td>
