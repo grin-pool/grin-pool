@@ -71,7 +71,7 @@ export class MinerDataComponent extends Component {
                 <td id={faderStyleId}>{latestBlock.height}</td>
               </tr>
               <tr>
-                <td>Latest Block</td>
+                <td>Latest Block Earning</td>
                 <td>{latestBlockGrinEarnedSyntax}</td>
               </tr>
               <tr>
