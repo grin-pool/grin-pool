@@ -18,8 +18,8 @@ export class NetworkDataComponent extends Component {
 
   componentDidUpdate (prevProps) {
     const { faderStyleId } = this.state
-    const { latestBlock, fetchNetworkData, fetchGrinPoolRecentBlocks } = this.props
-    if (latestBlock.height !== prevProps.latestBlock.height) {
+    const { latestBlockHeight, fetchNetworkData, fetchGrinPoolRecentBlocks } = this.props
+    if (latestBlockHeight !== prevProps.latestBlockHeight) {
       fetchGrinPoolRecentBlocks()
       fetchNetworkData()
       this.setState({
@@ -29,12 +29,11 @@ export class NetworkDataComponent extends Component {
   }
 
   render () {
-    const { networkData, latestBlock, poolBlocksMined } = this.props
+    const { networkData, latestBlock, poolBlocksMined, latestBlockHeight } = this.props
     const { faderStyleId } = this.state
     let c29LatestGraphRate = 'C29 = 0 gps'
     let c31LatestGraphRate = 'C31 = 0 gps'
     let latestDifficulty = 'n/a'
-    let latestBlockHeight = 'n/a'
     if (networkData.length > 0) {
       const lastBlock = networkData[networkData.length - 1]
       if (lastBlock.gps[0]) {
@@ -44,12 +43,10 @@ export class NetworkDataComponent extends Component {
         c31LatestGraphRate = `C${lastBlock.gps[1].edge_bits} = ${lastBlock.gps[1].gps.toFixed(2)} gps`
       }
       latestDifficulty = lastBlock.difficulty
-      latestBlockHeight = lastBlock.height
     } else {
       c29LatestGraphRate = '0 gps'
       c31LatestGraphRate = '0 gps'
       latestDifficulty = 'n/a'
-      latestBlockHeight = 'n/a'
     }
     const nowTimestamp = Date.now()
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''

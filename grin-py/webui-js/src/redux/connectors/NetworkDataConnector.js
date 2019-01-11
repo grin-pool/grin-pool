@@ -8,10 +8,12 @@ const mapStateToProps = (state) => {
   const networkData = state.networkData.historical || []
   const latestBlock = state.networkData.latestBlock || 0
   const poolBlocksMined = state.grinPoolData.poolBlocksMined || []
+  const latestBlockHeight = state.networkData.latestBlock.height
   return {
     networkData,
     latestBlock,
-    poolBlocksMined
+    poolBlocksMined,
+    latestBlockHeight
   }
 }
 
