@@ -13,7 +13,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchBlockRange: () => dispatch(fetchNetworkRecentBlocks())
+    fetchBlockRange: (endBlockHeight?: null | number, rangeSize?: number) => dispatch(fetchNetworkRecentBlocks(endBlockHeight, rangeSize))
   }
 }
 

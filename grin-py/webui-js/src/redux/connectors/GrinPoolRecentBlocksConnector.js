@@ -13,7 +13,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchBlockRange: () => dispatch(fetchGrinPoolRecentBlocks())
+    fetchBlockRange: (endBlockHeight?: null | number, rangeSize?: number) => dispatch(fetchGrinPoolRecentBlocks(endBlockHeight, rangeSize))
   }
 }
 
