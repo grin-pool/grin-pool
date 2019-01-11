@@ -11,6 +11,15 @@ export const historical = (state: Array<Object> = [], action: Action) => {
   }
 }
 
+export const recentBlocks = (state: Array<Object> = [], action: Action) => {
+  switch (action.type) {
+    case 'NETWORK_RECENT_BLOCKS':
+      return action.data
+    default:
+      return state
+  }
+}
+
 export const minedBlockAlgos = (state: any = { c29: [], c31: [] }, action: Action) => {
   switch (action.type) {
     case 'MINED_BLOCKS_ALGOS':
@@ -31,6 +40,7 @@ export const latestBlock = (state: Object = {}, action: Action) => {
 
 export const networkData = combineReducers({
   historical,
+  recentBlocks,
   minedBlockAlgos,
   latestBlock
 })
