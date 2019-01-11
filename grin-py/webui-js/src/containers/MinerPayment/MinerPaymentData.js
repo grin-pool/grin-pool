@@ -45,6 +45,7 @@ export class MinerPaymentDataComponent extends Component {
     const readableAmount = amount > 0 ? amount : 0
     const lastTryTimeAgo = lastTry ? secondsToHms(currentTimestamp - lastTry) : 'n/a'
     const lastPayoutTimeAgo = lastSuccess ? secondsToHms(currentTimestamp - lastSuccess) : 'n/a'
+    const minerImmatureBalanceSyntax = (!isNaN(minerImmatureBalance) && minerImmatureBalance > 0) ? `${nanoGrinToGrin(minerImmatureBalance)} GRIN` : 'n/a'
     return (
       <div>
         <h4>Payment Info</h4>
@@ -56,7 +57,7 @@ export class MinerPaymentDataComponent extends Component {
             </tr>
             <tr>
               <td>Immature Balance</td>
-              <td id={faderStyleId}>{nanoGrinToGrin(minerImmatureBalance)} GRIN</td>
+              <td id={faderStyleId}>{minerImmatureBalanceSyntax}</td>
             </tr>
             <tr>
               <td>Payout Address</td>
