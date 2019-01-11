@@ -92,11 +92,6 @@ export class MinerPaymentComponent extends Component {
         </FormGroup>
         <FormGroup check>
           <Label check>
-            <Input onChange={this.onPaymentMethodChange} type='radio' value='keybase' name='paymentMethod' />Keybase Username
-          </Label>
-        </FormGroup>
-        <FormGroup check>
-          <Label check>
             <Input onChange={this.onPaymentMethodChange} type='radio' value='payoutScript' name='paymentMethod' />Download Payout Script
           </Label>
         </FormGroup>
@@ -133,8 +128,6 @@ export class MinerPaymentComponent extends Component {
     switch (paymentType) {
       case 'manual':
         return this.renderManualPayoutOptions()
-      case 'scheduled':
-        return this.renderAutomaticPayoutOptions()
       case 'null':
         return null
       default:
@@ -157,19 +150,6 @@ export class MinerPaymentComponent extends Component {
                 name="onlineWallet"
                 id="onlineWallet"
                 placeholder="195.128.200.15:13415"
-                className='form-control' />
-            </div>
-          )
-        case 'keybase':
-          return (
-            <div>
-              <Label for="onlineWallet">Enter Keybase Username:</Label>
-              <Input
-                onChange={this.onChangeTextInput}
-                type="text"
-                name="keybase"
-                id="keybase"
-                placeholder="myKeybaseUser"
                 className='form-control' />
             </div>
           )
@@ -223,12 +203,12 @@ export class MinerPaymentComponent extends Component {
                 <p>GrinPool supports multiple methods of payment, including automatic payments and manual / on-demand payments. The list of payment methods is likely to grow, so stay tuned!</p>
                 <Alert color='light' style={{ textAlign: 'center', position: 'relative', marginTop: '16px' }}>To learn how to properly configure payouts, please read our <a href='https://medium.com/@blade.doyle/configure-payments-on-mwgrinpool-com-how-to-7b84163ec467' style={{ fontWeight: 'bold', color: '#818182' }} rel='noopener noreferrer' target='_blank'>tutorial</a>.</Alert>
                 <br />
+                <Alert color='danger' style={{ textAlign: 'center', position: 'relative', marginTop: '16px' }}>Please be aware that current GRIN payment methods are still under development. We ask for your patience as we test and implement additional payment options.</Alert>
                 <Form className='minerPaymentForm'>
                   <FormGroup>
                     <Label for='paymentType'>Payment Type:</Label>
                     <Input defaultValue={paymentType} type='select' name='paymentType' id='paymentSelect' onChange={this.onPaymentTypeChange}>
                       <option value='null'>------------</option>
-                      <option value='scheduled'>Scheduled Payout</option>
                       <option value='manual'>Manual Payout</option>
                     </Input>
                   </FormGroup>
