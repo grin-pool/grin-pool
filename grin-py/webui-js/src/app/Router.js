@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import { Route, Switch, Redirect, NavLink } from 'react-router-dom'
+import { Route, Switch, Redirect } from 'react-router-dom'
 import { Alert } from 'reactstrap'
 import Layout from '../containers/_layout/Layout'
 import MainWrapper from './MainWrapper'
@@ -28,12 +28,12 @@ class Router extends Component {
 
 class WrappedRoutes extends Component {
   render () {
-    const { account, history } = this.props
+    const { account } = this.props
     return (
       <div>
         <Layout/>
         <div className='container__wrap'>
-          {(!account && (history.location.pathname !== '/instructions')) && <Alert color='success' style={{ fontSize: '1.1rem', textAlign: 'center', position: 'relative' }}>MWGrinPool is currently offering <strong>zero fees</strong> for the first month immediately following mainnet launch. To start mining GRIN, please check out our <NavLink to='/instructions' style={{ fontWeight: 'bold', color: '#155724' }}>instructions</NavLink> page.</Alert>}
+          <Alert color='danger' style={{ fontSize: '1.1rem', textAlign: 'center', position: 'relative' }}>Our pool is currently experiencing difficulties with its stratum server, causing miner shares to not be accepted. Our team will continue debugging on Saturday morning (Pacific Time).</Alert>
           <Route exact path='/' component={HomepageConnector}/>
           <Route path='/pages' component={Pages}/>
           <Route path='/about' component={AboutComponent}/>
