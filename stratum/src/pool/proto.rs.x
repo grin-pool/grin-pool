@@ -54,7 +54,7 @@ pub struct RpcError {
     pub message: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LoginParams {
     pub login: String,
     pub pass: String,
@@ -63,11 +63,10 @@ pub struct LoginParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitParams {
-    pub height: u64,
+    height: u64,
     pub job_id: u64,
     pub nonce: u64,
-    edge_bits: u32,
-    pub pow: Vec<u32>,
+    pow: Vec<u32>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -225,10 +224,10 @@ impl StratumProtocol {
         stream: &mut BufStream<TcpStream>,
         method: String,
         result: Value,
-        id: usize,
+        id: String,
     ) -> Result<(), String> {
         let res = RpcResponse {
-            id: id.to_string(),
+            id: id,
             jsonrpc: "2.0".to_string(),
             method: method,
             result: Some(result),
