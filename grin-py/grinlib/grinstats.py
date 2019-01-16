@@ -21,6 +21,7 @@ import sys
 import time
 import requests
 import json
+from datetime import datetime
 
 from grinlib import lib
 from grinlib import grin
@@ -57,6 +58,8 @@ def estimate_all_gps(window):
     difficulty = window[-1].total_difficulty - window[-2].total_difficulty
     # Get secondary_scaling value for the most recent block
     secondary_scaling = window[-1].secondary_scaling
+    if secondary_scaling == 0:
+        secondary_scaling = 1840
     # Count the total number of each solution size in the window
     counts = {}
     counts[SECONDARY_SIZE] = 0
@@ -68,10 +71,12 @@ def estimate_all_gps(window):
     # Get total counts for primary and secondary POWs
     count_secondary = counts[SECONDARY_SIZE]
     count_primary = sum(counts.values()) - count_secondary
-    percent_primary = int(count_primary / len(window)*100)
     # ratios
     q = secondary_pow_ratio(height)/100
     r = 1 - q
+    print("ZZZZZZZZZ: difficulty={}, q={}, r={}, secondary_scaling={}".format(difficulty, q, r, secondary_scaling))
+#    if q < 1:
+#        q = 1
     # Calculate the GPS
     all_gps = []
     for edge_bits in counts:
@@ -85,7 +90,7 @@ def estimate_all_gps(window):
             gps = 42 * difficulty * r * count_ratio / graph_weight(edge_bits) / 60
         all_gps.append((edge_bits, gps, ))
     return all_gps
-    
+
 
 # Calculate the grin stats for the specified height
 # Return a Grin_stats object
@@ -95,13 +100,15 @@ def calculate(height, avg_range=DIFFICULTY_ADJUST_WINDOW):
     recent_blocks = []
     previous_stats_record = Grin_stats.get_by_height(height-1)
     print("XXX: {}".format(previous_stats_record))
-    assert previous_stats_record is not None, "No provious stats record found" 
+    assert previous_stats_record is not None, "No previous stats record found"
+    print("height {}, avg_range {}".format(height, avg_range))
     recent_blocks = Blocks.get_by_height(height, avg_range)
     if len(recent_blocks) < min(avg_range, height):
         # We dont have all of these blocks in the DB
         raise AssertionError("Missing blocks in range: {}:{}".format(height-avg_range, height))
-    assert recent_blocks[-1].height == height, "Invalid height in recent_blocks[-1]" 
-    assert recent_blocks[-2].height == height - 1, "Invalid height in recent_blocks[-2]: {} vs {}".format(recent_blocks[-2].height, height - 1) 
+    print("{} vs {}".format(recent_blocks[-1].height, height))
+    assert recent_blocks[-1].height == height, "Invalid height in recent_blocks[-1]"
+    assert recent_blocks[-2].height == height - 1, "Invalid height in recent_blocks[-2]: {} vs {}".format(recent_blocks[-2].height, height - 1)
     # Calculate the stats data
     first_block = recent_blocks[0]
     last_block = recent_blocks[-1]
@@ -123,27 +130,54 @@ def calculate(height, avg_range=DIFFICULTY_ADJUST_WINDOW):
     return new_stats
 
 
-# Initialize Grin_stats
-# No return value
-def initialize():
+def initialize(avg_over_range, logger):
     database = lib.get_db()
     # Special case for new pool startup - Need 3 stats records to bootstrap
-    block_zero = Blocks.get_by_height(0)
+    block_zero = None
+    while block_zero is None:
+        logger.warn("Waiting for the first block record in the database")
+        time.sleep(1)
+        block_zero = Blocks.get_earliest()
+    print("block_zero={}".format(block_zero))
+    height = block_zero.height
+    # Create avg_over_range dummy block records prior to block_zero
+    print("Create block filtters: {} - {}".format(height-avg_over_range, height))
+    for h in range(height-avg_over_range, height):
+        print("Creating fillter at height {}".format(h))
+        new_block = Blocks(hash = "x",
+            version = 0,
+            height = h,
+            previous = "x",
+            timestamp = datetime.utcnow(),
+            output_root = "x",
+            range_proof_root = "x",
+            kernel_root = "x",
+            nonce = 0,
+            edge_bits = 29,
+            total_difficulty = block_zero.total_difficulty,
+            secondary_scaling = 0,
+            num_inputs = 0,
+            num_outputs = 0,
+            num_kernels = 0,
+            fee = 0,
+            lock_height = 0,
+            total_kernel_offset = "x",
+            state = "filler")
+        database.db.getSession().add(new_block)
+    database.db.getSession().commit()
     seed_stat0 = Grin_stats(
-        height=0,
+        height=height-2,
         timestamp=block_zero.timestamp,
         difficulty=block_zero.total_difficulty)
     database.db.createDataObj(seed_stat0)
-    block_one = Blocks.get_by_height(1)
     seed_stat1 = Grin_stats(
-        height=1,
-        timestamp=block_one.timestamp,
-        difficulty=block_one.total_difficulty - block_zero.total_difficulty)
+        height=height-1,
+        timestamp=block_zero.timestamp,
+        difficulty=block_zero.total_difficulty)
     database.db.createDataObj(seed_stat1)
-    block_two = Blocks.get_by_height(2)
     seed_stat2 = Grin_stats(
-        height=2,
-        timestamp=block_two.timestamp,
-        difficulty=block_two.total_difficulty - block_one.total_difficulty)
+        height=height,
+        timestamp=block_zero.timestamp,
+        difficulty=block_zero.total_difficulty)
     database.db.createDataObj(seed_stat2)
-
+    return height

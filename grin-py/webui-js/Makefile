@@ -1,5 +1,5 @@
 CONTAINER := webui-js
-REGISTRY := docker.io/grinpool
+REGISTRY := docker.mwgrinpool.com:5001
 
 push: build
 

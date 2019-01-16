@@ -16,14 +16,17 @@
 import sys
 import os
 import time
-import subprocess
 from datetime import datetime
 from random import randint
 import socket
 from urllib.parse import urlparse
+import requests
+import json
+
 
 from grinlib import lib
 from grinlib import grin
+from grinlib import payments
 from grinbase.model.pool_utxo import Pool_utxo
 from grinbase.model.pool_payment import Pool_payment
 
@@ -31,80 +34,11 @@ PROCESS = "makePayouts"
 LOGGER = None
 CONFIG = None
 
-# pool_utxo <--- these are our user records.  A record of each pending payout (one per unique miner payout address)
-# makePayouts.py gets the list of pool_utxo records with value greater than threshold and attepmts to make a payment.
-#     * Future: Do multiple payouts in a single grin wallet tx
-#     * updates pool_utxo with new total, timestamp of last payout, number of failed payout attempts
+# Get K8s secret from container environment
+wallet_api_user = os.environ['WALLET_OWNER_API_USER']
+wallet_api_key = os.environ["WALLET_OWNER_API_PASSWORD"]
 
-# XXX TODO:  Add maximum payout value to reduce the pools risk
-
-
-def makePayout(address, amount):
-    global LOGGER
-    global CONFIG
-
-    LOGGER.warn("Making Payout of: {} to: {}".format(address, amount))
-    # Validate the address does not contain dangerous shell characters
-    valid = validateWalletAddress(address)
-    if valid == False:
-        LOGGER.warn("Wallet address is invalid: {}".format(address))
-        return 1 # failure status
-    # Test a low-timeout connection before involving the wallet
-    probe = testWalletPort(address)
-    if probe == False:
-        LOGGER.warn("Test Connection Failed: {} {}".format(address, amount))
-        return 1 # failure status
-    # Make the payout
-    LOGGER.warn("Test Connection Ok: {} {}".format(address, amount))
-    grin_api_url = grin.get_api_url()
-    os.chdir(CONFIG[PROCESS]["wallet_dir"])
-    send_cmd = [
-        "/usr/local/bin/grin",
-          "wallet",
-            "--api_server_address", grin_api_url,
-          "send",
-            "--selection", "smallest",
-            "--dest", str(address),
-            str(amount)
-    ]
-    LOGGER.warn("Command: {}".format(send_cmd))
-    try:
-        output = subprocess.check_output(send_cmd, stderr=subprocess.STDOUT, shell=False)
-        LOGGER.warn("Sent OK: {}".format(output))
-        return 0
-    except subprocess.CalledProcessError as exc:
-        LOGGER.error("Send failed with rc {} and output {}".format(exc.returncode, exc.output))
-        return 1 # exc.returncode
-    except Exception as e:
-        LOGGER.error("Send failed with error {}".format(str(e)))
-        return 1
- 
-# Only supporting http url for wallet address for now
-def validateWalletAddress(address):
-    global LOGGER
-    try:
-        LOGGER.warn("Validating wallet address: {}".format(address))
-        return urlparse(address).scheme == 'http'
-    except Exception as e:
-        LOGGER.error("Wallet address is invalid: {}".format(str(e)))
-    return False
-
-def testWalletPort(address):
-    global LOGGER
-    try:
-        s = socket.socket()
-        s.settimeout(2)
-        netloc = urlparse(address).netloc
-        addr = netloc.split(':')
-        LOGGER.warn("Testing: {}, {}".format(addr[0], addr[1]))
-        s.connect((addr[0], int(addr[1])))
-        s.close()
-    except Exception as e:
-        LOGGER.error("Failed test connection: {}".format(str(e)))
-        return False
-    
-    return True
-        
+# XXX TODO:  Add maximum payout value to reduce the pools risk?
 
 def main():
     global LOGGER
@@ -114,16 +48,13 @@ def main():
     LOGGER.warn("=== Starting {}".format(PROCESS))
 
     # Connect to DB
-    try:
-        database = lib.get_db()
-    except Exception as e:
-        LOGGER.error("Failed to connect to the db: {}".format(e))
-
-    wallet_dir = CONFIG[PROCESS]["wallet_dir"]
+    database = lib.get_db()
+    # Configs
     minimum_payout = int(CONFIG[PROCESS]["minimum_payout"])
-    os.chdir(wallet_dir)
+    walletauth = (wallet_api_user, wallet_api_key)
+
     utxos = Pool_utxo.getPayable(minimum_payout)
-    database.db.getSession().commit()
+
     # XXX TODO: Use the current balance, timestamp, the last_attempt timestamp, last_payout, and failed_attempts
     # XXX TODO: to filter and sort by order we want to make payment attempts
     for utxo in utxos:
@@ -132,47 +63,18 @@ def main():
             if utxo.amount < utxo.failure_count:
                 if randint(0, 11) != 0:
                     continue
-            LOGGER.warn("Trying to pay: {} {} {}".format(utxo.id, utxo.address, utxo.amount))
-            # Lock just this current record for update
-            locked_utxo = Pool_utxo.get_locked_by_id(utxo.id)
-            # Save and Zero the balance
-            original_balance = locked_utxo.amount
-            locked_utxo.amount = 0
-            # Savepoint changes - if we crash after sending coins but before commit we roll back to here.
-            #   The pool audit service (coming soon) finds lost payouts and restores user balance
-            database.db.getSession().begin_nested();
-            # Attempt to make the payment
-            timestamp = datetime.utcnow()
-            status =  makePayout(locked_utxo.address, original_balance)
-            LOGGER.warn("Payout status: {}".format(status))
-            if status == 0:
-                LOGGER.warn("Made payout for {} {} {} at {}".format(locked_utxo.id, locked_utxo.address, original_balance, timestamp))
-                # Create a payment record
-                payment_record = Pool_payment(locked_utxo.id, timestamp, locked_utxo.address, original_balance, 0, locked_utxo.failure_count, "schedule" )
-                database.db.getSession().add(payment_record)
-                # Update timestamp of last payout, number of failed payout attempts
-                locked_utxo.amount = 0
-                locked_utxo.failure_count = 0
-                locked_utxo.last_try = timestamp
-                locked_utxo.last_success = timestamp
-                locked_utxo.total_amount += original_balance
-                # Commit changes
-                database.db.getSession().commit() 
+            LOGGER.warn("Processing utxo for: {} {} {} using method: {}".format(utxo.user_id, utxo.address, utxo.amount, utxo.method))
+            if utxo.method in ["http", "https", "keybase"]:
+                try:
+                                        #user_id,      address,      logger, database, wallet_auth, method,     invoked_by
+                    payments.atomic_send(utxo.user_id, utxo.address, LOGGER, database, walletauth, utxo.method, "schedule")
+                except payments.PaymentError as e:
+                    LOGGER.error("Failed to make http payment: {}".format(e))
             else:
-                LOGGER.error("Failed to make payout: {} {} {}".format(locked_utxo.id, locked_utxo.address, original_balance))
-                # Restore the users balance 
-                locked_utxo.amount = original_balance
-                # Update number of failed payout attempts
-                if locked_utxo.failure_count is None:
-                    locked_utxo.failure_count = 0
-                locked_utxo.failure_count += 1
-                locked_utxo.last_try = timestamp
-                # Commit changes
-                database.db.getSession().commit()
-            database.db.getSession().commit()
+                LOGGER.warn("Automatic payment does not (yet?) support method: {}".format(utxo.method))
 
         except Exception as e:
-            LOGGER.error("Failed to process utxo: {} because {}".format(utxo.id, str(e)))
+            LOGGER.error("Failed to process utxo: {} because {}".format(utxo.user_id, str(e)))
             database.db.getSession().rollback()
             sys.exit(1)
 

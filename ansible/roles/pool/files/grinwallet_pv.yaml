@@ -7,7 +7,7 @@ kind: PersistentVolume
 metadata:
   name: grinwallet
   labels:
-    node: node1
+    node: lucy
 spec:
   capacity:
     storage: 5Gi
@@ -24,8 +24,7 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - node1
----
+          - lucy
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -40,4 +39,46 @@ spec:
       storage: 5Gi
   selector:
     matchLabels:
-      node: node1
+      node: lucy
+---
+##
+# Pools Keybase Account
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: keybase
+  labels:
+    node: lucy
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /data/keybase
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - lucy
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keybase
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      node: lucy

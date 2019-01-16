@@ -10,3 +10,15 @@ spec:
   resources:
     requests:
       storage: 10Gi
+---
+# Keybase Account
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keybase
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

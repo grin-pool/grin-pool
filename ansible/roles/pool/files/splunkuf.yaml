@@ -32,9 +32,12 @@ spec:
         - name: SPLUNK_START_ARGS
           value: "--accept-license"
         - name: SPLUNK_USER
-          value: root
+          value: "root"
         - name: SPLUNK_PASSWORD
-          value: password
+          valueFrom:
+            secretKeyRef:
+              name: splunk
+              key: password.txt
         volumeMounts:
         - mountPath: /var/run/docker.sock
           readOnly: true

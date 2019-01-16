@@ -1,6 +1,6 @@
 ---
 ##
-# Splunk Logs and Dashboards
+# PVC for Splunk Logs and Dashboards
 
 apiVersion: v1
 kind: PersistentVolume
@@ -25,18 +25,3 @@ spec:
           operator: In
           values:
           - node1
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: splunk
-spec:
-  storageClassName: local-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Gi
-  selector:
-    matchLabels:
-      node: node1

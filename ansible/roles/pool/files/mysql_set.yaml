@@ -7,7 +7,7 @@ spec:
     matchLabels:
       app: mysql
   serviceName: mysql
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
@@ -16,6 +16,12 @@ spec:
       initContainers:
       - name: init-mysql
         image: mysql:5.7
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         command:
         - bash
         - "-c"
@@ -40,6 +46,12 @@ spec:
           mountPath: /mnt/config-map
       - name: clone-mysql
         image: gcr.io/google-samples/xtrabackup:1.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         command:
         - bash
         - "-c"
@@ -54,7 +66,7 @@ spec:
           # Clone data from previous peer.
           ncat --recv-only mysql-$(($ordinal-1)).mysql 3307 | xbstream -x -C /var/lib/mysql
           # Prepare the backup.
-          xtrabackup --prepare --target-dir=/var/lib/mysql
+          xtrabackup --prepare --user=root --password=${MYSQL_ROOT_PASSWORD} --target-dir=/var/lib/mysql
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
@@ -65,8 +77,11 @@ spec:
       - name: mysql
         image: mysql:5.7
         env:
-        - name: MYSQL_ALLOW_EMPTY_PASSWORD
-          value: "1"
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         ports:
         - name: mysql
           containerPort: 3306
@@ -86,15 +101,21 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
-        readinessProbe:
-          exec:
-            # Check we can execute queries over TCP (skip-networking is off).
-            command: ["mysql", "-h", "127.0.0.1", "-e", "SELECT 1"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 1
+          #        readinessProbe:
+          # exec:
+          #   # Check we can execute queries over TCP (skip-networking is off).
+          #   command: ["mysql", "-h", "127.0.0.1", "-u", "root", "-p$MYSQL_ROOT_PASSWORD", "-e", "SELECT 1"]
+          # initialDelaySeconds: 5
+          # periodSeconds: 2
+          # timeoutSeconds: 1
       - name: xtrabackup
         image: gcr.io/google-samples/xtrabackup:1.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
         ports:
         - name: xtrabackup
           containerPort: 3307
@@ -123,16 +144,16 @@ spec:
           # Check if we need to complete a clone by starting replication.
           if [[ -f change_master_to.sql.in ]]; then
             echo "Waiting for mysqld to be ready (accepting connections)"
-            until mysql -h 127.0.0.1 -e "SELECT 1"; do sleep 1; done
+            until mysql -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD -e "SELECT 1"; do sleep 1; done
 
             echo "Initializing replication from clone position"
             # In case of container restart, attempt this at-most-once.
             mv change_master_to.sql.in change_master_to.sql.orig
-            mysql -h 127.0.0.1 <<EOF
+            mysql -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD <<EOF
           $(<change_master_to.sql.orig),
             MASTER_HOST='mysql-0.mysql',
             MASTER_USER='root',
-            MASTER_PASSWORD='',
+            MASTER_PASSWORD='$MYSQL_ROOT_PASSWORD',
             MASTER_CONNECT_RETRY=10;
           START SLAVE;
           EOF
@@ -140,7 +161,7 @@ spec:
 
           # Start a server to send backups when requested by peers.
           exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c \
-            "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root"
+            "xtrabackup --backup  --user=root --password=${MYSQL_ROOT_PASSWORD} --slave-info --stream=xbstream --host=127.0.0.1"
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql

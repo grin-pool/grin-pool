@@ -189,7 +189,10 @@ def pad_worker_graph_data(worker_stats, start, r):
     while current < int(worker_stats[0]["height"]):
         pad_stat = copy.copy(worker_stats[0])
         pad_stat["height"] = current
-        pad_stat["gps"] = 0
+        pad_stat["gps"] = []
+        pad_stat["gps"].append({})
+        pad_stat["gps"][0]['gps'] = 1.64413
+        pad_stat["gps"][0]['edge_bits'] = 29
         padded_stats.append(pad_stat)
         current += 1
     # Missing from middle
@@ -210,11 +213,11 @@ def pad_worker_graph_data(worker_stats, start, r):
 
 
 def get_workers_graph(workers, start, r):
-    url = get_api_url() + '/worker/stats/' + str(start) +','+str(r)+'/gps,height,worker'
+    url = get_api_url() + '/worker/stats/' + str(start) +','+str(r)+'/gps,height,user_id'
     result = urlopen(url)
     js_string = result.read().decode('utf-8')
     parsed = json.loads(js_string)
-    #print("parsed: {}".format(parsed))
+    print("parsed: {}".format(parsed))
     height_data = range(start-r+1, start) # sorted(set([int(i['height']) for i in parsed]))
     #print("height data:  {}".format(height_data))
 
@@ -240,10 +243,10 @@ def get_workers_graph(workers, start, r):
     graph.x_labels = height_data
 
     for miner in workers:
-      if miner == "GrinPool":
-        continue
+#      if miner == "0":
+#        continue
       print("miner = {}".format(miner))
-      worker_stats = [stat for stat in parsed if stat["worker"] == miner]
+      worker_stats = [stat for stat in parsed if stat["user_id"] == miner]
       if worker_stats is None:
         continue
       print("Len of worker stats: {}".format(len(worker_stats)))
@@ -251,21 +254,21 @@ def get_workers_graph(workers, start, r):
       if padded_worker_stats is None:
         continue
       print("Len of padded worker stats: {}".format(len(padded_worker_stats)))
-      #print("PADDED Miner stats {}".format(padded_worker_stats))
-      worker_data = [i['gps'] for i in padded_worker_stats]
-      graph.add(obfuscate_name(miner), worker_data)
+      print("PADDED Miner stats {}".format(padded_worker_stats))
+      worker_data = [i['gps'][0]['gps'] for i in padded_worker_stats if len(i['gps']) > 0]
+      graph.add(miner, worker_data)
 
     return graph
 
-def obfuscate_name(name):
-    obfname = ''
-    for i in range(0, min(18,len(name))):
-      if i < 11 or i % 3 != 0:
-        obfname += name[i]
-      else:
-        obfname += '*'
-    obfname += '**'
-    return obfname
+#def obfuscate_name(name):
+#    obfname = ''
+#    for i in range(0, min(18,len(name))):
+#      if i < 11 or i % 3 != 0:
+#        obfname += name[i]
+#      else:
+#        obfname += '*'
+#    obfname += '**'
+#    return obfname
 
 @home_profile.route('/')
 def home_template():
@@ -333,8 +336,8 @@ def home_template():
         latest_stats = []
         active_miners = []
         r = 60
-        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/worker".format(latest["height"], r)).content.decode('utf-8'))
-        active_miners = list(set([d['worker'] for d in active_miners]))
+        active_miners = json.loads(requests.get(get_api_url() + "/worker/stats/{},{}/user_id".format(latest["height"], r)).content.decode('utf-8'))
+        active_miners = list(set([d['user_id'] for d in active_miners]))
         latest_stats = json.loads(requests.get(get_api_url() + "/worker/stats/0,{}".format(r)).content.decode('utf-8'))
         top_workers = []
         workers = []
@@ -343,17 +346,17 @@ def home_template():
         for miner in active_miners:
           print("Miner: {}".format(miner))
           try:
-            miner_stats = [stat for stat in latest_stats if stat["worker"] == miner][-1]
+            miner_stats = [stat for stat in latest_stats if stat["user_id"] == miner][-1]
            #print("Adding stats for miner: {}, {}".format(miner, miner_stats))
-            workers.append(miner_stats["worker"])
+            workers.append(miner_stats["user_id"])
             total_gps = sum([ms["gps"] for ms in miner_stats["gps"]])
-            top_workers.append({"name": obfuscate_name(miner_stats["worker"]), "gps": round(total_gps, 2)})
+            top_workers.append({"name": miner_stats["user_id"], "gps": round(total_gps, 2)})
           except Exception as e:
            pass
-#        while len(top_workers) < 5:
-#          top_workers.append({"name": "None", "gps": 0})
-#        top_workers.sort(key=lambda s: s["gps"], reverse=True)
-#        print("Top Workers: {}".format(top_workers))
+        while len(top_workers) < 5:
+          top_workers.append({"name": "None", "gps": 0})
+        top_workers.sort(key=lambda s: s["gps"], reverse=True)
+        print("Top Workers: {}".format(top_workers))
           
         workers_graph = get_workers_graph(active_miners, HEIGHT, RANGE) 
         

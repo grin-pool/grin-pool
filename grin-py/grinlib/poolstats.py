@@ -79,15 +79,13 @@ def calculate(height, window_size):
     window = Worker_shares.get_by_height(height, window_size)
     # Calculate the stats data
     timestamp = grin_block.timestamp
-    active_miners = len(list(set([s.worker for s in window])))
+    active_miners = len(list(set([s.user_id for s in window])))
     print("active_miners = {}".format(active_miners))
     # Keep track of share totals - sum counts of all share sizes submitted for this block
-    shares_processed = 0
-    if len(window) > 0:
-        shares_processed = window[-1].num_shares()
-    print("shares_processed this block= {}".format(shares_processed))
-    total_shares_processed = previous_stats_record.total_shares_processed + shares_processed
-    total_grin_paid = previous_stats_record.total_grin_paid # XXX TODO
+    shares_processed = Worker_shares.get_by_height(height)
+    num_shares_processed = sum([shares.num_shares() for shares in shares_processed])
+    print("num_shares_processed this block= {}".format(num_shares_processed))
+    total_shares_processed = previous_stats_record.total_shares_processed + num_shares_processed
     total_blocks_found = previous_stats_record.total_blocks_found
     # Caclulate estimated GPS for all sizes with shares submitted
     all_gps = estimate_gps_for_all_sizes(window)
@@ -97,10 +95,9 @@ def calculate(height, window_size):
             height = height,
             timestamp = timestamp,
             active_miners = active_miners,
-            shares_processed = shares_processed,
+            shares_processed = num_shares_processed,
             total_blocks_found = total_blocks_found,
             total_shares_processed = total_shares_processed,
-            total_grin_paid = total_grin_paid,
             dirty = False,
         )
     print("all_gps for all pool workers")
@@ -137,7 +134,6 @@ def recalculate(start_height, window_size):
             old_stats.shares_processed = new_stats.shares_processed
             old_stats.total_blocks_found = new_stats.total_blocks_found
             old_stats.total_shares_processed = new_stats.total_shares_processed
-            old_stats.total_grin_paid = new_stats.total_grin_paid
             old_stats.dirty = False
             database.db.getSession().commit()
         height = height + 1
@@ -145,18 +141,31 @@ def recalculate(start_height, window_size):
 
 # Initialize Pool_stats
 # No return value
-def initialize():
+def initialize(window_size, logger):
     database = lib.get_db()
     # Special case for new pool startup
+    block_zero = None
+    while block_zero is None:
+        logger.warn("Waiting for the first block record in the database")
+        time.sleep(1)
+        block_zero = Blocks.get_earliest()
+    print("block_zero={}".format(block_zero))
+    
+    stat_height = max(0, block_zero.height - window_size)
     seed_stat = Pool_stats(
-            height=0,
+            height=stat_height,
             timestamp=datetime.utcnow(),
             active_miners=0,
             shares_processed=0,
             total_blocks_found=0,
             total_shares_processed=0,
-            total_grin_paid=0,
             dirty = False,
         )
     database.db.createDataObj(seed_stat)
+    seed_share = Worker_shares(
+            height=stat_height,
+            user_id=1,
+            timestamp=datetime.utcnow(),
+        )
+    database.db.createDataObj(seed_share)
 

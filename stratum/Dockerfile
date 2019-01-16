@@ -1,7 +1,7 @@
 # Multistage docker build, requires docker 17.05
 
 # builder stage
-FROM rust:1.26 as builder
+FROM rust:latest as builder
 
 RUN set -ex && \
     apt-get update && \
@@ -11,11 +11,19 @@ RUN set -ex && \
         llvm-dev \
         libncurses5 \
         libncursesw5 \
+        libssl-dev \
+        libssl1.1 \
         cmake \
-        git
+        git \
+        vim \
+        net-tools \
+        procps
+        
 
 WORKDIR /stratum
 
+
+RUN touch x
 # Copying grin-pool source
 COPY src/. /stratum/src/
 COPY grin-pool.toml Cargo.toml /stratum/
@@ -25,6 +33,12 @@ RUN cargo build
 
 # runtime stage
 FROM debian:9.4
+
+RUN set -ex && \
+    apt-get update && \
+    apt-get --no-install-recommends --yes install \
+        libssl-dev \
+        libssl1.1
 
 WORKDIR /stratum
 COPY --from=builder /stratum/target/*/grin-pool /usr/local/bin/

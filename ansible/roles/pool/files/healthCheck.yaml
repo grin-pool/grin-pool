@@ -5,7 +5,7 @@ metadata:
   labels:
     run: healthcheck
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 32050
     nodePort: 32050
@@ -27,8 +27,11 @@ spec:
     spec:
       containers:
       - name: healthcheck
-        image: grinpool/services:latest
+        image: docker.mwgrinpool.com:5001/services:latest
 #        command: ["sleep", "9999"]
         command: ["/usr/local/bin/healthCheck.py"]
         ports:
         - containerPort: 32050
+      imagePullSecrets:
+      - name: regsecret
+

@@ -18,6 +18,7 @@
 import sys
 import requests
 import json
+import atexit
 from time import sleep
 
 from grinlib import lib
@@ -32,7 +33,7 @@ LOGGER = None
 CONFIG = None
 
 # XXX TODO: Move to config
-BATCHSZ = 100
+BATCHSZ = 1
 
 def main():
     CONFIG = lib.get_config()
@@ -40,6 +41,7 @@ def main():
     LOGGER.warn("=== Starting {}".format(PROCESS))
     # Connect to DB
     database = lib.get_db()
+    atexit.register(lib.teardown_db)
 
     check_interval = float(CONFIG[PROCESS]["check_interval"])
     avg_over_range = int(CONFIG[PROCESS]["avg_over_range"])
@@ -47,27 +49,28 @@ def main():
     # Find the height of the latest stats record
     last_height = 0
     latest_stat = Grin_stats.get_latest()
+    print("latest_stat = {}".format(latest_stat))
 
     if latest_stat == None:
-        # Special case for new pool startup - Need 3 stats records to bootstrap
         LOGGER.warn("Initializing Grin_stats")
-        grinstats.initialize()
-        last_height = 2
-    else:
-        last_height = latest_stat.height
+        grinstats.initialize(avg_over_range, LOGGER)
+        latest_stat = Grin_stats.get_latest()
+        print("Finished initializing, latest_stat height = {}".format(latest_stat.height))
+    last_height = latest_stat.height
     height = last_height + 1
     LOGGER.warn("grinStats service starting at block height: {}".format(height))
 
     # Generate grin stats records - one per grin block
     while True:
-        latest = grin.blocking_get_current_height()
+        #latest_db_block = Blocks.get_latest()
+        latest = Blocks.get_latest().height
         while latest >= height:
             try:
                 new_stats = grinstats.calculate(height, avg_over_range)
                 # Batch new stats when possible, but commit at reasonable intervals
                 database.db.getSession().add(new_stats)
-                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
-                    database.db.getSession().commit()
+#                if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                database.db.getSession().commit()
                 LOGGER.warn("Added Grin_stats for block: {} - gps:{} diff:{}".format(new_stats.height, new_stats.gps, new_stats.difficulty))
                 height = height + 1
             except AssertionError as e:

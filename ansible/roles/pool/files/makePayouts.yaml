@@ -10,24 +10,37 @@ spec:
         spec:
           containers:
           - name: makepayouts
-            image: grinpool/services:latest
-#            command: ["sleep", "999"]
+            image: docker.mwgrinpool.com:5001/services:latest
+#            image: grinpool/services:latest
+#            command: ["sleep", "9999999"]
             command: ["/usr/local/bin/makePayouts.py"]
             env:
+            - name: WALLET_OWNER_API_USER
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-owner-api
+                  key: username.txt
+            - name: WALLET_OWNER_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-owner-api
+                  key: password.txt
             - name: MYSQL_ROOT_PASSWORD
               value:
-              #valueFrom:
-              #  secretKeyRef:
-              #    name: mysql-pass
-              #    key: password
-            volumeMounts:
-            - name: grinwallet
-              mountPath: /wallet
-          volumes:
-          - name: grinwallet
-            persistentVolumeClaim:
-              claimName: grinwallet
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+#            volumeMounts:
+#            - name: grinwallet
+#              mountPath: /wallet
+#          volumes:
+#          - name: grinwallet
+#            persistentVolumeClaim:
+#              claimName: grinwallet
           restartPolicy: Never
+          imagePullSecrets:
+          - name: regsecret
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0
   failedJobsHistoryLimit: 1

@@ -7,7 +7,6 @@ from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
 from grinbase.model import Base
-from grinbase.model.worker_shares import Worker_shares
 
 
 # This table contains share information - one record per solution type per user per block
@@ -16,7 +15,7 @@ class Shares(Base):
     __tablename__ = 'shares'
     id = Column(BigInteger, primary_key=True)
     edge_bits = Column(Integer)
-    difficulty = Column(Integer) # Shares actual difficulty as reported in grin log
+    difficulty = Column(BigInteger) # Shares actual difficulty as reported in grin log
     valid = Column(Integer)
     invalid = Column(Integer)
     stale = Column(Integer)

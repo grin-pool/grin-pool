@@ -1,37 +1,35 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, BigInteger, Boolean, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
 from grinbase.model import Base
 
-# This is the "user payment" table
+# This is the "user balance and payout" table
 
 class Pool_utxo(Base):
     __tablename__ = 'pool_utxo'
-    id = Column(String(36), primary_key=True, nullable=False)
-    address = Column(String(1024), nullable=False)
-    amount = Column(Float)
+    id = Column(Integer, primary_key=True, index=True)
+    address = Column(String(1024))
+    method = Column(String(64))
+    locked = Column(Boolean)
+    amount = Column(BigInteger)
     failure_count = Column(Integer)
     last_try = Column(DateTime)
     last_success = Column(DateTime)
-    total_amount = Column(Float)
+    total_amount = Column(BigInteger)
+    user_id = Column(Integer, ForeignKey('users.id'))
 
     def __repr__(self):
-        return "{} {} {} {} {} {} {}".format(
-            self.id,
-            self.address,
-            self.amount,
-            self.failure_count,
-            self.last_try,
-            self.last_success,
-            self.total_amount)
+        return self.to_json()
 
-    def __init__(self, id, address):
-        self.id = id
+    def __init__(self, user_id, address=None, method=None):
+        self.user_id = user_id
         self.address = address
+        self.method = method
+        self.locked = False
         self.amount = 0
         self.failure_count = 0
         self.last_try = datetime.utcfromtimestamp(0)
@@ -42,11 +40,14 @@ class Pool_utxo(Base):
         obj = {
                 'id': self.id,
                 'address': self.address,
+                'method': self.method,
+                'locked': self.locked,
                 'amount': self.amount,
                 'failure_count': self.failure_count,
                 'last_try': self.last_try.timestamp(),
                 'last_success': self.last_success.timestamp(),
-                'total_amount': self.total_amount
+                'total_amount': self.total_amount,
+                'user_id': self.user_id,
         }
         # Filter by field(s)
         if fields != None:
@@ -54,11 +55,6 @@ class Pool_utxo(Base):
                 if k not in fields:
                     del obj[k]
         return obj
-
-    # Get worker UUID from login string
-    @classmethod
-    def loginToUUID(cls, login):
-        return str(uuid.uuid3(uuid.NAMESPACE_URL, str(login)))
 
     # Get a list of all records in the table
     @classmethod
@@ -68,7 +64,7 @@ class Pool_utxo(Base):
     # Get a list of all payable records
     @classmethod
     def getPayable(cls, minPayout):
-        return list(database.db.getSession().query(Pool_utxo).filter(Pool_utxo.amount >= minPayout))
+        return list(database.db.getSession().query(Pool_utxo).filter(and_(Pool_utxo.amount >= minPayout,Pool_utxo.locked == False,Pool_utxo.address != None,Pool_utxo.method != None)))
 
     # Get by address
     @classmethod
@@ -76,24 +72,37 @@ class Pool_utxo(Base):
         full_addr = "http://" + address
         return database.db.getSession().query(Pool_utxo).filter(Pool_utxo.address==full_addr).first()
 
-    # Get by id (no lock)
+    # Get by user_id
     @classmethod
-    def get_by_id(cls, uid):
-        return database.db.getSession().query(Pool_utxo).filter(Pool_utxo.id==uid).first()
+    def get_by_userid(cls, user_id):
+        return database.db.getSession().query(Pool_utxo).filter(Pool_utxo.user_id==user_id).first()
 
-    # Get a single record by id locked for update
+    # Get a single record by user_id locked for update
     @classmethod
-    def get_locked_by_id(cls, uid):
-        return database.db.getSession().query(Pool_utxo).with_for_update().filter(Pool_utxo.id==uid).first()
+    def get_locked_by_userid(cls, user_id):
+        return database.db.getSession().query(Pool_utxo).with_for_update().filter(Pool_utxo.user_id==user_id).first()
 
     # Add creadit to a worker, create a new record if none exists
     @classmethod
-    def credit_worker(cls, worker, amount):
-        uid = Pool_utxo.loginToUUID(worker)
-        worker_utxo = Pool_utxo.get_locked_by_id(uid)
+    def credit_worker(cls, user_id, amount):
+        worker_utxo = Pool_utxo.get_locked_by_userid(int(user_id))
         if worker_utxo is None:
-            worker_utxo = Pool_utxo(id=uid, address=worker)
+            worker_utxo = Pool_utxo(user_id=user_id)
             database.db.createDataObj(worker_utxo)
         worker_utxo.amount += amount
         return worker_utxo
+    
+    # Update fields in the record
+    @classmethod
+    def update_field(cls, user_id, field, value):
+        worker_utxo = Pool_utxo.get_by_userid(int(user_id))
+        if worker_utxo is None:
+            return False
+        try:
+            setattr(worker_utxo, field, value)
+            database.db.getSession().commit()
+        except:
+            return False
+        return True
+        
     

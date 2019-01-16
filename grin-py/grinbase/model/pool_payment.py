@@ -1,52 +1,57 @@
 import datetime
-import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, func, and_, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
 from grinbase.model import Base
 
-# This is the "payment" record table.  It keeps track of payments made to workers
+# This is the "payment" record table.  It keeps track of payments made to users
 
 class Pool_payment(Base):
     __tablename__ = 'pool_payment'
-    id = Column(String(36), primary_key=True)
-    timestamp = Column(DateTime, primary_key=True)
-    address = Column(String(1024), nullable=False)
-    amount = Column(Float)
-    fee = Column(Float)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    height = Column(BigInteger, nullable=False, index=True)
+    address = Column(String(1024))
+    amount = Column(BigInteger)
+    method = Column(String(64))
+    fee = Column(BigInteger)
     failure_count = Column(Integer)
-    invoked_by = Column(String(15))
+    invoked_by = Column(String(16))
+    state = Column(String(16))
+    tx_data = Column(Text(100000))
+    user_id = Column(Integer, ForeignKey('users.id'))
     
 
     def __repr__(self):
-        return "{} {} {} {} {} {} {}".format(
-            self.id,
-            self.timestamp,
-            self.address,
-            self.amount,
-            self.fee,
-            self.failure_count,
-            self.invoked_by)
+        return self.to_json()
 
-    def __init__(self, id, timestamp, address, amount, fee, failure_count=0, invoked_by="schedule"):
-        self.id = id
+    def __init__(self, user_id, timestamp, height, address, amount, method, fee, tx_data, failure_count=0, state="new", invoked_by="schedule"):
         self.timestamp = timestamp
+        self.height = height
+        self.user_id = user_id
         self.address = address
         self.amount = amount
+        self.method = method
         self.fee = fee
         self.failure_count = failure_count
+        self.state = state
+        self.tx_data = str(tx_data)
         self.invoked_by = invoked_by
 
     def to_json(self, fields=None):
         obj = {
                 'id': self.id,
-                'timestamp': self.timestamp,
+                'timestamp': self.timestamp.timestamp(),
+                'height': self.height,
+                'user_id': self.user_id,
                 'address': self.address,
                 'amount': self.amount,
+                'method': self.method,
                 'fee': self.fee,
                 'failure_count': self.failure_count,
+                'state': self.state,
                 'invoked_by': self.invoked_by
         }
         # Filter by field(s)
@@ -56,28 +61,58 @@ class Pool_payment(Base):
                     del obj[k]
         return obj
 
-    # Get worker UUID from login string
-    @classmethod
-    def loginToUUID(cls, login):
-        return str(uuid.uuid3(uuid.NAMESPACE_URL, str(login)))
-
     # Get a list of all records in the table
     @classmethod
     def getAll(cls):
         return list(database.db.getSession().query(Pool_payment))
 
+    # Get by state
+    @classmethod
+    def get_by_state(cls, state):
+        return list(database.db.getSession().query(Pool_payment).filter(Pool_payment.state==state).all())
+
     # Get by address
     @classmethod
     def get_by_address(cls, address):
-        full_addr = "http://" + address
-        return database.db.getSession().query(Pool_payment).filter(Pool_payment.address==full_addr).first()
+        rec = database.db.getSession().query(Pool_payment).filter(Pool_payment.address==address).first()
+        if rec is None:
+            full_addr = "http://" + address
+            rec = database.db.getSession().query(Pool_payment).filter(Pool_payment.address==full_addr).first()
+        return rec
 
-    # Get by id (no lock)
+    # Get all payment records by height for a single worker
     @classmethod
-    def get_by_id(cls, uid):
-        return database.db.getSession().query(Pool_payment).filter(Pool_payment.id==uid).first()
+    def get_by_userid_and_height(cls, user_id, height, range=None):
+        if range is None:
+            return list(database.db.getSession().query(Pool_payment).filter(and_(Pool_payment.user_id==user_id, Pool_payment.height==height)))
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_payment).filter(and_(Pool_payment.user_id==user_id, Pool_payment.height >= h_start, Pool_payment.height <= h_end)))
 
-    # Get a single record by id locked for update
+
+    # Get all payment records by height got all workers
     @classmethod
-    def get_locked_by_id(cls, uid):
-        return database.db.getSession().query(Pool_payment).with_for_update().filter(Pool_payment.id==uid).first()
+    def get_by_height(cls, height, range=None):
+        if range is None:
+            return list(database.db.getSession().query(Pool_payment).filter(Pool_payment.height==height))
+        else:
+            h_start = height-(range-1)
+            h_end = height
+            return list(database.db.getSession().query(Pool_payment).filter(and_(Pool_payment.height >= h_start, Pool_payment.height <= h_end)))
+
+    # Get payment records by timestamp
+    @classmethod
+    def get_by_userid_and_time(cls, user_id, ts, range):
+        ts_start = ts-range
+        ts_end = ts
+        return list(database.db.getSession().query(Pool_payment).filter(and_(Pool_payment.timestamp >= ts_start, Pool_payment.timestamp <= ts_end, Pool_payment.user_id == user_id)).order_by(asc(Pool_payment.timestamp)))
+
+
+    # Get latest payment records by user_id (no lock)
+    @classmethod
+    def get_latest_by_userid(cls, user_id, range=None):
+        if range is None:
+            return database.db.getSession().query(Pool_payment).filter(Pool_payment.user_id==user_id).order_by(Pool_payment.height.desc()).first()
+        else:
+            return list(database.db.getSession().query(Pool_payment).filter(Pool_payment.user_id==user_id).order_by(Pool_payment.height.desc()).limit(range).all())

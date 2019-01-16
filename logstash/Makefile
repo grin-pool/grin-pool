@@ -1,5 +1,6 @@
 CONTAINER := logstash
-REGISTRY := docker.io/grinpool
+REGISTRY := docker.mwgrinpool.com:5001
+#REGISTRY := grinpool
 
 push: build
 

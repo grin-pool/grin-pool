@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, Boolean, asc, and_
+from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Boolean, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -14,24 +14,22 @@ class Pool_stats(Base):
     __tablename__ = 'pool_stats'
     height = Column(BigInteger, primary_key=True, index=True, autoincrement=False)
     timestamp = Column(DateTime, nullable=False, index=True)
-    active_miners = Column(Integer)
+    active_miners = Column(BigInteger)
     shares_processed = Column(Integer) # this block only
     total_blocks_found = Column(Integer) 
     total_shares_processed = Column(BigInteger) 
-    total_grin_paid = Column(Float)
     dirty = Column(Boolean, index=True)
     gps = relationship("Gps")
     
     def __repr__(self):
         return str(self.to_json())
 
-    def __init__(self, timestamp, height, active_miners, shares_processed, total_shares_processed, total_grin_paid, total_blocks_found, dirty=False):
+    def __init__(self, timestamp, height, active_miners, shares_processed, total_shares_processed, total_blocks_found, dirty=False):
         self.timestamp = timestamp
         self.height = height
         self.active_miners = active_miners
         self.shares_processed = shares_processed
         self.total_shares_processed = total_shares_processed
-        self.total_grin_paid = total_grin_paid
         self.total_blocks_found = total_blocks_found
         self.dirty = dirty
 
@@ -45,7 +43,6 @@ class Pool_stats(Base):
                 'active_miners': self.active_miners,
                 'shares_processed': self.shares_processed,
                 'total_shares_processed': self.total_shares_processed,
-                'total_grin_paid': self.total_grin_paid,
                 'total_blocks_found': self.total_blocks_found,
                 'dirty': self.dirty,
                 'gps': gps_data,

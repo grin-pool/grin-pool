@@ -2,9 +2,7 @@ FROM splunk/universalforwarder:latest
 
 USER root
 
-ENV SPLUNK_USER=root
 ENV SPLUNK_START_ARGS=--accept-license
-ENV SPLUNK_PASSWORD=password
 
 EXPOSE 9997
 

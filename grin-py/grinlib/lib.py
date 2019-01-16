@@ -22,6 +22,7 @@ import sys
 import time
 import configparser
 import logging
+import redis
 import threading
 import subprocess
 from datetime import datetime
@@ -34,8 +35,13 @@ from grinbase.dbaccess.database import database_details
 from grinbase.model.blocks import Blocks
 
 
+# XXX TODO: Get from config
+REDIS_HOST = "redis-master"
+
 LOGGER = None
 CONFIG = None
+DATABASE = None
+REDIS = None
 
 def get_config():
     global CONFIG
@@ -91,14 +97,28 @@ def get_db_constraints():
     return mysqlcontsraints
 
 def get_db():
+    global DATABASE 
     rlock = threading.RLock()
     with rlock:
-        if database.db is None:
+        if DATABASE is None:
+            print("INIT DB")
             mysqlcontsraints = get_db_constraints()
             database.db = database_details(MYSQL_CONSTANTS=mysqlcontsraints)
             database.db.initialize()
-    database.db.initializeSession()
-    return database
+            DATABASE = database
+    DATABASE.db.initializeSession()
+    return DATABASE
+
+def teardown_db():
+    global database
+    database.db.destroySession()
+
+def get_redis_db():
+    print("INIT REDIS")
+    r = redis.Redis(
+            host='redis-master',
+    )
+    return r
 
 def get_grin_api_url():
     config = get_config()

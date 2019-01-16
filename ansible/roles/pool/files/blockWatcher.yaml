@@ -11,14 +11,16 @@ spec:
     spec:
       containers:
       - name: grin-pool
-        image: grinpool/services:latest
-#        command: ["sleep", "99999"]
-        command: ["/usr/local/bin/blockWatcher.py"]
+        image: docker.mwgrinpool.com:5001/services:latest
+        # DONT set command - it overrides docker entrypoint
+        args: ["/usr/local/bin/blockWatcher.py"]
         env:
-        - name: MYSQL_ROOT_PASSWORD
+        - name: DEBUG_HOLD
           value:
-          # valueFrom:
-          #  secretKeyRef:
-          #    name: mysql-pass
-          #    key: password
-
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+      imagePullSecrets:
+      - name: regsecret

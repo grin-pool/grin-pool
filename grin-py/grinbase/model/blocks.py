@@ -111,6 +111,16 @@ class Blocks(Base):
     def getAll(cls):
         return list(database.db.getSession().query(Blocks))
 
+    # Get the count of the number of blocks we have
+    @classmethod
+    def count(cls):
+        return database.db.getSession().query(func.count(Blocks.height)).scalar()
+    # Get the first block we have thats > 0
+    @classmethod
+    def get_earliest(cls):
+        lowest = database.db.getSession().query(func.min(Blocks.height)).scalar()
+        return database.db.getSession().query(Blocks).filter(Blocks.height == lowest).first()
+
     # Get a single record by nonce
     @classmethod
     def get_by_nonce(cls, nonce):

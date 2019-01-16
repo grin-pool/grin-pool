@@ -5,10 +5,9 @@ metadata:
   labels:
     run: webui
 spec:
-  type: LoadBalancer
   ports:
   - port: 13424
-    nodePort: 32424
+    targetPort: 3005
     protocol: TCP
     name: webui
   selector:
@@ -27,9 +26,11 @@ spec:
     spec:
       containers:
       - name: webui
-        image: grinpool/services:latest
+        image: docker.mwgrinpool.com:5001/webui-js:latest
 #        command: ["sleep", "9999999"]
-#        command: ["/usr/local/bin/grinbase/scripts/testpygal.py"]
-        command: ["/usr/local/bin/webui/__init__.py"]
+        command: ["yarn", "start"]
         ports:
-        - containerPort: 13424
+        - containerPort: 13524
+      imagePullSecrets:
+      - name: regsecret
+

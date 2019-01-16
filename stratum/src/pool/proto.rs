@@ -54,7 +54,7 @@ pub struct RpcError {
     pub message: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LoginParams {
     pub login: String,
     pub pass: String,
@@ -63,7 +63,7 @@ pub struct LoginParams {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitParams {
-    height: u64,
+    pub height: u64,
     pub job_id: u64,
     pub nonce: u64,
     edge_bits: u32,
@@ -139,7 +139,7 @@ impl StratumProtocol {
                 // warn!(LOGGER, "XXX DEBUG - line read: {:?}", line);
                 // stream is not returning a proper error on disconnect
                 if line == "" {
-                    return Err(format!("{} - Connection Error: Disconnected", self.id));
+                    return Err(format!("{} - Connection Error 1: Disconnected", self.id));
                 }
                 return Ok(Some(line));
             }
@@ -148,7 +148,7 @@ impl StratumProtocol {
                 return Ok(None);
             }
             Err(e) => {
-                error!(LOGGER, "{} - Connection Error: {}", self.id, e);
+                error!(LOGGER, "{} - Connection Error 1a: {}", self.id, e);
                 return Err(format!("{}", e));
             }
         }
@@ -168,12 +168,12 @@ impl StratumProtocol {
             Ok(_) => match stream.flush() {
                 Ok(_) => {}
                 Err(e) => {
-                    error!(LOGGER, "{} - Connection Error: {}", self.id, e);
+                    error!(LOGGER, "{} - Connection Error 2: {}", self.id, e);
                     return Err(format!("{}", e));
                 }
             },
             Err(e) => {
-                error!(LOGGER, "{} - Connection Error: {}", self.id, e);
+                error!(LOGGER, "{} - Connection Error 2a: {}", self.id, e);
                 return Err(format!("{}", e));
             }
         }

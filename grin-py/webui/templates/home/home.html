@@ -118,6 +118,79 @@
   </div>
 
 
+ <div class="card border-primary mb-3 text-left" >
+    <div class="card-header py-1" style="background-color:#000011;font-size:125%;">
+
+      
+      <div class="input-group input-group-sm mb-1 has-feedback has-clear">
+        <div style="color:#cd7f32">
+          <a data-toggle="collapse" data-target=".togglem" href="#m-block" aria-expanded="true" aria-controls="m-block" style="color:#cd7f32;" >
+          Miners
+          </a>
+        </div>
+        <div class="input-group-prepend" style="width: 85%;">
+          <span class="input-group-text py-0" style="background-color:#000011">
+            <button type="button" class="btn-primary btn-xs py-0" id="exampleButton1">
+              <i class="fa fa-search fa-xs" aria-hidden="true"></i>
+            </button>
+          </span>
+
+          <input type="text" class="form-control py-0"  style="background-color:#212133;color:#cd7f32" id="exampleInput1" placeholder="Enter your wallet address to see miner stats">
+          <span class="form-control-clear fa fa-times py-1 form-control-feedback hidden my-auto" style="background-color:#212133;color:#ffffff;">
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card-body text-left text-white py-3 togglem" style="background-color:#00001e;font-size:85%;">
+      <div class="row justify-content-center align-items-center">
+
+        <table class="table-striped table-dark table-sm table-hover fixed" style="background-color:#000021;">
+          <col width="185px" />
+          <col width="75px" />
+          <tr>
+            <td>
+              <i class="fa fa-server fa-lg" aria-hidden="true" style="color:#0f12c1"></i>
+              &nbsp; {{ workers["top"][0]["name"] }}
+            </td> <td>
+              {{ workers["top"][0].gps }} g/s
+            </td>
+          </tr> <tr>
+            <td>
+              <i class="fa fa-server fa-lg" aria-hidden="true" style="color:#c10e0e"></i>
+              &nbsp; {{ workers["top"][1]["name"] }}
+            </td> <td>
+              {{ workers["top"][1].gps }} g/s
+          </tr> <tr>
+            <td>
+              <i class="fa fa-server fa-lg" aria-hidden="true" style="color:#0dc110"></i>
+              &nbsp; {{ workers["top"][2].name }}
+            </td> <td>
+              {{ workers["top"][2].gps }} g/s
+          </tr> <tr>
+            <td>
+              <i class="fa fa-server fa-lg" aria-hidden="true" style="color:#8b0cc1"></i>
+              &nbsp; {{ workers["top"][3].name }}
+            </td> <td>
+              {{ workers["top"][3].gps }} g/s
+            </td>
+          </tr> <tr>
+            <td>
+              <i class="fa fa-server fa-lg" aria-hidden="true" style="color:#00effc"></i>
+              &nbsp; {{ workers["top"][4].name }}
+            </td> <td>
+              {{ workers["top"][4].gps }} g/s
+            </td>
+          </tr> 
+        </table>
+
+        <div class="col-lg-8 col-md-8">
+          <div id="chart">
+            <img src="{{workers.graph|safe}}" class="img-fluid" style="width:100%; max-height:225px;">
+          </div>
+        </div>
+
 
 
 {% endblock %}

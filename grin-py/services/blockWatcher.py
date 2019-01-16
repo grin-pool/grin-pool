@@ -23,6 +23,7 @@ import sys
 import traceback
 import requests
 import json
+import atexit
 from time import sleep
 from datetime import datetime
 
@@ -48,16 +49,18 @@ def main():
     LOGGER.warn("=== Starting {}".format(PROCESS))
     # Connect to DB
     database = lib.get_db()
+    atexit.register(lib.teardown_db)
 
     # Get Config
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
     # Find the height of the latest block record
-    last_height = -1
+    last_height = -1 # grin.blocking_get_current_height() - 1400
     latest_block = Blocks.get_latest()
     if latest_block is not None:
         last_height = latest_block.height
     height = last_height + 1
+    height = max(0, height)
     LOGGER.warn("Starting at block height: {}".format(height))
 
     while True:
@@ -67,6 +70,9 @@ def main():
                 response = grin.blocking_get_block_by_height(height)
                 LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
                                                          response["header"]["height"]))
+                #print("sleeping 60....")
+                #sleep(60)
+                #print(".....GO")
                 try:
                     new_block = Blocks(hash = response["header"]["hash"],
                                    version = response["header"]["version"],
@@ -102,6 +108,7 @@ def main():
             sleep(check_interval)
         except Exception as e:
             LOGGER.error("Something went wrong: {}\n{}".format(e, traceback.format_exc().splitlines()))
+            database.db.getSession().rollback()
             sys.stdout.flush()
             sleep(check_interval)
     # Should never get here, but....

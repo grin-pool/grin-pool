@@ -17,7 +17,6 @@ use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::Instant;
 use std::{thread, time};
-use sha2::{Sha256, Digest};
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
@@ -36,31 +35,38 @@ fn accept_workers(
     workers: &mut Arc<Mutex<Vec<Worker>>>,
 ) {
     let listener = TcpListener::bind(address).expect("Failed to bind to listen address");
-    let mut worker_id: usize = 0;
     let banned: HashMap<SocketAddr, Instant> = HashMap::new();
     // XXX TODO: Call the pool-api to get a list of banned IPs, refresh that list sometimes
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                // XXX ALWAYS DO THIS FIRST - Check if this ip is banned and if so, drop it
-                let worker_addr = stream.peer_addr().unwrap();
-                if banned.contains_key(&worker_addr) {
-                    let _ = stream.shutdown(Shutdown::Both);
-                    continue;
+                match stream.peer_addr() {
+                    Ok(worker_addr) => {
+                        // XXX ALWAYS DO THIS FIRST - Check if this ip is banned and if so, drop it
+                        if banned.contains_key(&worker_addr) {
+                            let _ = stream.shutdown(Shutdown::Both);
+                            continue;
+                        }
+                        warn!(
+                            LOGGER,
+                            "Worker Listener - New connection from ip: {}",
+                            worker_addr
+                        );
+                        stream
+                            .set_nonblocking(true)
+                            .expect("set_nonblocking call failed");
+                        let mut worker = Worker::new(0, BufStream::new(stream));
+                        worker.set_difficulty(difficulty);
+                        workers.lock().unwrap().push(worker);
+                        // The new worker is now added to the workers list
+                    }
+                    Err(e) => {
+                        warn!(
+                            LOGGER,
+                            "{} - Worker Listener - Error getting wokers ip address: {:?}", id, e
+                        );
+                    }
                 }
-                warn!(
-                    LOGGER,
-                    "{} - Worker Listener - New connection from {}",
-                    id,
-                    stream.peer_addr().unwrap()
-                );
-                stream
-                    .set_nonblocking(true)
-                    .expect("set_nonblocking call failed");
-                let mut worker = Worker::new(worker_id, BufStream::new(stream));
-                worker.set_difficulty(difficulty);
-                workers.lock().unwrap().push(worker);
-                worker_id = worker_id + 1;
             }
             Err(e) => {
                 warn!(
@@ -83,7 +89,7 @@ pub struct Pool {
     config: Config,
     server: Server,
     workers: Arc<Mutex<Vec<Worker>>>,
-    duplicates: HashMap<Vec<u32>, usize>, // nonce, worker id who first submitted it
+    duplicates: HashMap<Vec<u32>, usize>, // pow vector, worker id who first submitted it
 }
 
 impl Pool {
@@ -149,7 +155,7 @@ impl Pool {
             // Delete workers in error state
             let _num_active_workers = self.clean_workers();
 
-            thread::sleep(time::Duration::from_millis(50));
+            thread::sleep(time::Duration::from_millis(10));
         }
     }
 
@@ -165,7 +171,7 @@ impl Pool {
                 return Ok(());
             }
             Err(e) => {
-                // In most cases just log an error and continue
+                // Log an error
                 error!(
                     LOGGER,
                     "{} - Error processing upstream message: {:?}", self.id, e
@@ -264,10 +270,10 @@ impl Pool {
                         self.server.submit_share(&share.clone(), worker.id());
                         warn!(LOGGER, "{} - Got share at height {} with nonce {} with difficulty {} from worker {}",
                                 self.id,
-                                self.job.height,
+                                share.height,
                                 share.nonce,
                                 worker.status.difficulty,
-                                worker.login(),
+                                worker.id,
                         );
                     }
                 }

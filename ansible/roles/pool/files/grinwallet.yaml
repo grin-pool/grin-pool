@@ -5,12 +5,21 @@ metadata:
   labels:
     run: grinwallet
 spec:
-  type: LoadBalancer
+  # XXX TODO: REMOVE THIS BEFORE RELEASE
+#  type: LoadBalancer
   ports:
   - port: 13415
-    nodePort: 32415
+#    nodePort: 32415
     protocol: TCP
-    name: grinwallet
+    name: public
+  - port: 13420
+    # nodePort: 32420
+    protocol: TCP
+    name: private
+  - port: 13425
+    # nodePort: 32425
+    protocol: TCP
+    name: api
   selector:
     run: grinwallet
 ---
@@ -25,17 +34,108 @@ spec:
       labels:
         run: grinwallet
     spec:
+      hostname: "grinwallet"
       containers:
-      - name: grinwallet
-        image: grinpool/grin:latest
-#        command: ["sleep", "9999"]
-        command: ["/run-wallet.sh"]
+      - name: public
+        image: docker.mwgrinpool.com:5001/grin:latest
+        args: ["/run-wallet.sh", "public"]
+        env:
+        - name: DEBUG_HOLD
+          value:
+        - name: WALLET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinwallet
+              key: password.txt
         ports:
         - containerPort: 13415
         volumeMounts: # directory inside container
         - mountPath: /wallet
           name: grinwallet
+      - name: private
+        image: docker.mwgrinpool.com:5001/grin:latest
+#        command: ["sleep", "9999999999"]
+        command: ["/run-wallet.sh", "private"]
+        env:
+        - name: KEYBASE_ALLOW_ROOT
+          value: "1"
+        - name: WALLET_OWNER_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: password.txt
+        - name: WALLET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinwallet
+              key: password.txt
+        ports:
+        - containerPort: 13420
+        volumeMounts: # directory inside container
+        - mountPath: /wallet
+          name: grinwallet
+        - mountPath: /keybase
+          name: keybase
+      - name: api
+        image: docker.mwgrinpool.com:5001/services:latest
+#        command: ["sleep", "9999999999"]
+        command: ["/usr/local/bin/api/payment_api.py"]
+        env:
+        - name: WALLET_OWNER_API_USER
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: username.txt
+        - name: WALLET_OWNER_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: password.txt
+        - name: GRIN_POOL_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: username.txt
+        - name: GRIN_POOL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: password.txt
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 13425
+#        volumeMounts: # directory inside container
+#        - mountPath: /services
+#          name: xxx
+      - name: keybase
+        image: docker.mwgrinpool.com:5001/keybase:latest
+        command: ["/entrypoint.sh"]
+        #command: ["sleep", "9999"]
+        env:
+        - name: MYDOMAIN
+          value: "mwgrinpool.com"
+        - name: AUTH_SA
+          valueFrom:
+            secretKeyRef:
+              name: storage-update
+              key: grinpool-serviceaccount-storage-update.json
+        ports:
+        - containerPort: 13415
+        volumeMounts: # directory inside container
+        - mountPath: /keybase
+          name: keybase
       volumes:
       - name: grinwallet
         persistentVolumeClaim:
           claimName: grinwallet
+      - name: keybase
+        emptyDir: {}
+#      - name: xxx
+#        hostPath:
+#          path: /data/services
+      imagePullSecrets:
+      - name: regsecret

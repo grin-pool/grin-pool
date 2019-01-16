@@ -22,8 +22,13 @@ metadata:
   labels:
     app: mysql
 spec:
+#  type: LoadBalancer
   ports:
   - name: mysql
     port: 3306
+#    nodePort: 32336
+  - name: xtrabackup
+    port: 3307
+#    nodePort: 32337
   selector:
     app: mysql

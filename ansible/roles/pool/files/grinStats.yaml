@@ -11,12 +11,26 @@ spec:
     spec:
       containers:
       - name: grin-pool
-        image: grinpool/services:latest
-        command: ["/usr/local/bin/grinStats.py"]
+        image: docker.mwgrinpool.com:5001/services:latest
+        args: ["/usr/local/bin/grinStats.py"]
         env:
+        - name: DEBUG_HOLD
+          value: 
         - name: MYSQL_ROOT_PASSWORD
-          value:
-          #valueFrom:
-          #  secretKeyRef:
-          #    name: mysql-pass
-          #    key: password
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+#----
+#        volumeMounts: # directory inside container
+#        - mountPath: /services
+#          name: xxx
+#      imagePullSecrets:
+#      - name: regsecret
+#      volumes: # directory location on host
+#      - name: xxx
+#        hostPath:
+#          path: /data/services
+#----
+      imagePullSecrets:
+      - name: regsecret

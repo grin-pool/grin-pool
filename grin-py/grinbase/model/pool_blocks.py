@@ -2,7 +2,7 @@
 
 import datetime
 
-from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime, asc, and_, func
+from sqlalchemy import Column, ForeignKey, Integer, String, BigInteger, Boolean, DateTime, asc, and_, func
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -16,11 +16,11 @@ class Pool_blocks(Base):
     height = Column(BigInteger, primary_key=True, nullable=False, index=True)
     hash = Column(String(64))
     nonce = Column(String(20), nullable=False)
-    actual_difficulty = Column(Integer)
-    net_difficulty = Column(Integer)
+    actual_difficulty = Column(BigInteger)
+    net_difficulty = Column(BigInteger)
     timestamp = Column(DateTime, nullable=False, index=True)
-    found_by = Column(String(1024))
     state = Column(String(20))
+    found_by = Column(Integer, ForeignKey('users.id'))
 
     def __repr__(self):
         return "{} {} {} {} {} {} {} {}".format(
@@ -43,7 +43,7 @@ class Pool_blocks(Base):
         self.found_by = found_by
         self.state = state
 
-    def to_json(self, fields=None):
+    def to_json(self, fields=None, include_found_by=False):
         obj = { 'hash': self.hash,
                 'height': self.height,
                 'nonce': self.nonce,
@@ -53,12 +53,22 @@ class Pool_blocks(Base):
                 'found_by': self.found_by,
                 'state': self.state
               }
+        # AUTH FILTER
+        if include_found_by == False:
+            del obj['found_by']
         # Filter by field(s)
         if fields != None:
             for k in list(obj.keys()):
                 if k not in fields:
                     del obj[k]
         return obj
+
+    # Set the state
+    @classmethod
+    def setState(cls, height, state):
+        rec = database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == height).first()
+        rec.state = state
+        database.db.getSession().commit()
 
     # Get number of records up to height
     @classmethod
@@ -91,22 +101,34 @@ class Pool_blocks(Base):
 
     # Get the latest pool block record
     @classmethod
-    def get_latest(cls, n=None):
+    def get_latest(cls, n=None, id=None):
         highest = database.db.getSession().query(func.max(Pool_blocks.height)).scalar()
-        if n == None:
-            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == highest).first()
+        if n is None:
+            if id is None:
+                return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == highest).first()
+            else:
+                return database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height == highest, Pool_blocks.found_by == id)).first()
         else:
-            return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height >= highest-n).order_by(asc(Pool_blocks.height)))
+            if id is None:
+                return list(database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height >= highest-n).order_by(asc(Pool_blocks.height)))
+            else:
+                return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height >= highest-n, Pool_blocks.found_by == id)).order_by(asc(Pool_blocks.height)))
 
     # Get record(s) by height
     @classmethod
-    def get_by_height(cls, height, range=None):
+    def get_by_height(cls, height, range=None, id=None):
         if range == None:
-            return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == height).first()
+            if id is None:
+                return database.db.getSession().query(Pool_blocks).filter(Pool_blocks.height == height).first()
+            else:
+                return database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height == height, Pool_blocks.found_by == id)).first()
         else:
             h_start = height-(range-1)
             h_end = height
-            return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height >= h_start, Pool_blocks.height <= h_end)).order_by(asc(Pool_blocks.height)))
+            if id is None:
+                return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height >= h_start, Pool_blocks.height <= h_end)).order_by(asc(Pool_blocks.height)))
+            else:
+                return list(database.db.getSession().query(Pool_blocks).filter(and_(Pool_blocks.height >= h_start, Pool_blocks.height <= h_end, Pool_blocks.found_by == id)).order_by(asc(Pool_blocks.height)))
 
     # Get records falling within requested time range
     @classmethod

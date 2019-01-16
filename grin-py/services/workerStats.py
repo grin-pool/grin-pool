@@ -31,6 +31,7 @@ from grinlib import workerstats
 
 from grinbase.model.blocks import Blocks
 from grinbase.model.worker_stats import Worker_stats
+from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.pool_stats import Pool_stats
 
 
@@ -60,6 +61,12 @@ def main():
     
     if latest_stat != None:
         last_height = latest_stat.height
+    else:
+        latest = Blocks.get_latest()
+        while latest is None:
+            LOGGER.warn("Waiting for the first block...")
+            sleep(5)
+        last_height = latest.height
     height = last_height + 1
 
     LOGGER.warn("Starting at block height: {}".format(height))
@@ -69,13 +76,16 @@ def main():
         # latest = grin.blocking_get_current_height()
         latest = Blocks.get_latest().height
         LOGGER.warn("Latest Block Height = {}".format(latest))
+        while latest > Worker_shares.get_latest_height():
+            LOGGER.warn("Waiting for shares records to catch up: {} vs {}".format(latest, Worker_shares.get_latest_height()))
+            sleep(3)
         #LOGGER.warn("Latest Network Block Height = {}".format(latest))
         while latest >= height:
             try:
                 new_stats = workerstats.calculate(height, avg_over_range)
                 LOGGER.warn("{} new stats for height {}".format(len(new_stats), height))
                 for stats in new_stats:
-                    LOGGER.warn("Added Worker_stats for block: {}, Worker: {} - {} {} {} {} {} {}".format(stats.height, stats.worker, stats.gps, stats.shares_processed, stats.total_shares_processed, stats.grin_paid, stats.total_grin_paid, stats.balance))
+                    LOGGER.warn("Added Worker_stats: {}".format(stats))
                 # mark any existing pool_stats dirty
                 pool_stats = Pool_stats.get_by_height(height)
                 for stat_rec in new_stats:
@@ -84,9 +94,8 @@ def main():
                     LOGGER.warn("Marked existing pool_stats dirty for height: {}".format(height))
                     pool_stats.dirty = True # Pool_stats need to be recalculated
                 if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                    LOGGER.warn("Commit ---")
                     database.db.getSession().commit()
-#                for stats in new_stats:
-#                    LOGGER.warn("Added Worker_stats for block: {}, Worker: {} - {} {} {} {} {} {}".format(stats.height, stats.worker, stats.gps, stats.shares_processed, stats.total_shares_processed, stats.grin_paid, stats.total_grin_paid, stats.balance))
                 height = height + 1
             except Exception as e:
                 LOGGER.error("Something went wrong: {}".format(e))

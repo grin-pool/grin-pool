@@ -31,6 +31,11 @@ def get_api_url():
     grin_api_url = "http://" + config["grin_node"]["address"] + ":" + config["grin_node"]["api_port"]
     return grin_api_url
 
+def get_owner_api_url():
+    config = lib.get_config()
+    grin_owner_api_url = "http://" + config["wallet"]["address"] + ":" + config["wallet"]["owner_api_port"]
+    return grin_owner_api_url
+
 # Network chain height
 def get_current_height():
     config = lib.get_config()

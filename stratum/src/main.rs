@@ -28,7 +28,7 @@ extern crate time;
 extern crate lazy_static;
 #[macro_use]
 extern crate toml;
-extern crate sha2;
+extern crate reqwest;
 
 use bufstream::BufStream;
 use std::error::Error;

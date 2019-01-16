@@ -12,13 +12,6 @@
 // limitations under the License.
 
 #[macro_use]
-#[macro_use]
-#[macro_use]
-#[macro_use]
-#[macro_use]
-#[macro_use]
-#[macro_use]
-#[macro_use]
 use serde_derive;
 use std::fs::File;
 use std::io::prelude::*;

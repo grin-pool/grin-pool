@@ -1,3 +1,20 @@
+---
+# P2p port is public
+apiVersion: v1
+kind: Service
+metadata:
+  name: grin-p2p
+  labels:
+    app: grin
+spec:
+  type: LoadBalancer
+  ports:
+  - name: ptop
+    port: 13414
+    protocol: TCP
+  selector:
+    app: grin
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,18 +22,11 @@ metadata:
   labels:
     app: grin
 spec:
-  type: LoadBalancer
   ports:
   - port: 13413
-    nodePort: 32413
     protocol: TCP
     name: grinapi
-  - port: 13414
-    nodePort: 32414
-    protocol: TCP
-    name: grinptop
   - port: 13416
-    nodePort: 32416
     protocol: TCP
     name: grinstratum
   selector:
@@ -31,7 +41,7 @@ spec:
     matchLabels:
       app: grin
   serviceName: grin
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
@@ -39,24 +49,38 @@ spec:
     spec:
       containers:
       - name: grin
-        image: grinpool/grin:latest
-#        command: ["sleep", "9999"]
+#        image: grinpool/grin:test
+        image: docker.mwgrinpool.com:5001/grin:latest
+        #        command: ["sleep", "9999999"]
         command: ["/run.sh"]
         ports:
         - containerPort: 13413
         - containerPort: 13414
-        - containerPort: 13415
         - containerPort: 13416
         volumeMounts:
         - name: grinblockchain
           mountPath: /server
       - name: sharewatcher
-        image: grinpool/logstash:latest
-        command: ["logstash", "-f", "/usr/share/logstash/config/grinsharefilter.conf"]
+#        image: grinpool/logstash:test
+        image: docker.mwgrinpool.com:5001/logstash:latest
+        command: ["/run.sh", "grinsharefilter.conf"]
 #        command: ["sleep", "9999999"]
+        env:
+        - name: RMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt
         volumeMounts: # directory inside container
         - name: grinblockchain
           mountPath: /server
+      imagePullSecrets:
+      - name: regsecret
   volumeClaimTemplates:
   - metadata:
       name: grinblockchain

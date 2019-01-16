@@ -7,6 +7,10 @@ pymysql
 sqlalchemy
 Flask
 flask-restful
+flask-login
+flask_httpauth
+flask_limiter
+flask-caching
 wtforms
 wtforms_components
 pytz
@@ -14,3 +18,6 @@ pygal
 cairosvg
 flask-cors
 pika
+passlib
+gunicorn
+redis

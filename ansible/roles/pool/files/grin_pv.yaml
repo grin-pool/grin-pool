@@ -8,7 +8,7 @@ kind: PersistentVolume
 metadata:
   name: grinblockchain-grin-0
   labels:
-    node: node1
+    node: lucy
 spec:
   capacity:
     storage: 50Gi
@@ -25,7 +25,7 @@ spec:
         - key: kubernetes.io/hostname
           operator: In
           values:
-          - node1
+          - lucy
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -40,88 +40,88 @@ spec:
       storage: 50Gi
   selector:
     matchLabels:
-      node: node1
+      node: lucy
 
 
----
-
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: grinblockchain-grin-1
-  labels:
-    node: node1
-spec:
-  capacity:
-    storage: 50Gi
-  accessModes:
-  - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: local-storage
-  local:
-    path: /data/grin-1
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - node1
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grinblockchain-grin-1
-spec:
-  storageClassName: local-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Gi
-  selector:
-    matchLabels:
-      node: node1
-
-
----
-
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: grinblockchain-grin-2
-  labels:
-    node: node1
-spec:
-  capacity:
-    storage: 50Gi
-  accessModes:
-  - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: local-storage
-  local:
-    path: /data/grin-2
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - node1
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grinblockchain-grin-2
-spec:
-  storageClassName: local-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Gi
-  selector:
-    matchLabels:
-      node: node1
+#---
+#
+#apiVersion: v1
+#kind: PersistentVolume
+#metadata:
+#  name: grinblockchain-grin-1
+#  labels:
+#    node: lucy
+#spec:
+#  capacity:
+#    storage: 50Gi
+#  accessModes:
+#  - ReadWriteOnce
+#  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: local-storage
+#  local:
+#    path: /data/grin-1
+#  nodeAffinity:
+#    required:
+#      nodeSelectorTerms:
+#      - matchExpressions:
+#        - key: kubernetes.io/hostname
+#          operator: In
+#          values:
+#          - lucy
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: grinblockchain-grin-1
+#spec:
+#  storageClassName: local-storage
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 50Gi
+#  selector:
+#    matchLabels:
+#      node: lucy
+#
+#
+#---
+#
+#apiVersion: v1
+#kind: PersistentVolume
+#metadata:
+#  name: grinblockchain-grin-2
+#  labels:
+#    node: lucy
+#spec:
+#  capacity:
+#    storage: 50Gi
+#  accessModes:
+#  - ReadWriteOnce
+#  persistentVolumeReclaimPolicy: Retain
+#  storageClassName: local-storage
+#  local:
+#    path: /data/grin-2
+#  nodeAffinity:
+#    required:
+#      nodeSelectorTerms:
+#      - matchExpressions:
+#        - key: kubernetes.io/hostname
+#          operator: In
+#          values:
+#          - lucy
+#---
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: grinblockchain-grin-2
+#spec:
+#  storageClassName: local-storage
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 50Gi
+#  selector:
+#    matchLabels:
+#      node: lucy

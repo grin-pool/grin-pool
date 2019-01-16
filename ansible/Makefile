@@ -1,8 +1,8 @@
 
 default: build
 
-EXT_IP := 192.168.1.100
-INT_IP := 192.168.1.100
+EXT_IP := "13.52.54.132 13.57.107.221 13.57.87.74"
+INT_IP := 10.1.1.177
 USER := "ubuntu"
 
 clean:
@@ -11,6 +11,7 @@ clean:
 	rm -f access
 	rm -f pool
 	rm -f grin
+	rm -f site.retry
 
 python:
 	ssh ${USER}@${EXT_IP} sudo apt-get -y install python python-apt

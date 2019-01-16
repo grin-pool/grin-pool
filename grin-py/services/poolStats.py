@@ -19,6 +19,7 @@
 import sys
 import requests
 import json
+import atexit
 from time import sleep
 import traceback
 
@@ -27,20 +28,18 @@ from grinbase.dbaccess import database
 
 from grinlib import lib
 from grinlib import grin
-#from grinlib import grinstats
 from grinlib import poolstats
 
 from grinbase.model.blocks import Blocks
 from grinbase.model.pool_stats import Pool_stats
-#from grinbase.model.worker_shares import Worker_shares
-#from grinbase.model.pool_blocks import Pool_blocks
+from grinbase.model.worker_shares import Worker_shares
 
 PROCESS = "poolStats"
 LOGGER = None
 CONFIG = None
 
 # XXX TODO: Move to config
-BATCHSZ = 100
+BATCHSZ = 1
 
 def main():
     CONFIG = lib.get_config()
@@ -48,6 +47,7 @@ def main():
     LOGGER.warn("=== Starting {}".format(PROCESS))
     # Connect to DB
     database = lib.get_db()
+    atexit.register(lib.teardown_db)
 
     # Get config
     check_interval = float(CONFIG[PROCESS]["check_interval"])
@@ -57,7 +57,7 @@ def main():
     latest_stat = Pool_stats.get_latest()
     if latest_stat is None:
         # Special case for new pool startup
-        poolstats.initialize()
+        poolstats.initialize(avg_over_range, LOGGER)
 
     # Generate pool stats records - one per grin block
     while True:
@@ -69,12 +69,15 @@ def main():
             while True:
                 # latest = grin.blocking_get_current_height()
                 latest = Blocks.get_latest().height
+                while latest > Worker_shares.get_latest_height():
+                    LOGGER.warn("Waiting for shares records to catch up: {} vs {}".format(latest, Worker_shares.get_latest_height()))
+                    sleep(3)
                 while latest >= height:
                     new_stats = poolstats.calculate(height, avg_over_range)
                     # Batch new stats when possible, but commit at reasonable intervals
                     database.db.getSession().add(new_stats)
-                    if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
-                        database.db.getSession().commit()
+#                    if( (height % BATCHSZ == 0) or (height >= (latest-10)) ):
+                    database.db.getSession().commit()
                     LOGGER.warn("Added Pool_stats for block: {} - {} {} {}".format(new_stats.height, new_stats.gps, new_stats.active_miners, new_stats.shares_processed))
                     height = height + 1
                     sys.stdout.flush()

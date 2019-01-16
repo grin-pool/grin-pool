@@ -2,7 +2,7 @@ import datetime
 import uuid
 import json
 
-from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Float, Boolean, asc, and_
+from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Boolean, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -15,7 +15,7 @@ class Grin_stats(Base):
     __tablename__ = 'grin_stats'
     height = Column(BigInteger, index=True, primary_key=True, autoincrement=False)
     timestamp = Column(DateTime, nullable=False, index=True)
-    difficulty = Column(Integer)
+    difficulty = Column(BigInteger)
     gps = relationship("Gps")
     
     def __repr__(self):
@@ -50,12 +50,13 @@ class Grin_stats(Base):
 
     # Get the latest (n) record(s) in the db
     @classmethod
-    def get_latest(cls, n=None):
+    def get_latest(cls, range=None):
         highest = database.db.getSession().query(func.max(Grin_stats.height)).scalar()
-        if n == None:
+        if range == None:
             return database.db.getSession().query(Grin_stats).filter(Grin_stats.height == highest).first()
         else:
-            return list(database.db.getSession().query(Grin_stats).filter(Grin_stats.height >= highest-n).order_by(asc(Grin_stats.height)))
+            h_start = highest-(range-1)
+            return list(database.db.getSession().query(Grin_stats).filter(Grin_stats.height >= h_start).order_by(asc(Grin_stats.height)))
 
 
     # Get record(s) by height and optional historical range

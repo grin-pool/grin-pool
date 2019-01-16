@@ -1,6 +1,6 @@
 CONTAINER1 := splunk
 CONTAINER2 := universalforwarder
-REGISTRY := docker.io/grinpool
+REGISTRY := docker.mwgrinpool.com:5001
 
 push: build
 

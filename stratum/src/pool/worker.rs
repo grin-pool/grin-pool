@@ -20,13 +20,22 @@ use bufstream::BufStream;
 use serde_json;
 use serde_json::Value;
 use std::net::TcpStream;
+use reqwest;
+use std::collections::HashMap;
 
 use pool::logger::LOGGER;
-use pool::proto::RpcRequest;
+use pool::proto::{RpcRequest, RpcError};
 use pool::proto::{JobTemplate, LoginParams, StratumProtocol, SubmitParams, WorkerStatus};
 
 // ----------------------------------------
 // Worker Object - a connected stratum client - a miner
+//
+
+//#derive(Serialize, Deserialize, Debug)]
+//pub struct AuthForm {
+//    pub username: String,
+//    pub password: String,
+//}
 
 #[derive(Debug)]
 pub struct WorkerConfig {}
@@ -75,7 +84,10 @@ impl Worker {
     pub fn login(&self) -> String {
         match self.login {
             None => "None".to_string(),
-            Some(ref login) => login.login.clone(),
+            Some(ref login) => {
+                let mut loginstr = login.login.clone();
+                return loginstr.to_string();
+            }
         }
     }
 
@@ -122,9 +134,23 @@ impl Worker {
         trace!(LOGGER, "Worker {} - sending OK Response", self.id);
         return self.protocol.send_response(
             &mut self.stream,
-            method,
+            method.to_string(),
             serde_json::to_value("ok".to_string()).unwrap(),
             self.id,
+        );
+    }
+
+    /// Send Err Response
+    pub fn send_err(&mut self, method: String, message: String, code: i32) -> Result<(), String> {
+        trace!(LOGGER, "Worker {} - sending Err Response", self.id);
+        let e = RpcError {
+            code: code,
+            message: message.to_string(),
+        };
+        return self.protocol.send_error_response(
+            &mut self.stream,
+            method.to_string(),
+            e,
         );
     }
 
@@ -160,6 +186,7 @@ impl Worker {
                             Ok(r) => r,
                             Err(e) => {
                                 self.error = true;
+                                debug!(LOGGER, "Worker {} - Got Invalid Message", self.id);
                                 // XXX TODO: Invalid request
                                 return Err(e.to_string());
                             }
@@ -177,8 +204,14 @@ impl Worker {
                                     Some(p) => p,
                                     None => {
                                         self.error = true;
+                                        debug!(LOGGER, "Worker {} - Missing Login request parameters", self.id);
+                                        return self.send_err(
+                                            "login".to_string(),
+                                            "Missing Login request parameters".to_string(),
+                                            -32500,
+                                        );
                                         // XXX TODO: Invalid request
-                                        return Err("invalid request".to_string());
+                                        //return Err("Invalid Login request".to_string());
                                     }
                                 };
                                 let login_params: LoginParams = match serde_json::from_value(params)
@@ -186,12 +219,149 @@ impl Worker {
                                     Ok(p) => p,
                                     Err(e) => {
                                         self.error = true;
+                                        debug!(LOGGER, "Worker {} - Invalid Login request parameters", self.id);
+                                        return self.send_err(
+                                            "login".to_string(),
+                                            "Invalid Login request parameters".to_string(),
+                                            -32500,
+                                        );
                                         // XXX TODO: Invalid request
-                                        return Err(e.to_string());
+                                        //return Err(e.to_string());
                                     }
                                 };
-                                // XXX TODO: Validate the login - is it a valid grin wallet address?
-                                self.login = Some(login_params);
+                                let client = reqwest::Client::new();
+                                //
+                                // Call the pool API server to Try to get the users ID based on login
+                                self.login = Some(login_params.clone());
+                                let mut response = client
+                                    .get(format!("http://poolapi:13423/pool/userid/{}", login_params.login.clone()).as_str())
+                                    .send(); // This could be Err
+                                let mut result = match response {
+                                    Ok(r) => r,
+                                    Err(e) => {
+                                        self.error = true;
+                                        debug!(LOGGER, "Worker {} - Failed to contact API server", self.id);
+                                        return self.send_err(
+                                            "login".to_string(),
+                                            "Failed to contatct API server for user lookup".to_string(),
+                                            -32500,
+                                        );
+                                        //return Err("Login Failed to contatct API server for user lookup".to_string());
+                                    }
+                                };
+                                if result.status().is_success() {
+                                    let userid_json: Value = result.json().unwrap();
+                                    debug!(LOGGER, "Got ID from database: {}", userid_json.clone());
+                                    self.id = userid_json["id"].as_u64().unwrap() as usize;
+                                    // We still need to validate the password if one is provided
+                                    debug!(LOGGER, "Password length: {}", login_params.pass.chars().count());
+                                    if login_params.pass.chars().count() > 0 {
+                                        let mut response = client
+                                            .get("http://poolapi:13423/pool/users/id")
+                                            .basic_auth(login_params.login.clone(), Some(login_params.pass.clone()))
+                                            .send(); // This could be Err
+                                        let mut result = match response {
+                                            Ok(r) => r,
+                                            Err(e) => {
+                                                self.error = true;
+                                                debug!(LOGGER, "Worker {} - Failed to contact API server", self.id);
+                                                return self.send_err(
+                                                    "login".to_string(),
+                                                    "Failed to contatct API server for user lookup".to_string(),
+                                                    -32500,
+                                                );
+                                                //return Err("Login Failed to contatct API server for user lookup".to_string());
+                                            }
+                                        };
+                                        if ! result.status().is_success() {
+                                            self.error = true;
+                                            debug!(LOGGER, "Worker {} - Failed to log in", self.id);
+                                            return self.send_err(
+                                                "login".to_string(),
+                                                "Failed to log in".to_string(),
+                                                -32500,
+                                            );
+                                           //return Err("Failed to Login".to_string());
+                                        }
+                                    }
+                                } else {
+                                    //
+                                    // No account exists.
+                                    debug!(LOGGER, "Could not find user in the database: {}", result.status());
+                                    // If we have been given a password, create an account now
+                                    if ! login_params.pass.is_empty() {
+                                        let mut auth_data = HashMap::new();
+                                        auth_data.insert("username", login_params.login.clone());
+                                        auth_data.insert("password", login_params.pass.clone());
+                                        let mut response = client
+                                            .post("http://poolapi:13423/pool/users")
+                                            .form(&auth_data)
+                                            .send(); // This could be Err
+                                        let mut result = match response {
+                                            Ok(r) => r,
+                                            Err(e) => {
+                                                self.error = true;
+                                                debug!(LOGGER, "Worker {} - Failed contatct API server for user lookup", self.id);
+                                                return self.send_err(
+                                                    "login".to_string(),
+                                                    "Failed contatct API server for user lookup".to_string(),
+                                                    -32500,
+                                                );
+                                                //return Err("Login Failed to contatct API server for user lookup".to_string());
+                                            }
+                                        };
+                                        if result.status().is_success() {
+                                            // The response contains the id
+                                            let worker_json: Value = result.json().unwrap();
+                                            debug!(LOGGER, "Created ID in database: {}", worker_json);
+                                            self.id = worker_json["id"].as_u64().unwrap() as usize
+                                        } else {
+                                            debug!(LOGGER, "Failed to create user: {}", result.status());
+                                            self.error = true;
+                                            return self.send_err(
+                                                "login".to_string(),
+                                                "Failed to create user or Login".to_string(),
+                                                -32500,
+                                            );
+                                            //return Err("Failed to create user or Login".to_string())
+                                        }
+                                    } else {
+                                        // We could not find the user in the database, and we dont
+                                        // have a password to create the user, so we cant continue
+                                        self.error = true;
+                                        debug!(LOGGER, "Worker {} - Failed find user account", self.id);
+                                        return self.send_err(
+                                            "login".to_string(),
+                                            "Login Failed to get your ID, please visit https://MWGrinPool.com and create an account".to_string(),
+                                            -32500,
+                                        );
+                                        //return Err("Login Failed to get your ID, please visit https://MWGrinPool.com and create an account".to_string())
+                                    }
+                                }
+                                //
+//                                // Get the workers stats
+//                                let mut response = client
+//                                    .get(format!("http://poolapi:13423/worker/stats/{}/0,1", self.id).as_str())
+//                                    .basic_auth(login_params.login.clone(), Some(login_params.pass.clone()))
+//                                    .send(); // This could be Err
+//                                match response {
+//                                    Err(e) => {
+//                                        debug!(LOGGER, "Worker {} - Unable to fetch worker stats data", self.id);
+//                                        // Failed to get stats, but this is not fatal
+//                                    },
+//                                    Ok(mut result) => {
+//                                        if result.status().is_success() {
+//                                            // Fill in worker stats with this data
+//                                            // XXX TODO
+//                                            let stats_json: Value = result.json().unwrap();
+//                                            debug!(LOGGER, "Worker stats: {:?}", stats_json);
+//                                            //self.status.accepted =  stats_json["total_shares_processed"].as_u64().unwrap();
+//                                        } else {
+//                                            warn!(LOGGER, "Failed to get user stats: {}", result.status());
+//                                        }
+//                                    }
+//                                }
+
                                 // We accepted the login, send ok result
                                 self.send_ok(req.method);
                             }
