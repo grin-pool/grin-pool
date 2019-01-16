@@ -1,19 +1,18 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: makepayouts
+  name: tidywallet
 spec:
-  schedule: "0 0 * * *"
+  schedule: "0/15 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: makepayouts
+          - name: tidywallet
             image: docker.mwgrinpool.com:5001/services:latest
-#            image: grinpool/services:latest
-#            command: ["sleep", "9999999"]
-            command: ["/usr/local/bin/makePayouts.py"]
+            #command: ["sleep", "999"]
+            command: ["/usr/local/bin/tidyWallet.py"]
             env:
             - name: WALLET_OWNER_API_USER
               valueFrom:
@@ -26,18 +25,10 @@ spec:
                   name: wallet-owner-api
                   key: password.txt
             - name: MYSQL_ROOT_PASSWORD
-              value:
               valueFrom:
                 secretKeyRef:
                   name: mysql-pass
                   key: password
-#            volumeMounts:
-#            - name: grinwallet
-#              mountPath: /wallet
-#          volumes:
-#          - name: grinwallet
-#            persistentVolumeClaim:
-#              claimName: grinwallet
           restartPolicy: Never
           imagePullSecrets:
           - name: regsecret

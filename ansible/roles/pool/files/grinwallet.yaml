@@ -39,6 +39,7 @@ spec:
       - name: public
         image: docker.mwgrinpool.com:5001/grin:latest
         args: ["/run-wallet.sh", "public"]
+        #args: ["sleep", "9999999"]
         env:
         - name: DEBUG_HOLD
           value:
@@ -54,7 +55,7 @@ spec:
           name: grinwallet
       - name: private
         image: docker.mwgrinpool.com:5001/grin:latest
-#        command: ["sleep", "9999999999"]
+        #command: ["sleep", "9999999999"]
         command: ["/run-wallet.sh", "private"]
         env:
         - name: KEYBASE_ALLOW_ROOT
@@ -78,7 +79,7 @@ spec:
           name: keybase
       - name: api
         image: docker.mwgrinpool.com:5001/services:latest
-#        command: ["sleep", "9999999999"]
+        #command: ["sleep", "9999999999"]
         command: ["/usr/local/bin/api/payment_api.py"]
         env:
         - name: WALLET_OWNER_API_USER
@@ -108,13 +109,10 @@ spec:
               key: password
         ports:
         - containerPort: 13425
-#        volumeMounts: # directory inside container
-#        - mountPath: /services
-#          name: xxx
       - name: keybase
         image: docker.mwgrinpool.com:5001/keybase:latest
         command: ["/entrypoint.sh"]
-        #command: ["sleep", "9999"]
+        #command: ["sleep", "9909999"]
         env:
         - name: MYDOMAIN
           value: "mwgrinpool.com"
@@ -134,8 +132,5 @@ spec:
           claimName: grinwallet
       - name: keybase
         emptyDir: {}
-#      - name: xxx
-#        hostPath:
-#          path: /data/services
       imagePullSecrets:
       - name: regsecret

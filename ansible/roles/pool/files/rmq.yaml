@@ -1,0 +1,71 @@
+---
+# admin port is public
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmq-admin
+  labels:
+    app: rmq
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.233.149.87
+  ports:
+  - port: 15672
+    protocol: TCP
+    name: rmqadmin
+  selector:
+    app: rmq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rmq
+  labels:
+    run: rmq
+spec:
+  ports:
+  - port: 5672
+    protocol: TCP
+    name: rmqamqp
+  selector:
+    run: rmq
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: rmq
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: rmq
+    spec:
+      containers:
+      - name: rmq
+        image: docker.mwgrinpool.com:5001/rmq:latest
+#        command: ["sleep", "9999999"]
+#        command: ["/bin/sh", "/usr/lib/rabbitmq/bin/rabbitmq-server"]
+        ports:
+        - containerPort: 15672
+        - containerPort: 5672
+        env:
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt
+        volumeMounts:
+        - name: rmq
+          mountPath: /var/lib/rabbitmq
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+      - name: rmq
+        persistentVolumeClaim:
+          claimName: rmqdata

@@ -5,6 +5,8 @@ metadata:
   labels:
     run: stratum
 spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.247.60.242
   ports:
   - port: 3333
     name: stratum

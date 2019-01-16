@@ -31,6 +31,9 @@ spec:
         command: ["yarn", "start"]
         ports:
         - containerPort: 13524
+        env:
+        - name: NODE_ENV
+          value: production
       imagePullSecrets:
       - name: regsecret
 

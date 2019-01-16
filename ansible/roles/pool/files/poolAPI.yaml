@@ -29,7 +29,7 @@ spec:
         image: docker.mwgrinpool.com:5001/services:latest
         #command: ["/usr/local/bin/api/api.py"]
         #command: ["sleep", "9999"]
-        command: ["gunicorn", "-w", "8", "-b", "0.0.0.0:13423", "api.api:app"]
+        command: ["gunicorn", "-w", "8", "--timeout", "999", "-b", "0.0.0.0:13423", "api.api:app"]
         ports:
         - containerPort: 13423
         env:

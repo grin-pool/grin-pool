@@ -22,13 +22,16 @@ spec:
             secretKeyRef:
               name: mysql-pass
               key: password
-#        volumeMounts: # directory inside container
-#        - mountPath: /services
-#          name: xxx
-#      volumes: # directory location on host
-#      - name: xxx
-#        hostPath:
-#          path: /data/services
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt
       imagePullSecrets:
       - name: regsecret
 
