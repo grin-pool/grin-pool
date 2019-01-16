@@ -9,7 +9,7 @@ export const fetchMinerData = () => async (dispatch: Dispatch, getState: GetStat
     const state = getState()
     const id = state.auth.account.id
     const latestBlockHeight = state.networkData.latestBlock.height || 0
-    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,valid_shares,timestamp,invalid_shares,stale_shares,`
+    const url = `${API_URL}worker/stats/${id}/${latestBlockHeight},${BLOCK_RANGE}/gps,height,valid_shares,timestamp,invalid_shares,stale_shares`
     const minerDataResponse = await fetch(url, {
       headers: {
         'Authorization': basicAuth(state.auth.account.token)
@@ -204,11 +204,33 @@ export const fetchMinerImmatureBalance = (range?: number = 60) => async (dispatc
       }
     })
     const fetchMinerImmatureBalanceData = await fetchMinerImmatureBalanceResponse.json()
+    if (isNaN(fetchMinerImmatureBalanceData)) return
     dispatch({
       type: 'MINER_IMMATURE_BALANCE',
       data: fetchMinerImmatureBalanceData
     })
   } catch (e) {
     console.log('fetchMinerImmatureBalance error: ', e)
+  }
+}
+
+export const fetchLatestBlockGrinEarned = () => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const id = state.auth.account.id
+    const latestBlockHeight = state.networkData.latestBlock.height || 0
+    const url = `${API_URL}worker/estimate/payment/${id}/${latestBlockHeight}`
+    const fetchLatestBlockGrinEarnedResponse = await fetch(url, {
+      headers: {
+        authorization: basicAuth(state.auth.account.token)
+      }
+    })
+    const fetchLatestBlockGrinEarnedData = await fetchLatestBlockGrinEarnedResponse.json()
+    dispatch({
+      type: 'MINER_LATEST_BOCK_GRIN_EARNED',
+      data: fetchLatestBlockGrinEarnedData
+    })
+  } catch (e) {
+    console.log('fetchLatestBlockGrinEarned error: ', e)
   }
 }

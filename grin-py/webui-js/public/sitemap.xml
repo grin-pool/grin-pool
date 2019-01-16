@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+   <url>
+      <loc>https://www.mwgrinpool.com.com/</loc>
+      <lastmod>2019-01-10</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+   </url>
+    <url>
+      <loc>https://www.mwgrinpool.com.com/pool</loc>
+      <lastmod>2019-01-10</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.3</priority>
+   </url>
+      <url>
+      <loc>https://www.mwgrinpool.com.com/miner</loc>
+      <lastmod>2019-01-10</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.3</priority>
+   </url>
+      <url>
+      <loc>https://www.mwgrinpool.com.com/instructions</loc>
+      <lastmod>2019-01-10</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+   </url>
+      <url>
+      <loc>https://www.mwgrinpool.com.com/about</loc>
+      <lastmod>2019-01-10</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.8</priority>
+   </url>
+</urlset> 

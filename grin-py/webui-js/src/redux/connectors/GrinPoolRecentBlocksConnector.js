@@ -1,18 +1,20 @@
 
 import { connect } from 'react-redux'
-import { GrinPoolRecentBlocks } from '../../containers/GrinPoolData/GrinPoolRecentBlocks.js'
+import { BlockRange } from '../../containers/BlockRange/BlockRange.js'
 import { fetchGrinPoolRecentBlocks } from '../actions/grinPoolDataActions.js'
 
 const mapStateToProps = (state) => {
   return {
-    recentBlocks: state.grinPoolData.recentBlocks || []
+    latestBlockHeight: state.networkData.latestBlock.height,
+    recentBlocks: state.grinPoolData.recentBlocks || [],
+    graphTitle: 'Blocks Found by Pool'
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchGrinPoolRecentBlocks: () => dispatch(fetchGrinPoolRecentBlocks())
+    fetchBlockRange: (endBlockHeight?: null | number, rangeSize?: number) => dispatch(fetchGrinPoolRecentBlocks(endBlockHeight, rangeSize))
   }
 }
 
-export const GrinPoolRecentBlocksConnector = connect(mapStateToProps, mapDispatchToProps)(GrinPoolRecentBlocks)
+export const GrinPoolRecentBlocksConnector = connect(mapStateToProps, mapDispatchToProps)(BlockRange)

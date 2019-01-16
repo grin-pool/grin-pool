@@ -32,6 +32,24 @@ export const getLatestBlock = () => async (dispatch: Dispatch) => {
   }
 }
 
+export const fetchNetworkRecentBlocks = (endBlock: number | null = null, range: number = 20) => async (dispatch: Dispatch, getState: GetState) => {
+  try {
+    const state = getState()
+    const blockHeight = endBlock || state.networkData.latestBlock.height || 0
+    const url = `${API_URL}grin/blocks/${blockHeight},${range}`
+    const networkRecentBlocksResponse = await fetch(url)
+    const networkRecentBlocksData = await networkRecentBlocksResponse.json()
+    // const blocksOrphaned = grinPoolRecentBlocksData.filter((block) => block.state === 'orphan')
+    // console.log('fetchGrinPoolRecentBlocks blocksOrphaned: ', blocksOrphaned)
+    dispatch({
+      type: 'NETWORK_RECENT_BLOCKS',
+      data: networkRecentBlocksData
+    })
+  } catch (e) {
+
+  }
+}
+
 export const getMinedBlocksAlgos = () => async (dispatch: Dispatch, getState: GetState) => {
   try {
     const state = getState()

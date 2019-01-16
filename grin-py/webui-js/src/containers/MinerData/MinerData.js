@@ -13,27 +13,28 @@ export class MinerDataComponent extends Component {
   }
 
   UNSAFE_componentWillMount () {
-    this.fetchMinerData()
+    this.updateData()
   }
 
   componentDidUpdate (prevProps) {
     const { faderStyleId } = this.state
     const { latestBlockHeight } = this.props
     if (prevProps.latestBlockHeight !== latestBlockHeight) {
-      this.fetchMinerData()
+      this.updateData()
       this.setState({
         faderStyleId: faderStyleId === 'blockHeight1' ? 'blockHeight2' : 'blockHeight1'
       })
     }
   }
 
-  fetchMinerData = () => {
-    const { fetchMinerData } = this.props
+  updateData = () => {
+    const { fetchMinerData, fetchLatestBlockGrinEarned } = this.props
     fetchMinerData()
+    fetchLatestBlockGrinEarned()
   }
 
   render () {
-    const { minerData, poolBlocksMined, estimatedHourlyReturn, latestBlock } = this.props
+    const { minerData, poolBlocksMined, latestBlockGrinEarned, latestBlock } = this.props
     const { faderStyleId } = this.state
     const numberOfRecordedBlocks = minerData.length
     const noBlocksAlertSyntax = 'Mining data may take a few minutes to show up after you start mining'
@@ -54,7 +55,7 @@ export class MinerDataComponent extends Component {
     }
     const nowTimestamp = Date.now()
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
-
+    const latestBlockGrinEarnedSyntax = (!isNaN(latestBlockGrinEarned) && latestBlockGrinEarned > 0) ? `~ ${nanoGrinToGrin(latestBlockGrinEarned).toFixed(6)} GRIN` : 'n/a'
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>
@@ -70,8 +71,8 @@ export class MinerDataComponent extends Component {
                 <td id={faderStyleId}>{latestBlock.height}</td>
               </tr>
               <tr>
-                <td>Hourly Return</td>
-                <td>~ {nanoGrinToGrin(estimatedHourlyReturn)} GRIN</td>
+                <td>Latest Block Earning</td>
+                <td>{latestBlockGrinEarnedSyntax}</td>
               </tr>
               <tr>
                 <td>Last Block Found</td>
