@@ -154,6 +154,7 @@ impl Worker {
             &mut self.stream,
             method.to_string(),
             e,
+            self.id,
         );
     }
 

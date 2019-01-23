@@ -251,9 +251,10 @@ impl StratumProtocol {
         stream: &mut BufStream<TcpStream>,
         method: String,
         error: RpcError,
+        id: usize,
     ) -> Result<(), String> {
         let res = RpcResponse {
-            id: self.id.clone(),
+            id: id.to_string(),
             jsonrpc: "2.0".to_string(),
             method: method,
             result: None,

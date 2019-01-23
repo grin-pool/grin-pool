@@ -1,4 +1,4 @@
-CONTAINER := stratum
+CONTAINER := stratumx
 REGISTRY := docker.mwgrinpool.com:5001
 
 build:

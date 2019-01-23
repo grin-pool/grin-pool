@@ -380,6 +380,8 @@ impl Server {
                                                                 LOGGER,
                                                                 "Server rejected share as stale"
                                                             );
+                                                            workers_l[w_id].send_err(res.method.clone(), "Solution submitted too late".to_string(), -32503);
+                                                            // ? return Err(res.method.clone());
                                                         }
                                                         _ => {
                                                             workers_l[w_id].status.rejected += 1;
@@ -387,6 +389,8 @@ impl Server {
                                                                 LOGGER,
                                                                 "Server rejected share as invalid"
                                                             );
+                                                            workers_l[w_id].send_err(res.method.clone(), "Failed to validate solution".to_string(), -32502);
+                                                            // ? return Err(res.method.clone());
                                                         }
                                                     }
                                                 }

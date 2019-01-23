@@ -132,7 +132,7 @@ impl Pool {
                         LOGGER,
                         "{} - Unable to connect to upstream server: {}", self.id, e
                     );
-                    thread::sleep(time::Duration::from_secs(1));
+                    thread::sleep(time::Duration::from_secs(10));
                     continue;
                 }
             }
@@ -199,6 +199,8 @@ impl Pool {
             if worker.needs_job {
                 // Randomize the nonce
                 // XXX TODO (Need to know block header format and deserialize it
+                worker.set_difficulty(1); // XXX TODO: get this from config, or dynamic?
+                worker.set_height(self.job.height);
                 worker.send_job(&mut self.server.job.clone());
             }
         }
@@ -245,6 +247,7 @@ impl Pool {
                             );
                             worker.status.rejected += 1;
                             worker.block_status.rejected += 1;
+                            worker.send_err("submit".to_string(), "Rejected duplicate share".to_string(), -32502);
                             continue; // Dont process this share anymore
                         } else {
                             self.duplicates.insert(share.pow.clone(), worker.id());
