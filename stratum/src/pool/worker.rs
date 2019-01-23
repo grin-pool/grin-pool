@@ -22,6 +22,7 @@ use serde_json::Value;
 use std::net::TcpStream;
 use reqwest;
 use std::collections::HashMap;
+use redis::{Client, Commands, Connection, RedisResult};
 
 use pool::logger::LOGGER;
 use pool::proto::{RpcRequest, RpcError};
@@ -51,6 +52,7 @@ pub struct Worker {
     pub block_status: WorkerStatus, // Totals for current block
     shares: Vec<SubmitParams>,
     pub needs_job: bool,
+    redis: Option<redis::Connection>
 }
 
 impl Worker {
@@ -67,6 +69,7 @@ impl Worker {
             block_status: WorkerStatus::new(id.to_string()),
             shares: Vec::new(),
             needs_job: true,
+            redis: None,
         }
     }
 
@@ -200,6 +203,12 @@ impl Worker {
                         match req.method.as_str() {
                             "login" => {
                                 debug!(LOGGER, "Worker {} - Accepting Login request", self.id);
+                                if self.id != 0 {
+                                    // dont log in again, just say ok
+                                    debug!(LOGGER, "User already logged in: {}", self.id.clone());
+                                    self.send_ok(req.method);
+                                    return Ok(());
+                                }
                                 let params: Value = match req.params {
                                     Some(p) => p,
                                     None => {
@@ -229,10 +238,54 @@ impl Worker {
                                         //return Err(e.to_string());
                                     }
                                 };
-                                let client = reqwest::Client::new();
-                                //
-                                // Call the pool API server to Try to get the users ID based on login
+
+                                // Get the user id
                                 self.login = Some(login_params.clone());
+                                // Try to get this user id from the redis cache
+                                // Connect
+                                match self.redis {
+                                    None => {
+                                        match redis::Client::open("redis://redis-master/") {
+                                            Err(e) => {},
+                                            Ok(client) => {
+                                                // create connection from client and assing to
+                                                // self.redis if success
+                                                match client.get_connection() {
+                                                    Err(e) => {},
+                                                    Ok(con) => {
+                                                        self.redis = Some(con);
+                                                    },
+                                                }
+                                            },
+                                        };
+                                    },
+                                    Some(_) => {},
+                                };
+
+
+                                let mut userid_key = format!("userid.{}", login_params.login);
+                                match self.redis {
+                                    Some(ref mut redis) => {
+                                        let response: usize = match redis.get(userid_key.clone()) {
+                                            Ok(id) => id,
+                                            Err(e) => 0,
+                                        };
+                                        if response != 0 {
+                                            self.id = response as usize;
+                                            debug!(LOGGER, "Got user login from redis: {}", self.id.clone());
+                                        };
+                                    },
+                                    None => {}
+                                }
+                                if self.id != 0 {
+                                    debug!(LOGGER, "User already logged in: {}", self.id.clone());
+                                    self.send_ok(req.method);
+                                    return Ok(());
+                                }
+                                // Didnt find user in the redis, try the database
+                                debug!(LOGGER, "Calling pool api to get userid");
+                                // Call the pool API server to Try to get the users ID based on login
+                                let client = reqwest::Client::new(); // api request client
                                 let mut response = client
                                     .get(format!("http://poolapi:13423/pool/userid/{}", login_params.login.clone()).as_str())
                                     .send(); // This could be Err
@@ -246,7 +299,6 @@ impl Worker {
                                             "Failed to contatct API server for user lookup".to_string(),
                                             -32500,
                                         );
-                                        //return Err("Login Failed to contatct API server for user lookup".to_string());
                                     }
                                 };
                                 if result.status().is_success() {
@@ -283,6 +335,16 @@ impl Worker {
                                             );
                                            //return Err("Failed to Login".to_string());
                                         }
+                                    }
+                                    // Cache the user id in redis
+                                    debug!(LOGGER, "Attempting to cache userid A: {} {}", userid_key.clone(), self.id.clone());
+                                    match self.redis {
+                                        Some(ref mut redis) => {
+                                            let _ : () = redis.set(userid_key.clone(), self.id.clone()).unwrap();
+                                        },
+                                        None => {
+                                            debug!(LOGGER, "Worker {} - No redis connection, cant cache id", self.id);
+                                        },
                                     }
                                 } else {
                                     //
