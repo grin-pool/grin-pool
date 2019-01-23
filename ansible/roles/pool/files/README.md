@@ -17,69 +17,53 @@ gcloud config set compute/zone us-west1-c
 gcloud container clusters create grinpool  --enable-cloud-logging --disk-size=25G --machine-type=n1-standard-2 --num-nodes=6 --zone us-west1-c  
 ```
 
-## Add 3 grin nodes
-```
-cd /root/grin-pool/ansible/roles/pool/files/
-kubectl create -f grin_set.yaml 
-```
+./docker_registry_secret.sh
 
-## Add 3-node SQL cluster with replication
-```
+
+./rmq_secret.sh
+kubectl create -f grin_set.yaml   
+./mysql_password_secret.sh
 kubectl create -f mysql_svc.yaml
 kubectl create -f mysql_configmap.yaml
 kubectl create -f mysql_set.yaml
-```
 
-## Start the blockWatcher service
-```
+./grinpool_secrets.sh
+kubectl create -f dbInit.yaml
 kubectl create -f blockWatcher.yaml
-```
-
-## Start the grinStats service
-```
 kubectl create -f grinStats.yaml
-```
 
-## Create and start the wallet 
-```
+./grinwallet_secret.sh
 kubectl create -f grinwallet_claim.yaml 
-kubectl create -f grinwallet.yaml 
-```
+kubectl create -f grinwallet.yaml
 
-## Start the API
-```
-kubectl create -f poolAPI.yaml
-```
+kubectl create -f shareAggr.yaml
+kubectl create -f rmq_claim.yaml
+kubectl create -f rmq.yaml
 
-## Start grin stats
-```
-kubectl create -f grinStats.yaml
-```
-
-## Start pool stats
-```
+kubectl create -f workerStats.yaml
 kubectl create -f poolStats.yaml
-```
+kubectl create -f poolAPI.yaml
 
-## Start share aggregator
-```
-kubectl create -f shareAggr.yaml 
-```
+kubectl create -f webui.yaml
+kubectl create -f stratum.yaml
 
-## Start the stratum server
-```
-kubectl create -f stratum.yaml 
-```
+kubectl create -f letsencrypt_configmap.yaml
+kubectl create -f letsencrypt_claim.yaml
+./aws_access_secret.sh
+kubectl create -f mwnginx.yaml # xxx need to test this
 
-## Start the Web UI
-```
-kubectl create -f webui.yaml 
-```
+kubectl create -f splunkuf.yaml
+kubectl create -f splunk_claim.yaml
+kubectl create -f splunk.yaml
 
-## Start ... XXX TODO ADD XXX
 
-## Create LoadBalancers for ingress ports
-(not yet)
+
+kubectl create -f blockValidator.yaml
+kubectl create -f makePayouts.yaml
+kubectl create -f paymentMaker.yaml
+kubectl create -f poolblockUnlocker.yaml
+kubectl create -f tidyWallet.yaml
+
 
 
 ----------
