@@ -1,0 +1,13 @@
+---
+##
+# Splunk Logs and Dashboards
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: splunk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Gi
