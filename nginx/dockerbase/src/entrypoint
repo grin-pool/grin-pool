@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Fetch and deploy the certificates
+echo "${AUTH_SA}" > /serviceaccount.json
+gcloud auth activate-service-account --key-file=/serviceaccount.json
+
+# FROM ENVIRONMENT:  MYDOMAIN
+
+echo "== Fetching certs for ${MYDOMAIN}"
+mkdir -p /etc/letsencrypt
+pushd .
+cd /etc/letsencrypt
+gsutil cp gs://${MYDOMAIN}/certs/certs.tgz .
+tar zxf certs.tgz
+popd
+
+echo "== Deploy nginx configs for ${MYDOMAIN}"
+cp /${MYDOMAIN}/* /etc/nginx/conf.d/
+
+# Start nginx
+nginx
+
