@@ -1,5 +1,7 @@
 # grin-pool
 
+** Announcement: we are looking for a MySQL developer / DBA. If you are familiar with MySQL on a professional level and are interested, please contact kylan.hurt@gmail.com or bladedoyle@gmail.com **
+
 ## What it is:
 An Open Source Mining Pool for [Grin](https://github.com/mimblewimble/grin) MimbleWimble Cryptocurrency Implementation
 * Supports Linux and Windows miners: [mimblewimble/grin-miner](https://github.com/mimblewimble/grin-miner) and [mozkomor/GrinGoldMiner](https://github.com/mozkomor/GrinGoldMiner)
