@@ -1,0 +1,45 @@
+---
+##
+# LetsEncrypt Certs
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: letsencrypt
+  labels:
+    node: node1
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /data/letsencrypt
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - node1
+---
+##
+# LetsEncrypt Certs
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: letsencrypt
+spec:
+  storageClassName: local-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      node: node1

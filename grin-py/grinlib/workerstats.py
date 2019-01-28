@@ -137,7 +137,7 @@ def calculate(height, window_size):
                 total_stale_shares = this_workers_total_stale_shares,
             )
         database.db.getSession().add(stats)
-        database.db.getSession().commit()
+#        database.db.getSession().commit()
         #print("AAA: Created Worker_stats with id={}".format(stats.id))
 #        print("all_gps for worker {}:".format(worker))
 #        pp.pprint(all_gps)
@@ -148,11 +148,11 @@ def calculate(height, window_size):
             )
             stats.gps.append(gps_rec)
             #print("AAA: Appended gps record to Worker_stats: {}".format(gps_rec))
-#            gps_rec.worker_stats_id = stats.id,
-#            database.db.getSession().add(gps_rec)
+            gps_rec.worker_stats_id = stats.id,
+            database.db.getSession().add(gps_rec)
         new_stats.append(stats)
-        database.db.getSession().add(stats)
-        database.db.getSession().commit()
+#        database.db.getSession().add(stats)
+#        database.db.getSession().commit()
     sys.stdout.flush()
     return new_stats
 

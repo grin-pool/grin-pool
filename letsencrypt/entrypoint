@@ -1,0 +1,37 @@
+#!/bin/bash
+
+echo "${AUTH_SA}" > /serviceaccount.json
+gcloud auth activate-service-account --key-file=/serviceaccount.json
+
+# FROM ENVIRONMENT:  MYDOMAIN
+
+echo "== Fetching existing certs"
+# This will fail if there are no existing certs, but the next steps will generate and stage them.
+mkdir -p /etc/letsencrypt
+pushd .
+cd /etc/letsencrypt
+gsutil cp gs://${MYDOMAIN}/certs/certs.tgz .
+orig_sum=$(md5sum certs.tgz | awk '{print $1}')
+tar zxf certs.tgz
+rm certs.tgz
+popd
+
+
+echo "== Running letsencrypt dehydrated cert create/renew"
+cp /mnt/domains.txt /etc/letsencrypt/
+cp /mnt/domains.txt /etc/letsencrypt/dehydrated
+dehydrated --cron --challenge dns-01 -o /etc/letsencrypt --hook /usr/share/nginx/dehydrated/hooks/manual/route53_hook.rb
+
+# Upload certs to goocle cloud storage
+rm -f /certs.tgz
+pushd .
+cd /etc/letsencrypt
+tar czf /certs.tgz ${MYDOMAIN}
+new_sum=$(md5sum /certs.tgz | awk '{print $1}') 
+if [[ "${orig_sum}" != "${new_sum}" ]]; then
+    echo "== Uploading upodated certs"
+    gsutil cp /certs.tgz gs://${MYDOMAIN}/certs/certs.tgz
+fi
+rm /certs.tgz
+popd
+

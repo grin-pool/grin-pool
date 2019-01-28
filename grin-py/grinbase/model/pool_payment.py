@@ -1,4 +1,6 @@
 import datetime
+import sys
+import json
 
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, func, and_, ForeignKey, Text
 from sqlalchemy.orm import relationship
@@ -41,6 +43,14 @@ class Pool_payment(Base):
         self.invoked_by = invoked_by
 
     def to_json(self, fields=None):
+        # Extract txid from tx_data
+        try:
+            tx_data_json = json.loads(self.tx_data)
+            txid = tx_data_json['id']
+        except Exception as e:
+            print("XXX Extract TXID from payemnt record: {}".format(repr(e)))
+            sys.stdout.flush()
+            txid = self.address
         obj = {
                 'id': self.id,
                 'timestamp': self.timestamp.timestamp(),
@@ -52,7 +62,8 @@ class Pool_payment(Base):
                 'fee': self.fee,
                 'failure_count': self.failure_count,
                 'state': self.state,
-                'invoked_by': self.invoked_by
+                'invoked_by': self.invoked_by,
+                'txid': txid,
         }
         # Filter by field(s)
         if fields != None:

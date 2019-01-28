@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: letsencrypt
+  labels:
+    app: letsencrypt
+data:
+  domains.txt: |
+    mwgrinpool.com api.mwgrinpool.com www.mwgrinpool.com us.mwgrinpool.com eu.mwgrinpool.com asia.mwgrinpool.com testui.mwgrinpool.com stratum.mwgrinpool.com docker.mwgrinpool.com splunk.mwgrinpool.com

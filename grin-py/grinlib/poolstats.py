@@ -77,6 +77,8 @@ def calculate(height, window_size):
     grin_block = Blocks.get_by_height(height)
     assert grin_block is not None, "Missing grin block: {}".format(height)
     window = Worker_shares.get_by_height(height, window_size)
+    assert window[-1].height - window[0].height >= window_size, "Failed to get proper window size"
+    print("Sanity: window size:  {} vs  {}".format(window[-1].height - window[0].height, window_size))
     # Calculate the stats data
     timestamp = grin_block.timestamp
     active_miners = len(list(set([s.user_id for s in window])))

@@ -1,0 +1,50 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: letsencrypt
+spec:
+  schedule: "20 4 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: letsencrypt
+            image: docker.mwgrinpool.com:5001/letsencrypt:latest
+            command: ["/entrypoint"]
+            #command: ["sleep", "9999999"]
+            env:
+            - name: MYDOMAIN
+              value: "mwfloopool.com"
+            - name: AUTH_SA
+              valueFrom:
+                secretKeyRef:
+                  name: storage-update
+                  key: grinpool-serviceaccount-storage-update.json
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: awssecretkeyid
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: awssecretaccesskey
+                  key: AWS_SECRET_ACCESS_KEY
+            volumeMounts: # directory inside container
+            - name: conf
+              mountPath: /mnt/
+          volumes: # directory location on host
+          - name: conf
+            configMap:
+              name: letsencrypt
+          imagePullSecrets:
+          - name: regsecret
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1
+
+
+
+

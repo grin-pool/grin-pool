@@ -1,0 +1,106 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    run: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://api.mwfloopool.com"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.247.115.34
+  externalTrafficPolicy: Local
+  ports:
+  - port: 80
+    nodePort: 32080
+    protocol: TCP
+    name: nginx
+  - port: 443
+    nodePort: 32443
+    protocol: TCP
+    name: nginxssl
+  - port: 3301
+    nodePort: 32333
+    name: stratum
+  - port: 3401
+    name: stratumssl
+  selector:
+    run: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-pub
+  labels:
+    run: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://api.mwfloopool.com"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.203.128.104
+  externalTrafficPolicy: Local
+  ports:
+  - port: 80
+    protocol: TCP
+    name: nginx
+  - port: 443
+    protocol: TCP
+    name: nginxssl
+  - port: 3301
+    name: stratumprivate
+  - port: 3401
+    name: stratumsslprivate
+  - port: 3333
+    name: stratum
+  - port: 3332
+    name: stratuma
+  - port: 13416
+    name: stratumb
+  - port: 3334
+    name: stratumssl
+  - port: 23416
+    name: stratumssla
+  selector:
+    run: nginx
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: docker.mwgrinpool.com:5001/mwnginx-floonet:latest
+        #command: ["sleep", "9999999"]
+        command: ["/entrypoint"]
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        - containerPort: 3332
+        - containerPort: 3333
+        - containerPort: 3334
+        - containerPort: 13416
+        - containerPort: 23416
+        env:
+        - name: MYDOMAIN
+          value: "mwfloopool.com"
+        - name: AUTH_SA
+          valueFrom:
+            secretKeyRef:
+              name: storage-update
+              key: grinpool-serviceaccount-storage-update.json
+      imagePullSecrets:
+      - name: regsecret

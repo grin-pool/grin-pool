@@ -16,6 +16,8 @@
 import os
 import sys
 import json
+import time
+import redis
 from datetime import datetime
 import requests
 
@@ -57,6 +59,19 @@ admin_user = os.environ["GRIN_POOL_ADMIN_USER"]
 admin_pass = os.environ["GRIN_POOL_ADMIN_PASSWORD"]
 app_secret_key = "xxxxyyyyyzzzzz" # os.environ["APP_SECRET_KEY"]
 
+# Admin user is created as id=1 in dbinit
+ADMIN_ID = 1
+
+# Move these limits to config
+grin_blocks_range_limit = 501
+grin_stats_range_limit = 240
+pool_blocks_range_limit = 5001
+pool_stats_range_limit = 240
+worker_stats_range_limit = 240
+worker_shares_range_limit = 240
+worker_block_range_limit = 240
+worker_payment_record_range_limit = 240
+redis_userid_key = "userid."
 
 ##
 # App
@@ -86,10 +101,24 @@ database = lib.get_db()
 LOGGER = lib.get_logger(PROCESS)
 
 
+r = redis.Redis(
+    host='redis-master',
+    port=6379)
+
 @app.before_request
 def pre_request():
     global database
     database.db.initializeSession()
+    g.start = time.time()
+
+@app.after_request
+def after_request(response):
+    global LOGGER
+    timediff = time.time() - g.start
+    LOGGER.warn("Exec time: {}".format(str(timediff)))
+#    if (response.response):
+#        response.response[0] = response.response[0].replace('__EXECUTION_TIME__'.encode(), str(timediff).encode())
+    return response
 
 @app.teardown_request
 def teardn_request(response):
@@ -135,6 +164,9 @@ def verify_password(username_or_token, password=None):
     if user_rec is None:
         return False
     g.user = user_rec
+    # Cache username<->user_id in redis for our stratum server
+    redis_key = redis_userid_key + user_rec.username
+    r.set(redis_key, user_rec.id)
     return True
 
 # XXX TODO:
@@ -243,6 +275,9 @@ class GrinAPI_stats(Resource):
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
         LOGGER.warn("GrinAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, grin_stats_range_limit)
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             stats = Grin_stats.get_latest(range)
@@ -277,6 +312,9 @@ class GrinAPI_blocks(Resource):
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
         LOGGER.warn("GrinAPI_blocks get height:{} range:{} fields:{}".format(height, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, grin_blocks_range_limit)
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             blocks = Blocks.get_latest(range)
@@ -311,6 +349,9 @@ class PoolAPI_blocks(Resource):
     #decorators = [limiter.limit("50/minute")]
     @cache.cached(timeout=10)
     def get(self, height=None, range=None, fields=None):
+        # Enforce range limit
+        if range is not None:
+            range = min(range, pool_blocks_range_limit)
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             blocks = Pool_blocks.get_latest(range)
@@ -358,6 +399,9 @@ class PoolAPI_stats(Resource):
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
         LOGGER.warn("PoolAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, pool_stats_range_limit)
         fields = lib.fields_to_list(fields)
         if height is None or height == 0:
             stats = Pool_stats.get_latest(range)
@@ -447,7 +491,7 @@ class WorkersAPI_stats(Resource):
             height = Blocks.get_latest().height
         for stat in Worker_stats.get_by_height(height, range):
             # AUTH FILTER
-            if stat.user_id == g.user.id:
+            if stat.user_id == ADMIN_ID:
                 stats.append(stat.to_json(fields))
 
         return stats
@@ -478,6 +522,9 @@ class WorkerAPI_stats(Resource):
             response.status_code = 403
             return response
         LOGGER.warn("WorkerAPI_stats get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, worker_stats_range_limit)
         fields = lib.fields_to_list(fields)
         res = None
         if range is None:
@@ -559,6 +606,9 @@ class WorkerAPI_shares(Resource):
             response.status_code = 403
             return response
         LOGGER.warn("WorkerAPI_shares get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, worker_shares_range_limit)
         fields = lib.fields_to_list(fields)
         if height is None:
             return Worker_shares.get_latest_height(id)
@@ -598,6 +648,9 @@ class WorkerAPI_blocks(Resource):
     def get(self, id, height=None, range=None, fields=None):
         global database
         #database = lib.get_db()
+        # Enforce range limit
+        if range is not None:
+            range = min(range, worker_block_range_limit)
         fields = lib.fields_to_list(fields)
         # AUTH FILTER
         if id != g.user.id:
@@ -699,6 +752,9 @@ class WorkerAPI_payments(Resource):
             response.status_code = 403
             return response
         LOGGER.warn("WorkerAPI_payments get id:{} range:{} fields:{}".format(id, range, fields))
+        # Enforce range limit
+        if range is not None:
+            range = min(range, worker_payment_record_range_limit)
         fields = lib.fields_to_list(fields)
         if range is None:
             payment_rec = Pool_payment.get_latest_by_userid(id)
@@ -731,9 +787,11 @@ class EstimateApi_payment(Resource):
         LOGGER.warn("EstimateApi_payment get id:{} height:{}".format(id, height))
         if height != 0:
             # Request is for a single block reward
-            payout_map = pool.calculate_block_payout_map(height, 60, LOGGER, True)
-            print("payout map: {}".format(payout_map))
-            sys.stdout.flush()
+            payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
+            if payout_map is None:
+                return 0
+            #print("payout map: {}".format(payout_map))
+            #sys.stdout.flush()
             if id in payout_map:
                 return payout_map[id]
             else:
@@ -741,15 +799,15 @@ class EstimateApi_payment(Resource):
         # Get a list of all new and unlocked blocks
         unlocked_blocks = Pool_blocks.get_all_unlocked()
         unlocked_blocks_h = [blk.height for blk in unlocked_blocks]
-        LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
+        #LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
         new_blocks = Pool_blocks.get_all_new()
         new_blocks_h = [blk.height for blk in new_blocks]
-        LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
+        #LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
         total = 0
         for height in unlocked_blocks_h + new_blocks_h:
             print("Estimate block at height: {}".format(height))
-            payout_map = pool.calculate_block_payout_map(height, 60, LOGGER, True)
-            if id in payout_map:
+            payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
+            if payout_map is not None and id in payout_map:
                 total = total + payout_map[id]
         return total
 
@@ -904,7 +962,7 @@ class PoolAPI_paymentrequest(Resource):
             
 api.add_resource(PoolAPI_paymentrequest,
         '/pool/payment/<string:function>/<int:id>', 
-        '/pool/payment/<string:function>/<int:id>/<string:address>', 
+        '/pool/payment/<string:function>/<int:id>/<path:address>', 
 )
 
 

@@ -79,7 +79,49 @@ dont_clean = False
 
 # Cleanup
 if os.path.exists(tmpfile):
+    # An unsigned slate file exists
+    # XXX TODO: check if the response exists and if not offer to try to process it?
     os.remove(tmpfile)
+
+##
+# Find Grin Wallet Command
+grin_cmd = "grin"
+cwd = os.getcwd()
+path = os.environ.get('PATH')
+path = cwd + ":" + cwd + "/grin:" + path
+for directory in path.split(":"):
+    if os.path.isfile(directory + "/grin"):
+        grin_cmd = directory + "/grin"
+
+##
+# Wallet Sanity Check
+wallettest_cmd = [
+    grin_cmd,
+      "wallet",
+        "-p", wallet_pass,
+      "info",
+]
+try:
+    sys.stdout.write("   ... Checking that your wallet works: ")
+    sys.stdout.flush()
+    output = subprocess.check_output(wallettest_cmd, stderr=subprocess.STDOUT, shell=False)
+    # print("{}".format(output))  < --- this is success output
+    print("Ok.")
+except subprocess.CalledProcessError as exc:
+    print("Failed")
+    print(" ")
+    print(" ")
+    print("   *** Error: Wallet test failed with rc {} and output {}".format(exc.returncode, exc.output))
+    print_footer()
+    sys.exit(1)
+except Exception as e:
+    print("Failed")
+    print(" ")
+    print(" ")
+    print("   *** Error: Wallet test failed with error {}".format(str(e)))
+    print_footer()
+    sys.exit(1)
+
 
 ##
 # Get my pool user_id
@@ -155,7 +197,7 @@ print("Ok.")
 ##
 # Call the wallet CLI to receive and sign the slate
 recv_cmd = [
-    "grin", "--floonet",
+    "grin",
       "wallet",
         "-p", wallet_pass,
       "receive",
