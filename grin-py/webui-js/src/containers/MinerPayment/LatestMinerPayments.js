@@ -32,8 +32,8 @@ export class LatestMinerPayments extends Component {
           <tr key={payment.id}>
             <td>{payment.id}</td>
             <td>{payment.address}</td>
-            <td>{nanoGrinToGrin(payment.amount)} GRIN</td>
-            <td>{nanoGrinToGrin(payment.fee)} GRIN</td>
+            <td>{nanoGrinToGrin(payment.amount)} XBG</td>
+            <td>{nanoGrinToGrin(payment.fee)} XBG</td>
             <td>{payment.state}</td>
             <td>{payment.height}</td>
             <td style={{ textAlign: 'right' }}>{readableTimeAgo} ago</td>

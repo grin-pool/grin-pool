@@ -55,7 +55,7 @@ export class MinerDataComponent extends Component {
     }
     const nowTimestamp = Date.now()
     const latestBlockTimeAgo = latestBlock.timestamp ? Math.floor((nowTimestamp / 1000) - latestBlock.timestamp) : ''
-    const latestBlockGrinEarnedSyntax = (!isNaN(latestBlockGrinEarned) && latestBlockGrinEarned > 0) ? `~ ${nanoGrinToGrin(latestBlockGrinEarned).toFixed(6)} GRIN` : 'n/a'
+    const latestBlockGrinEarnedSyntax = (!isNaN(latestBlockGrinEarned) && latestBlockGrinEarned > 0) ? `~ ${nanoGrinToGrin(latestBlockGrinEarned).toFixed(6)} XBG` : 'n/a'
     return (
       <Row xs={12} md={12} lg={12} xl={12}>
         <Col xs={12} md={12} lg={5} xl={3}>

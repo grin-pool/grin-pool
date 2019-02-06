@@ -23,8 +23,8 @@ $themes: (
     colorFitness: #555555,
   ),
   dark: (
-    colorBackground: #232329,
-    colorBackgroundBody: #2a2a31,
+    colorBackground: #232529,
+    colorBackgroundBody: #2a2d31,
     colorText: #dddddd,
     colorTextAdditional: #999999,
     logoImg: url(../custom/logo.png),
@@ -65,20 +65,20 @@ $themes: (
   @return map-get($theme-map, $key);
 }
 
-$color-accent: #fbf730;
+$color-accent: #fba330;
 $color-accent-hover: darken($color-accent, 10%);
 $color-additional: #999999;
 $color-additional-hover: darken($color-additional, 10%);
 
-$color-yellow: #f6da6e;
+$color-yellow: #f6a46e;
 $color-yellow-hover: darken($color-yellow, 10%);
 
-$color-violet: #c88ffa;
+$color-violet: #b48ffa;
 
-$color-red: #ff4861;
+$color-red: #ff489d;
 $color-red-hover: darken($color-red, 10%);
 
-$color-blue: #70bbfd;
+$color-blue: #70d0fd;
 $color-blue-hover: darken($color-blue, 10%);
 
-$color-gray: #787985;
+$color-gray: #787d85;

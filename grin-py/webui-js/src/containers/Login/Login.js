@@ -73,11 +73,11 @@ export class LoginComponent extends React.Component {
               <CardBody>
                 <div className="account__head">
                   <h3 className="account__title">Welcome to
-                  <span className="account__logo"> Grin
-                  <span className="account__logo-accent">Pool</span>
+                  <span className="account__logo"> BitGrin
+                  <span className="account__logo-accent"> Pool</span>
                   </span>
                   </h3>
-                  <h4 className="account__subhead subhead">Start mining GRIN today</h4>
+                  <h4 className="account__subhead subhead">Start mining BitGrin today</h4>
                 </div>
                 <Form className='login-form'>
                   <FormGroup>

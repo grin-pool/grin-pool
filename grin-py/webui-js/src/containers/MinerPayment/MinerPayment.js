@@ -111,7 +111,7 @@ export class MinerPaymentComponent extends Component {
         <FormGroup>
           <p>Scheduled payouts occur multiple times per day, although exact payout schedules may vary.</p><br />
           <div style={{ textAlign: 'center' }}>
-            <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 GRIN</strong> minimum balance in order to be triggered.</Alert>
+            <Alert color='warning' style={{ width: '80%', textAlign: 'center', display: 'inline-block' }}>Please be aware that automated payouts require a <strong>5 XBG</strong> minimum balance in order to be triggered.</Alert>
           </div>
         </FormGroup>
         <FormGroup check>
@@ -220,7 +220,7 @@ export class MinerPaymentComponent extends Component {
             <Card>
               <CardBody>
                 <h4>Payout</h4>
-                <p>GrinPool supports multiple methods of payment, including automatic payments and manual / on-demand payments. The list of payment methods is likely to grow, so stay tuned!</p>
+                <p>BitGrinPool supports multiple methods of payment, including automatic payments and manual / on-demand payments. The list of payment methods is likely to grow, so stay tuned!</p>
                 <Alert color='light' style={{ textAlign: 'center', position: 'relative', marginTop: '16px' }}>To learn how to properly configure payouts, please read our <a href='https://medium.com/@blade.doyle/configure-payments-on-mwgrinpool-com-how-to-7b84163ec467' style={{ fontWeight: 'bold', color: '#818182' }} rel='noopener noreferrer' target='_blank'>tutorial</a>.</Alert>
                 <br />
                 <Form className='minerPaymentForm'>

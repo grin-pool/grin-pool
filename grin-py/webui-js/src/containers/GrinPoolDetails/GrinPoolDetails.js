@@ -26,7 +26,7 @@ export class GrinPoolDetailsComponent extends Component {
       <Container className='dashboard'>
         <Row>
           <Col xs={12} md={12} lg={12} xl={12}>
-            <h3 className='page-title'>GrinPool Details</h3>
+            <h3 className='page-title'>BitGrinPool Details</h3>
           </Col>
         </Row>
         <Row>

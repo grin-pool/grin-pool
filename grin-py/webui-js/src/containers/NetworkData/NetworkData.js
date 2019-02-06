@@ -75,7 +75,7 @@ export class NetworkDataComponent extends Component {
               </tr>
               <tr>
                 <td><FontAwesomeIcon style={{ marginRight: 5 }} size='lg' icon={'dollar-sign'} />Reward</td>
-                <td>60 GRIN / block</td>
+                <td>4.5 XBG / block</td>
               </tr>
             </tbody>
           </Table>
