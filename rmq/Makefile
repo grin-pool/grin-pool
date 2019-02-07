@@ -1,5 +1,5 @@
 CONTAINER := rmq
-REGISTRY := docker.lsd25.net:5000
+REGISTRY := bitgrinmining
 
 push: build
 

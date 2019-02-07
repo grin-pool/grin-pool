@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: webui
-        image: docker.mwgrinpool.com:5001/webui-js:latest
+        image: bitgrinmining/webui-js:latest
 #        command: ["sleep", "9999999"]
         command: ["yarn", "start"]
         ports:
@@ -34,6 +34,3 @@ spec:
         env:
         - name: NODE_ENV
           value: production
-      imagePullSecrets:
-      - name: regsecret
-

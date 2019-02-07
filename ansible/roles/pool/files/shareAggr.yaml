@@ -12,7 +12,7 @@ spec:
     spec:
       containers:
       - name: shareaggr
-        image: docker.mwgrinpool.com:5001/services:latest
+        image: bitgrinmining/services:latest
         args: ["/usr/local/bin/shareAggr.py"]
         env:
         - name: DEBUG_HOLD
@@ -32,6 +32,3 @@ spec:
             secretKeyRef:
               name: rmq
               key: password.txt
-      imagePullSecrets:
-      - name: regsecret
-

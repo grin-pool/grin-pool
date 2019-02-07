@@ -1,6 +1,6 @@
 # GRIN
 CONTAINER := grin
-REGISTRY := docker.mwgrinpool.com:5001
+REGISTRY := bitgrinmining
 TAG := latest
 
 default: build push

@@ -37,7 +37,7 @@ spec:
       hostname: "grinwallet"
       containers:
       - name: public
-        image: docker.mwgrinpool.com:5001/grin:latest
+        image: bitgrinmining/grin:latest
         args: ["/run-wallet.sh", "public"]
         #args: ["sleep", "9999999"]
         env:
@@ -54,7 +54,7 @@ spec:
         - mountPath: /wallet
           name: grinwallet
       - name: private
-        image: docker.mwgrinpool.com:5001/grin:latest
+        image: bitgrinmining/grin:latest
         #command: ["sleep", "9999999999"]
         command: ["/run-wallet.sh", "private"]
         env:
@@ -78,9 +78,9 @@ spec:
         - mountPath: /keybase
           name: keybase
       - name: api
-        image: docker.mwgrinpool.com:5001/services:latest
-        #command: ["sleep", "9999999999"]
-        command: ["/usr/local/bin/api/payment_api.py"]
+        image: bitgrinmining/services:latest
+        command: ["sleep", "9999999999"]
+        #command: ["/usr/local/bin/api/payment_api.py"]
         env:
         - name: WALLET_OWNER_API_USER
           valueFrom:
@@ -109,28 +109,26 @@ spec:
               key: password
         ports:
         - containerPort: 13425
-      - name: keybase
-        image: docker.mwgrinpool.com:5001/keybase:latest
-        command: ["/entrypoint.sh"]
-        #command: ["sleep", "9909999"]
-        env:
-        - name: MYDOMAIN
-          value: "mwgrinpool.com"
-        - name: AUTH_SA
-          valueFrom:
-            secretKeyRef:
-              name: storage-update
-              key: grinpool-serviceaccount-storage-update.json
-        ports:
-        - containerPort: 13415
-        volumeMounts: # directory inside container
-        - mountPath: /keybase
-          name: keybase
-      volumes:
-      - name: grinwallet
-        persistentVolumeClaim:
-          claimName: grinwallet
-      - name: keybase
-        emptyDir: {}
-      imagePullSecrets:
-      - name: regsecret
+#      - name: keybase
+#        image: bitgrinmining/keybase:latest
+#        #command: ["/entrypoint.sh"]
+#        command: ["sleep", "9909999"]
+#        env:
+#        - name: MYDOMAIN
+#          value: "bitgrinmining.com"
+#        - name: AUTH_SA
+#          valueFrom:
+#            secretKeyRef:
+#              name: storage-update
+#              key: grinpool-serviceaccount-storage-update.json
+#        ports:
+#        - containerPort: 13415
+#        volumeMounts: # directory inside container
+#        - mountPath: /keybase
+#          name: keybase
+#      volumes:
+#      - name: grinwallet
+#        persistentVolumeClaim:
+#          claimName: grinwallet
+#      - name: keybase
+#        emptyDir: {}

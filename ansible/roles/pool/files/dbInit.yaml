@@ -6,7 +6,7 @@ metadata:
 spec:
   containers:
   - name: dbinit
-    image: docker.mwgrinpool.com:5001/services:latest
+    image: bitgrinmining/services:latest
     #    command: ["sleep", "99999999"]
     command: ["/usr/local/bin/dbInit.py"]
     env:
@@ -25,13 +25,4 @@ spec:
         secretKeyRef:
           name: mysql-pass
           key: password
-          #    volumeMounts: # directory inside container
-          #    - mountPath: /services
-          #      name: xxx
-          #  volumes: # directory location on host
-          #  - name: xxx
-          #    hostPath:
-          #      path: /data/services
-  imagePullSecrets:
-  - name: regsecret
   restartPolicy: Never

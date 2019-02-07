@@ -9,7 +9,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 75Gi
+      storage: 50Gi
 ---
 # Keybase Account
 apiVersion: v1

@@ -1,5 +1,5 @@
-CONTAINER := stratumx
-REGISTRY := docker.mwgrinpool.com:5001
+CONTAINER := stratum
+REGISTRY := bitgrinmining
 
 build:
 	docker build --network=host $(DOCKER_BUILD_FLAGS) -t $(CONTAINER) .

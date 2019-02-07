@@ -8,7 +8,7 @@ metadata:
     app: rmq
 spec:
   type: LoadBalancer
-  loadBalancerIP: 35.233.149.87
+#  loadBalancerIP: 35.233.149.87
   ports:
   - port: 15672
     protocol: TCP
@@ -43,7 +43,7 @@ spec:
     spec:
       containers:
       - name: rmq
-        image: docker.mwgrinpool.com:5001/rmq:latest
+        image: bitgrinmining/rmq:latest
 #        command: ["sleep", "9999999"]
 #        command: ["/bin/sh", "/usr/lib/rabbitmq/bin/rabbitmq-server"]
         ports:
@@ -63,8 +63,6 @@ spec:
         volumeMounts:
         - name: rmq
           mountPath: /var/lib/rabbitmq
-      imagePullSecrets:
-      - name: regsecret
       volumes:
       - name: rmq
         persistentVolumeClaim:

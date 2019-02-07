@@ -1,6 +1,5 @@
 CONTAINER := logstash
-REGISTRY := docker.mwgrinpool.com:5001
-#REGISTRY := grinpool
+REGISTRY := bitgrinmining
 
 push: build
 

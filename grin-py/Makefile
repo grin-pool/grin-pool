@@ -1,5 +1,6 @@
 CONTAINER := services
-REGISTRY := docker.mwgrinpool.com:5001
+REGISTRY := bitgrinmining
+
 TAG := latest
 
 push: build

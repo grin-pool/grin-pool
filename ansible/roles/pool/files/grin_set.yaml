@@ -8,7 +8,7 @@ metadata:
     app: grin
 spec:
   type: LoadBalancer
-  loadBalancerIP: 35.247.33.125
+#  loadBalancerIP: 35.247.33.125
   ports:
   - name: ptop
     port: 3414
@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
       - name: grin
-        image: docker.mwgrinpool.com:5001/grin:latest
+        image: bitgrinmining/grin:latest
         #command: ["sleep", "9999999"]
         command: ["/run.sh"]
         ports:
@@ -61,7 +61,7 @@ spec:
         - name: grinblockchain
           mountPath: /server
       - name: sharewatcher
-        image: docker.mwgrinpool.com:5001/logstash:latest
+        image: bitgrinmining/logstash:latest
         command: ["/run.sh", "grinsharefilter.conf"]
 #        command: ["sleep", "9999999"]
         env:
@@ -78,8 +78,6 @@ spec:
         volumeMounts: # directory inside container
         - name: grinblockchain
           mountPath: /server
-      imagePullSecrets:
-      - name: regsecret
   volumeClaimTemplates:
   - metadata:
       name: grinblockchain
@@ -87,4 +85,4 @@ spec:
       accessModes: ["ReadWriteOnce"]
       resources:
         requests:
-          storage: 100Gi
+          storage: 50Gi
