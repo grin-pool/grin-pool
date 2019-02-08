@@ -1,5 +1,5 @@
-CONTAINER := mwnginx
-REGISTRY := docker.mwgrinpool.com:5001
+CONTAINER := bgnginx
+REGISTRY := bitgrinmining
 
 push: build
 

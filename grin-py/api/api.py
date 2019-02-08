@@ -790,8 +790,8 @@ class EstimateApi_payment(Resource):
             payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
             if payout_map is None:
                 return 0
-            #print("payout map: {}".format(payout_map))
-            #sys.stdout.flush()
+            print("payout map: {}".format(payout_map))
+            sys.stdout.flush()
             if id in payout_map:
                 return payout_map[id]
             else:
@@ -799,10 +799,10 @@ class EstimateApi_payment(Resource):
         # Get a list of all new and unlocked blocks
         unlocked_blocks = Pool_blocks.get_all_unlocked()
         unlocked_blocks_h = [blk.height for blk in unlocked_blocks]
-        #LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
+        LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
         new_blocks = Pool_blocks.get_all_new()
         new_blocks_h = [blk.height for blk in new_blocks]
-        #LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
+        LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
         total = 0
         for height in unlocked_blocks_h + new_blocks_h:
             print("Estimate block at height: {}".format(height))

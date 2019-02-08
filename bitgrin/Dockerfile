@@ -19,7 +19,7 @@ RUN rustup update && \
 WORKDIR /usr/src/grin
 
 # Copying Grin
-RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; git pull;
+RUN git clone https://github.com/bitgrin/bitgrin.git .; git checkout master; git pull;
 
 # Building Grin
 RUN cargo build --release
@@ -37,8 +37,6 @@ RUN sed -i -e 's/127\.0\.0\.1:13420/0.0.0.0:13420/g' wallet/src/command.rs
 RUN cargo build --release
 
 # Generate configuration
-# XXX TODO: REMOVE FOR MAINNET
-ENV NET_FLAG "--floonet"
 RUN mkdir -p /root/.grin && \
     cd /root/.grin && \
     ln -s . floo && \

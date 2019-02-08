@@ -6,6 +6,8 @@ metadata:
   labels:
     run: poolapi
 spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.205.118.112
   ports:
   - port: 13423
     protocol: TCP

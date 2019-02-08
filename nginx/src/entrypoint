@@ -1,0 +1,17 @@
+#!/bin/bash
+
+MYDOMAIN="pool.bitgrin.io"
+
+echo "== Deploy nginx configs for ${MYDOMAIN}"
+cp /${MYDOMAIN}/* /etc/nginx/conf.d/
+
+cp /etc/certs/origin.pem /etc/ssl/certs/origin.pem
+cp /etc/certs/pkey.pem /etc/ssl/certs/pkey.pem
+
+update-ca-certificates --fresh
+
+ls -alrt /etc/ssl/certs/
+
+# Start nginx
+nginx
+

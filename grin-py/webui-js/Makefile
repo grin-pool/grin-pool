@@ -1,5 +1,5 @@
 CONTAINER := webui-js
-REGISTRY := docker.mwgrinpool.com:5001
+REGISTRY := bitgrinmining
 
 push: build
 

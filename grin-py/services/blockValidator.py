@@ -22,6 +22,8 @@ import requests
 import json
 import time
 import traceback
+from datetime import datetime
+
 
 from grinlib import lib
 from grinlib import grin
@@ -79,14 +81,14 @@ def main():
                                    version = response["header"]["version"],
                                    height = response["header"]["height"],
                                    previous = response["header"]["previous"],
-                                   timestamp = response["header"]["timestamp"][:-1],
+                                   timestamp = datetime.strptime(response["header"]["timestamp"][:-1], "%Y-%m-%dT%H:%M:%S+00:0"),
                                    output_root = response["header"]["output_root"],
                                    range_proof_root = response["header"]["range_proof_root"],
                                    kernel_root = response["header"]["kernel_root"],
                                    nonce = response["header"]["nonce"],
                                    edge_bits = response["header"]["edge_bits"],
                                    total_difficulty = response["header"]["total_difficulty"],
-                                   scaling_difficulty = response["header"]["scaling_difficulty"],
+                                   secondary_scaling = response["header"]["secondary_scaling"],
                                    num_inputs = len(response["inputs"]),
                                    num_outputs = len(response["outputs"]),
                                    num_kernels = len(response["kernels"]),

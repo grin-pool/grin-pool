@@ -5,6 +5,8 @@ metadata:
   labels:
     run: webui
 spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.195.241.47
   ports:
   - port: 13424
     targetPort: 3005

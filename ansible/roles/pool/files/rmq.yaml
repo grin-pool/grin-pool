@@ -45,6 +45,7 @@ spec:
       - name: rmq
         image: bitgrinmining/rmq:latest
 #        command: ["sleep", "9999999"]
+        command: ["/entrypoint.sh"]
 #        command: ["/bin/sh", "/usr/lib/rabbitmq/bin/rabbitmq-server"]
         ports:
         - containerPort: 15672

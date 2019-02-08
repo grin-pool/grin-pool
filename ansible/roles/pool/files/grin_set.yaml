@@ -8,7 +8,7 @@ metadata:
     app: grin
 spec:
   type: LoadBalancer
-#  loadBalancerIP: 35.247.33.125
+  loadBalancerIP: 35.247.33.125
   ports:
   - name: ptop
     port: 3414
@@ -50,7 +50,7 @@ spec:
     spec:
       containers:
       - name: grin
-        image: bitgrinmining/grin:latest
+        image: bitgrinmining/bitgrin:latest
         #command: ["sleep", "9999999"]
         command: ["/run.sh"]
         ports:

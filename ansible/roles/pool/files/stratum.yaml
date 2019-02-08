@@ -6,7 +6,7 @@ metadata:
     run: stratum
 spec:
   type: LoadBalancer
-#  loadBalancerIP: 35.247.60.242
+  loadBalancerIP: 35.195.176.190
   ports:
   - port: 3333
     name: stratum
@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: stratum
-        image: docker.mwgrinpool.com:5001/stratum:latest
+        image: bitgrinmining/stratum:latest
         command: ["/run.sh"]
         ports:
         - containerPort: 3333
@@ -35,7 +35,7 @@ spec:
         - name: logdir
           mountPath: /stratum
       - name: sharewatcher
-        image: docker.mwgrinpool.com:5001/logstash:latest
+        image: bitgrinmining/logstash:latest
         command: ["/run.sh", "poolsharefilter.conf"]
         env:
         - name: RMQ_USER

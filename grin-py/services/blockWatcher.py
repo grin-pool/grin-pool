@@ -55,7 +55,7 @@ def main():
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
     # Find the height of the latest block record
-    last_height = -1 # grin.blocking_get_current_height() - 1400
+    last_height = grin.blocking_get_current_height() - 1400
     latest_block = Blocks.get_latest()
     if latest_block is not None:
         last_height = latest_block.height

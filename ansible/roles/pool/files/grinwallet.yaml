@@ -37,7 +37,7 @@ spec:
       hostname: "grinwallet"
       containers:
       - name: public
-        image: bitgrinmining/grin:latest
+        image: bitgrinmining/bitgrin:latest
         args: ["/run-wallet.sh", "public"]
         #args: ["sleep", "9999999"]
         env:
@@ -54,7 +54,7 @@ spec:
         - mountPath: /wallet
           name: grinwallet
       - name: private
-        image: bitgrinmining/grin:latest
+        image: bitgrinmining/bitgrin:latest
         #command: ["sleep", "9999999999"]
         command: ["/run-wallet.sh", "private"]
         env:
@@ -126,9 +126,9 @@ spec:
 #        volumeMounts: # directory inside container
 #        - mountPath: /keybase
 #          name: keybase
-#      volumes:
-#      - name: grinwallet
-#        persistentVolumeClaim:
-#          claimName: grinwallet
-#      - name: keybase
-#        emptyDir: {}
+      volumes:
+      - name: grinwallet
+        persistentVolumeClaim:
+          claimName: grinwallet
+      - name: keybase
+        emptyDir: {}

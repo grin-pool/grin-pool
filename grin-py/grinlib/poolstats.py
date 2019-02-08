@@ -41,11 +41,12 @@ from grinbase.model.gps import Gps
 POOL_MIN_DIFF = 29
 
 def estimate_gps_for_all_sizes(window):
+    print("estimate_gps_for_all_sizes across all workers")
+    sys.stdout.flush()
     if len(window) < 2:
         return []
     first_height = window[0].height
     last_height = window[-1].height
-    print("estimate_gps_for_all_sizes across all workers")
     first_grin_block = Blocks.get_by_height(first_height)
     last_grin_block = Blocks.get_by_height(last_height)
     assert first_grin_block is not None, "Missing grin block at height: {}".format(first_height)
@@ -77,8 +78,8 @@ def calculate(height, window_size):
     grin_block = Blocks.get_by_height(height)
     assert grin_block is not None, "Missing grin block: {}".format(height)
     window = Worker_shares.get_by_height(height, window_size)
-    assert window[-1].height - window[0].height >= window_size, "Failed to get proper window size"
-    print("Sanity: window size:  {} vs  {}".format(window[-1].height - window[0].height, window_size))
+#    assert window[-1].height - window[0].height >= window_size, "Failed to get proper window size"
+#    print("Sanity: window size:  {} vs  {}".format(window[-1].height - window[0].height, window_size))
     # Calculate the stats data
     timestamp = grin_block.timestamp
     active_miners = len(list(set([s.user_id for s in window])))

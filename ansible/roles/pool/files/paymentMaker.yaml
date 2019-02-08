@@ -10,8 +10,7 @@ spec:
         spec:
           containers:
           - name: paymentmaker
-            image: docker.mwgrinpool.com:5001/services:latest
-#            image: grinpool/services:latest
+            image: bitgrinmining/services:latest
 #            command: ["sleep", "9999999"]
             command: ["/usr/local/bin/paymentMaker.py"]
             env:
@@ -20,15 +19,6 @@ spec:
                 secretKeyRef:
                   name: mysql-pass
                   key: password
-#            volumeMounts: # directory inside container
-#            - mountPath: /services
-#              name: poolservicesdir
-#          volumes: # directory location on host
-#          - name: poolservicesdir
-#            hostPath:
-#              path: /data/services
-          imagePullSecrets:
-          - name: regsecret
           restartPolicy: Never
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0

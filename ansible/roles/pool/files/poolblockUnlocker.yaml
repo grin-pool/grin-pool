@@ -10,8 +10,7 @@ spec:
         spec:
           containers:
           - name: blockunlocker
-#            image: grinpool/services:latest
-            image: docker.mwgrinpool.com:5001/services:latest
+            image: bitgrinmining/services:latest
             command: ["/usr/local/bin/poolblockUnlocker.py"]
             env:
             - name: MYSQL_ROOT_PASSWORD
@@ -19,15 +18,6 @@ spec:
                 secretKeyRef:
                   name: mysql-pass
                   key: password
-#            volumeMounts: # directory inside container
-#            - mountPath: /services
-#              name: poolservicesdir
-#          volumes: # directory location on host
-#          - name: poolservicesdir
-#            hostPath:
-#              path: /data/services
-          imagePullSecrets:
-          - name: regsecret
           restartPolicy: Never
   concurrencyPolicy: Replace
   successfulJobsHistoryLimit: 0
