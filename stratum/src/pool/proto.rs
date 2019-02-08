@@ -66,8 +66,8 @@ pub struct SubmitParams {
     pub height: u64,
     pub job_id: u64,
     pub nonce: u64,
-    edge_bits: u32,
-    pub pow: Vec<u32>,
+    pub edge_bits: u32,
+    pub pow: Vec<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -225,10 +225,10 @@ impl StratumProtocol {
         stream: &mut BufStream<TcpStream>,
         method: String,
         result: Value,
-        id: usize,
+        worker_id: Option<String>,
     ) -> Result<(), String> {
         let res = RpcResponse {
-            id: id.to_string(),
+            id: worker_id.clone().unwrap(),
             jsonrpc: "2.0".to_string(),
             method: method,
             result: Some(result),
@@ -239,7 +239,7 @@ impl StratumProtocol {
             LOGGER,
             "{} for {} - Responding: {}",
             self.id,
-            id.to_string(),
+            worker_id.unwrap(),
             res_str
         );
         return self.write_message(res_str, stream);
@@ -251,10 +251,9 @@ impl StratumProtocol {
         stream: &mut BufStream<TcpStream>,
         method: String,
         error: RpcError,
-        id: usize,
     ) -> Result<(), String> {
         let res = RpcResponse {
-            id: id.to_string(),
+            id: self.id.clone(),
             jsonrpc: "2.0".to_string(),
             method: method,
             result: None,

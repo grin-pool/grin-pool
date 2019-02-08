@@ -22,8 +22,6 @@ RUN set -ex && \
 
 WORKDIR /stratum
 
-
-RUN touch x
 # Copying grin-pool source
 COPY src/. /stratum/src/
 COPY grin-pool.toml Cargo.toml /stratum/

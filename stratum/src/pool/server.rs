@@ -22,6 +22,8 @@ use serde_json::Value;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
 use std::{thread, time};
+use std::collections::HashMap;
+
 
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::logger::LOGGER;
@@ -46,13 +48,13 @@ impl Server {
     /// Creates a new Stratum Server Connection.
     pub fn new(cfg: Config) -> Server {
         Server {
-            id: "Pool".to_string(),
+            id: "MWGrinPool".to_string(),
             config: cfg,
             stream: None,
             protocol: StratumProtocol::new(),
             error: false,
             job: JobTemplate::new(),
-            status: WorkerStatus::new("Pool".to_string()),
+            status: WorkerStatus::new("MWGrinPool".to_string()),
         }
     }
 
@@ -161,7 +163,7 @@ impl Server {
     pub fn submit_share(
         &mut self,
         solution: &SubmitParams,
-        worker_id: usize,
+        worker_id: String,
     ) -> Result<(), String> {
         match self.stream {
             Some(ref mut stream) => {
@@ -171,7 +173,7 @@ impl Server {
                     stream,
                     "submit".to_string(),
                     Some(params_value),
-                    Some(worker_id.to_string()),
+                    Some(worker_id),
                 );
             }
             None => Err("No upstream connection".to_string()),
@@ -200,14 +202,14 @@ impl Server {
     /// Process Messages from the upstream stratum server
     pub fn process_messages(
         &mut self,
-        workers: &mut Arc<Mutex<Vec<Worker>>>,
+        workers: &mut Arc<Mutex<HashMap<String, Worker>>>,
     ) -> Result<String, RpcError> {
         // XXX TODO: With some reasonable rate limiting (like N message per pass)
         return self.process_message(workers);
     }
     pub fn process_message(
         &mut self,
-        workers: &mut Arc<Mutex<Vec<Worker>>>,
+        workers: &mut Arc<Mutex<HashMap<String, Worker>>>,
     ) -> Result<String, RpcError> {
         // Read a message from the upstream
         // Handle the message
@@ -228,7 +230,7 @@ impl Server {
                                 // Is this a response or request?
                                 // XXX TODO: Is there a better way? Introspection? Check Value for field?
                                 if v["id"] == String::from("Stratum") {
-                                    // this is a request
+                                    // This is a REQUEST because its from the Stratum server
                                     let req: RpcRequest = serde_json::from_str(&message).unwrap();
                                     trace!(
                                         LOGGER,
@@ -245,14 +247,14 @@ impl Server {
                                                 "{} - Setting new job for height {} job_id {}",
                                                 self.id,
                                                 job.height,
-						job.job_id,
+                                                job.job_id,
                                             );
-                                            self.job = job;
+                                            self.job = job; // The pool will see the job changed and send to workers
                                             return Ok(req.method.clone());
                                         }
                                         _ => {
                                             // XXX TODO: Unknown request type from the upstream stratum server - log it and continue
-                                            debug!(
+                                            error!(
                                                 LOGGER,
                                                 "{} - Pool server got unknown request type: {}",
                                                 self.id,
@@ -270,14 +272,13 @@ impl Server {
                                 } else {
                                     // This is a response from the upstream Grin Stratum Server
                                     // Here, we are accepting responses to requests we sent on behalf of a worker
-                                    // The messages 'id' field contains the worker id this response is for
+                                    // The messages 'id' field contains the worker.id+worker.rig_id this response is for
                                     // We need to process the responses the pool cares about,
                                     // The pool made this request and it will handle responses (so return the results back up)
                                     let res: RpcResponse = serde_json::from_str(&message).unwrap();
                                     debug!(LOGGER, "{} - Received response {:?}", self.id, res);
-                                    let mut workers_l = workers.lock().unwrap();
-                                    // Get the worker index this response is for
-                                    let w_id_usz: usize = match res.id.parse::<usize>() {
+                                    // Get the worker this response is for
+                                    let worker_id = match res.id.parse::<String>() {
                                         Ok(id) => id,
                                         Err(err) => {
                                             let e = RpcError {
@@ -287,15 +288,64 @@ impl Server {
                                             return Err(e);
                                         }
                                     };
-                                    let w_id_o: Option<usize> = workers_l
-                                        .iter()
-                                        .position(|ref i| i.id == w_id_usz);
-                                    let w_id: usize;
-                                    match w_id_o {
-                                        Some(id) => w_id = id,
+                                    // First check if this message is for us, rather than a worker
+                                    if worker_id == self.id {
+                                        debug!(LOGGER, "RESPOPNSE for MWGRINPOOL: {}", worker_id);
+                                        match res.method.as_str() {
+                                            "getjobtemplate" => {
+                                                // The upstream stratum server has sent us a new job
+                                                let job: JobTemplate = serde_json::from_value(res.result.unwrap()).unwrap();
+                                                debug!(
+                                                    LOGGER,
+                                                    "{} - Setting new job for height {} job_id {}",
+                                                    self.id,
+                                                    job.height,
+                                                    job.job_id,
+                                                );
+                                                self.job = job;
+                                                return Ok(res.method.clone());
+                                            }
+                                            "login" => {
+                                                debug!(
+                                                    LOGGER,
+                                                    "{} - Upstream server accepted our login",
+                                                    self.id,
+                                                );
+                                                return Ok(res.method.clone());
+                                            }
+                                            _ => {
+                                                // XXX TODO: Response to unknown request type from the upstream stratum server - log it and continue
+                                                error!(
+                                                    LOGGER,
+                                                    "{} - Pool server got unknown response type: {}",
+                                                    self.id,
+                                                    res.method.as_str()
+                                                );
+                                                let e = RpcError {
+                                                    code: -32601,
+                                                    message: ["Method not found: ", &res.method]
+                                                        .join("")
+                                                        .to_string(),
+                                                };
+                                                return Err(e);
+                                            }
+                                        };
+                                        return Ok(res.method.clone());
+                                    }
+                                    
+
+                                    let mut w_m = workers.lock().unwrap();
+                                    // debug print all workers id
+                                    //for (worker_id, worker) in w_m.iter_mut() {
+                                    //    debug!(LOGGER, "worker: {}", worker_id);
+                                    //}
+                                    // Debug print this method
+                                    debug!(LOGGER, "rpc method: {}", res.method.as_str());
+                                    let mut worker = match w_m.get_mut(&worker_id) {
+                                        Some(mut w) => w,
                                         _ => {
-                                            let err_msg = "Null Worker ID".to_string();
-                                            debug!(LOGGER, "Null Worker ID");
+                                            let err_msg = "Worker ID Not Found".to_string();
+                                            error!(LOGGER, "Worker ID Not Found");
                                             self.error = true;
                                             let e = RpcError {
                                                 code: -32600,
@@ -304,6 +354,8 @@ impl Server {
                                             return Err(e);
                                         }
                                     };
+                                    // Debug
+                                    debug!(LOGGER, "This worker: {}", worker.full_id());
                                     match res.method.as_str() {
                                         // This is a response to a getjobtemplate request made by the pool
                                         "getjobtemplate" => {
@@ -353,7 +405,8 @@ impl Server {
                                         }
                                         "submit" => {
                                             // XXX TODO: Error checking
-                                            debug!(LOGGER, "w_id = {}", w_id);
+                                            // Debug print this method
+                                            debug!(LOGGER, "IN rpc method: {}", res.method.as_str());
                                             match res.result {
                                                 Some(response) => {
                                                     // The share was accepted
@@ -361,9 +414,11 @@ impl Server {
                                                         LOGGER,
                                                         "setting stats for worker id {:?}", res.id
                                                     );
-                                                    workers_l[w_id].status.accepted += 1;
-                                                    debug!(LOGGER, "Server accepted our share");
-                                                    workers_l[w_id].send_ok(res.method.clone());
+                                                    self.status.accepted += 1;
+                                                    debug!(LOGGER, "Upstream Server accepted our share");
+                                                    // share response is now sent from pool.rs
+                                                    // after difficulty validation
+                                                    // worker.send_ok(res.method.clone());
                                                 }
                                                 None => {
                                                     // The share was not accepted, check RpcError.code for reason
@@ -375,22 +430,21 @@ impl Server {
                                                     let e: RpcError = serde_json::from_value(res.error.unwrap()).unwrap();
                                                     match e.code {
                                                         -32503 => {
-                                                            workers_l[w_id].status.stale += 1;
+                                                            // share response is now sent from pool.rs
+                                                            // after difficulty validation
+                                                            // workers_l[w_id].status.stale += 1;
                                                             debug!(
                                                                 LOGGER,
                                                                 "Server rejected share as stale"
                                                             );
-                                                            workers_l[w_id].send_err(res.method.clone(), "Solution submitted too late".to_string(), -32503);
-                                                            // ? return Err(res.method.clone());
                                                         }
                                                         _ => {
-                                                            workers_l[w_id].status.rejected += 1;
+                                                            // after difficulty validation
+                                                            // workers_l[w_id].status.rejected += 1;
                                                             debug!(
                                                                 LOGGER,
                                                                 "Server rejected share as invalid"
                                                             );
-                                                            workers_l[w_id].send_err(res.method.clone(), "Failed to validate solution".to_string(), -32502);
-                                                            // ? return Err(res.method.clone());
                                                         }
                                                     }
                                                 }

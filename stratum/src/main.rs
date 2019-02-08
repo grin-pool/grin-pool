@@ -30,7 +30,9 @@ extern crate lazy_static;
 extern crate toml;
 extern crate reqwest;
 extern crate redis;
-
+extern crate blake2_rfc as blake2;
+extern crate byteorder;
+extern crate rand;
 
 use bufstream::BufStream;
 use std::error::Error;
