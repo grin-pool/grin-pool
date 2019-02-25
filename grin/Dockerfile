@@ -25,24 +25,21 @@ RUN git clone https://github.com/mimblewimble/grin.git .; git checkout master; g
 RUN cargo build --release
 
 # Update and build grin
-RUN touch asxxyyzzzzqyxxxy
+RUN touch sxxyyzzzzqyxxxzfggx
 RUN git fetch && \
     git pull && \
-    git checkout master
+    git checkout v1.0.0
 
 # Monkey Patch
 RUN sed -i -e 's/127\.0\.0\.1:13420/0.0.0.0:13420/g' wallet/src/command.rs
-#COPY stratumserver.rs servers/src/mining/stratumserver.rs
+COPY stratumserver.rs servers/src/mining/stratumserver.rs
 
 RUN cargo build --release
 
 # Generate configuration
-# XXX TODO: REMOVE FOR MAINNET
-ENV NET_FLAG "--floonet"
 RUN mkdir -p /root/.grin && \
     cd /root/.grin && \
-    ln -s . floo && \
-    ln -s . main
+        ln -s . main
 RUN target/release/grin ${NET_FLAG} server config && \
     echo dummy > dummy && \
     echo dummy >> dummy && \
@@ -51,10 +48,6 @@ RUN target/release/grin ${NET_FLAG} server config && \
 
 # runtime stage
 FROM docker.mwgrinpool.com:5001/keybase:latest
-
-# XXX TODO: REMOVE FOR MAINNET
-ENV NET_FLAG "--floonet"
-
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     locales \
@@ -87,9 +80,9 @@ RUN sed -i 's/^db_root = .*$/db_root = "\/server\/.grin"/' /usr/src/grin/grin-se
     sed -i 's/^run_tui = .*$/run_tui = false/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^run_test_miner = .*$/run_test_miner = false/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^host = .*$/host = "0.0.0.0"/' /usr/src/grin/grin-server.toml && \
-    sed -i 's/^port = .*$/port = 13414/' /usr/src/grin/grin-server.toml && \
-    sed -i 's/^?peer_max_count = .*$/peer_max_count = 75/' /usr/src/grin/grin-server.toml && \
-    sed -i 's/^?peer_min_preferred_count = .*$/peer_min_preferred_count = 15/' /usr/src/grin/grin-server.toml && \
+    sed -i 's/^port = .*$/port = 3414/' /usr/src/grin/grin-server.toml && \
+    sed -i 's/^#peer_max_count = .*$/peer_max_count = 250/' /usr/src/grin/grin-server.toml && \
+    sed -i 's/^#peer_min_preferred_count = .*$/peer_min_preferred_count = 16/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^enable_stratum_server = .*$/enable_stratum_server = true/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^stratum_server_addr = .*$/stratum_server_addr = "0.0.0.0:13416"/' /usr/src/grin/grin-server.toml && \
     sed -i 's/^attempt_time_per_block = .*$/attempt_time_per_block = 300/' /usr/src/grin/grin-server.toml && \

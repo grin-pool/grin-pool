@@ -13,9 +13,9 @@
 // limitations under the License.
 
 //! Mining Stratum Server
+use crate::util::{Mutex, RwLock};
 use bufstream::BufStream;
 use chrono::prelude::Utc;
-use crate::util::{Mutex, RwLock};
 use serde;
 use serde_json;
 use serde_json::Value;
@@ -152,6 +152,7 @@ pub struct Worker {
 	stream: BufStream<TcpStream>,
 	error: bool,
 	authenticated: bool,
+	buffer: String,
 }
 
 impl Worker {
@@ -164,16 +165,18 @@ impl Worker {
 			stream: stream,
 			error: false,
 			authenticated: false,
+			buffer: String::with_capacity(4096),
 		}
 	}
 
 	// Get Message from the worker
 	fn read_message(&mut self) -> Option<String> {
 		// Read and return a single message or None
-		let mut line = String::new();
-		match self.stream.read_line(&mut line) {
+		match self.stream.read_line(&mut self.buffer) {
 			Ok(_) => {
-				return Some(line);
+				let res = self.buffer.clone();
+				self.buffer.clear();
+				return Some(res);
 			}
 			Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
 				// Not an error, just no messages ready
@@ -184,6 +187,7 @@ impl Worker {
 					"(Server ID: {}) Error in connection with stratum client: {}",
 					self.id, e
 				);
+				self.buffer.clear();
 				self.error = true;
 				return None;
 			}
@@ -191,13 +195,16 @@ impl Worker {
 	}
 
 	// Send Message to the worker
-	fn write_message(&mut self, message_in: String) {
+	fn write_message(&mut self, mut message: String) {
 		// Write and Flush the message
-		let mut message = message_in.clone();
 		if !message.ends_with("\n") {
 			message += "\n";
 		}
-		match self.stream.write(message.as_bytes()) {
+		match util::read_write::write_all(
+			&mut self.stream,
+			message.as_bytes(),
+			Duration::from_secs(1),
+		) {
 			Ok(_) => match self.stream.flush() {
 				Ok(_) => {}
 				Err(e) => {
@@ -246,7 +253,7 @@ impl StratumServer {
 		verifier_cache: Arc<RwLock<dyn VerifierCache>>,
 	) -> StratumServer {
 		StratumServer {
-			id: String::from("StratumServer"),
+			id: String::from("0"),
 			minimum_share_difficulty: config.minimum_share_difficulty,
 			config,
 			chain,
@@ -303,16 +310,26 @@ impl StratumServer {
 					};
 
 					let mut stratum_stats = stratum_stats.write();
-					let worker_stats_id = stratum_stats
+					let worker_stats_id = match stratum_stats
 						.worker_stats
 						.iter()
 						.position(|r| r.id == workers_l[num].id)
-						.unwrap();
+					{
+						Some(id) => id,
+						None => continue,
+					};
 					stratum_stats.worker_stats[worker_stats_id].last_seen = SystemTime::now();
 
 					// Call the handler function for requested method
 					let response = match request.method.as_str() {
-						"login" => self.handle_login(request.params, &mut workers_l[num]),
+						"login" => {
+							if self.current_block_versions.is_empty() {
+								continue;
+							}
+							stratum_stats.worker_stats[worker_stats_id].initial_block_height =
+								self.current_block_versions.last().unwrap().header.height;
+							self.handle_login(request.params, &mut workers_l[num])
+						}
 						"submit" => {
 							let res = self.handle_submit(
 								request.params,
@@ -338,7 +355,7 @@ impl StratumServer {
 							}
 						}
 						"status" => {
-							self.handle_status(&stratum_stats.worker_stats[worker_stats_id])
+							self.handle_status(&mut stratum_stats.worker_stats[worker_stats_id])
 						}
 						_ => {
 							// Called undefined method
@@ -350,33 +367,30 @@ impl StratumServer {
 						}
 					};
 
+					let id = request.id.clone();
 					// Package the reply as RpcResponse json
-					let rpc_response: String;
-					match response {
-						Err(response) => {
-							let resp = RpcResponse {
-								id: request.id,
-								jsonrpc: String::from("2.0"),
-								method: request.method,
-								result: None,
-								error: Some(response),
-							};
-							rpc_response = serde_json::to_string(&resp).unwrap();
-						}
-						Ok(response) => {
-							let resp = RpcResponse {
-								id: request.id,
-								jsonrpc: String::from("2.0"),
-								method: request.method,
-								result: Some(response),
-								error: None,
-							};
-							rpc_response = serde_json::to_string(&resp).unwrap();
-						}
-					}
-
-					// Send the reply
-					workers_l[num].write_message(rpc_response);
+					let resp = match response {
+						Err(response) => RpcResponse {
+							id: id,
+							jsonrpc: String::from("2.0"),
+							method: request.method,
+							result: None,
+							error: Some(response),
+						},
+						Ok(response) => RpcResponse {
+							id: id,
+							jsonrpc: String::from("2.0"),
+							method: request.method,
+							result: Some(response),
+							error: None,
+						},
+					};
+					if let Ok(rpc_response) = serde_json::to_string(&resp) {
+						// Send the reply
+						workers_l[num].write_message(rpc_response);
+					} else {
+						warn!("handle_rpc_requests: failed responding to {:?}", request.id);
+					};
 				}
 				None => {} // No message for us from this worker
 			}
@@ -384,7 +398,7 @@ impl StratumServer {
 	}
 
 	// Handle STATUS message
-	fn handle_status(&self, worker_stats: &WorkerStats) -> Result<Value, Value> {
+	fn handle_status(&self, worker_stats: &mut WorkerStats) -> Result<Value, Value> {
 		// Return worker status in json for use by a dashboard or healthcheck.
 		let status = WorkerStatus {
 			id: worker_stats.id.clone(),
@@ -394,6 +408,18 @@ impl StratumServer {
 			rejected: worker_stats.num_rejected,
 			stale: worker_stats.num_stale,
 		};
+		if worker_stats.initial_block_height == 0 {
+			worker_stats.initial_block_height = status.height;
+		}
+		debug!("(Server ID: {}) Status of worker: {} - Share Accepted: {}, Rejected: {}, Stale: {}. Blocks Found: {}/{}",
+			self.id,
+			worker_stats.id,
+			worker_stats.num_accepted,
+			worker_stats.num_rejected,
+			worker_stats.num_stale,
+			worker_stats.num_blocks_found,
+			status.height - worker_stats.initial_block_height,
+		);
 		let response = serde_json::to_value(&status).unwrap();
 		return Ok(response);
 	}
@@ -439,49 +465,14 @@ impl StratumServer {
 		// Validate parameters
 		let params: SubmitParams = parse_params(params)?;
 
-		let share_difficulty: u64;
-		let mut share_is_block = false;
-
 		// Find the correct version of the block to match this header
 		let b: Option<&Block> = self.current_block_versions.get(params.job_id as usize);
-		if b.is_none() {
+		if params.height != self.current_block_versions.last().unwrap().header.height || b.is_none()
+		{
 			// Return error status
 			error!(
-				"(Server ID: {}) Failed to validate solution at height {}, nonce {}, with {} edge_bits: invalid job_id {}",
-				self.id, params.height, params.nonce, params.edge_bits, params.job_id,
-			);
-			worker_stats.num_rejected += 1;
-			let e = RpcError {
-				code: -32502,
-				message: "Failed to validate solution".to_string(),
-			};
-			return Err(serde_json::to_value(e).unwrap());
-		}
-		let mut b: Block = b.unwrap().clone();
-		// Reconstruct the blocks header with this nonce and pow added
-		b.header.pow.proof.edge_bits = params.edge_bits as u8;
-		b.header.pow.nonce = params.nonce;
-		b.header.pow.proof.nonces = params.pow;
-
- 		if !b.header.pow.is_primary() && !b.header.pow.is_secondary() {
- 			// Return error status
- 			error!(
- 				"(Server ID: {}) Failed to validate solution at height {}, hash {}, edge_bits {}, nonce {}, job_id {}: cuckoo size too small",
- 				self.id, params.height, b.hash(), params.edge_bits, params.nonce, params.job_id,
- 			);
- 			worker_stats.num_rejected += 1;
- 			let e = RpcError {
- 				code: -32502,
- 				message: "Failed to validate solution".to_string(),
- 			};
- 			return Err(serde_json::to_value(e).unwrap());
- 		}
-
-		if params.height != self.current_block_versions.last().unwrap().header.height {
-			// Return error status
-			error!(
-				"(Server ID: {}) Share at height {}, nonce {}, hash {}, with {} edge_bits submitted too late",
-				self.id, params.height, params.nonce, b.hash(), params.edge_bits,
+				"(Server ID: {}) Share at height {}, edge_bits {}, nonce {}, job_id {} submitted too late",
+				self.id, params.height, params.edge_bits, params.nonce, params.job_id,
 			);
 			worker_stats.num_stale += 1;
 			let e = RpcError {
@@ -490,14 +481,38 @@ impl StratumServer {
 			};
 			return Err(serde_json::to_value(e).unwrap());
 		}
+
+		let share_difficulty: u64;
+		let mut share_is_block = false;
+
+		let mut b: Block = b.unwrap().clone();
+		// Reconstruct the blocks header with this nonce and pow added
+		b.header.pow.proof.edge_bits = params.edge_bits as u8;
+		b.header.pow.nonce = params.nonce;
+		b.header.pow.proof.nonces = params.pow;
+
+		if !b.header.pow.is_primary() && !b.header.pow.is_secondary() {
+			// Return error status
+			error!(
+				"(Server ID: {}) Failed to validate solution at height {}, hash {}, edge_bits {}, nonce {}, job_id {}: cuckoo size too small",
+				self.id, params.height, b.hash(), params.edge_bits, params.nonce, params.job_id,
+			);
+			worker_stats.num_rejected += 1;
+			let e = RpcError {
+				code: -32502,
+				message: "Failed to validate solution".to_string(),
+			};
+			return Err(serde_json::to_value(e).unwrap());
+		}
+
 		// Get share difficulty
 		share_difficulty = b.header.pow.to_difficulty(b.header.height).to_num();
 		// If the difficulty is too low its an error
 		if share_difficulty < self.minimum_share_difficulty {
 			// Return error status
 			error!(
-				"(Server ID: {}) Share at height {}, nonce {}, hash {}, with {} edge_bits rejected due to low difficulty: {}/{}",
-				self.id, params.height, params.nonce, b.hash(), params.edge_bits, share_difficulty, self.minimum_share_difficulty,
+				"(Server ID: {}) Share at height {}, hash {}, edge_bits {}, nonce {}, job_id {} rejected due to low difficulty: {}/{}",
+				self.id, params.height, b.hash(), params.edge_bits, params.nonce, params.job_id, share_difficulty, self.minimum_share_difficulty,
 			);
 			worker_stats.num_rejected += 1;
 			let e = RpcError {
@@ -513,12 +528,13 @@ impl StratumServer {
 			if let Err(e) = res {
 				// Return error status
 				error!(
-					"(Server ID: {}) Failed to validate solution at height {}, nonce {}, hash {}, with {} edge_bits: {}: {}",
+					"(Server ID: {}) Failed to validate solution at height {}, hash {}, edge_bits {}, nonce {}, job_id {}, {}: {}",
 					self.id,
 					params.height,
-                                        params.nonce,
-                                        b.hash(),
+					b.hash(),
 					params.edge_bits,
+					params.nonce,
+					params.job_id,
 					e,
 					e.backtrace().unwrap(),
 				);
@@ -533,24 +549,27 @@ impl StratumServer {
 			worker_stats.num_blocks_found += 1;
 			// Log message to make it obvious we found a block
 			warn!(
-				"(Server ID: {}) Solution Found for block {} - Yay!!! Worker ID: {}, blocks found: {}, shares: {}",
+				"(Server ID: {}) Solution Found for block {}, hash {} - Yay!!! Worker ID: {}, blocks found: {}, shares: {}",
 				self.id, params.height,
+				b.hash(),
 				worker_stats.id,
 				worker_stats.num_blocks_found,
 				worker_stats.num_accepted,
 			);
 		} else {
 			// Do some validation but dont submit
-			if !pow::verify_size(&b.header).is_ok() {
+			let res = pow::verify_size(&b.header);
+			if !res.is_ok() {
 				// Return error status
 				error!(
-					"(Server ID: {}) Failed to validate share at height {}, hash {}, with {} edge_bits with nonce {} using job_id {}",
+					"(Server ID: {}) Failed to validate share at height {}, hash {}, edge_bits {}, nonce {}, job_id {}. {:?}",
 					self.id,
 					params.height,
-                                        b.hash(),
+					b.hash(),
 					params.edge_bits,
 					b.header.pow.nonce,
 					params.job_id,
+					res,
 				);
 				worker_stats.num_rejected += 1;
 				let e = RpcError {
@@ -566,12 +585,13 @@ impl StratumServer {
 			Some(login) => login.clone(),
 		};
 		info!(
-			"(Server ID: {}) Got share for block: hash {}, height {}, edge_bits {}, nonce {}, difficulty {}/{}, submitted by {}",
+			"(Server ID: {}) Got share at height {}, hash {}, edge_bits {}, nonce {}, job_id {}, difficulty {}/{}, submitted by {}",
 			self.id,
-			b.hash(),
 			b.header.height,
+			b.hash(),
 			b.header.pow.proof.edge_bits,
 			b.header.pow.nonce,
+			params.job_id,
 			share_difficulty,
 			self.current_difficulty,
 			submitted_by,
@@ -703,6 +723,16 @@ impl StratumServer {
 			self.config.stratum_server_addr.clone().unwrap()
 		);
 
+		// Initial Loop. Waiting node complete syncing
+		while self.sync_state.is_syncing() {
+			self.clean_workers(&mut stratum_stats.clone());
+
+			// Handle any messages from the workers
+			self.handle_rpc_requests(&mut stratum_stats.clone());
+
+			thread::sleep(Duration::from_millis(50));
+		}
+
 		// Main Loop
 		loop {
 			// Remove workers with failed connections
@@ -762,7 +792,7 @@ impl StratumServer {
 			self.handle_rpc_requests(&mut stratum_stats.clone());
 
 			// sleep before restarting loop
-			thread::sleep(Duration::from_millis(50));
+			thread::sleep(Duration::from_micros(1));
 		} // Main Loop
 	} // fn run_loop()
 } // StratumServer

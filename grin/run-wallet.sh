@@ -1,5 +1,8 @@
 #!/bin/bash -x
 
+if [ "$NET_FLAG" = "--floonet" ]; then
+    sed -i 's/chain_type = .*/chain_type = \"Floonet\"/' /usr/src/grin/grin-wallet.toml
+fi
 
 # Live here
 cd /wallet
@@ -31,6 +34,8 @@ if [ $MODE == "private" ]; then
     echo "Starting wallet owner_api"
     grin ${NET_FLAG} wallet -p ${WALLET_PASSWORD} owner_api
 else
+    echo "Backup Wallet DB"
+    tar czf wallet_db.backup.$(date "+%F-%T" |tr : '_').tgz wallet_data
     echo "Starting public wallet listener"
     grin ${NET_FLAG} wallet -p ${WALLET_PASSWORD} listen
 fi
