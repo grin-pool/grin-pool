@@ -19,12 +19,20 @@ use std::time::Instant;
 use std::{thread, time};
 use rand::Rng;
 
+use failure::Error;
+use grin_util::from_hex;
+use grin_core::pow::Proof;
+use grin_core::core::BlockHeader;
+use grin_core::global::{ChainTypes, set_mining_mode};
+use grin_core::ser::{deserialize, ser_vec};
+
 use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
-use pool::logger::LOGGER;
-use pool::proto::{JobTemplate, RpcError, SubmitParams};
+use pool::proto::{JobTemplate, RpcError, SubmitParams, WorkerStatus};
+
 use pool::server::Server;
 use pool::worker::Worker;
-use pool::consensus::Proof;
+use pool::consensus::Proof as MinerProof;
+use pool::consensus::PROOF_SIZE;
 
 // ----------------------------------------
 // Worker Connection Thread Function
@@ -32,10 +40,12 @@ use pool::consensus::Proof;
 // Run in a thread. Adds new connections to the workers list
 fn accept_workers(
     stratum_id: String,
-    address: String,
-    difficulty: u64,
+    config: Config,
     workers: &mut Arc<Mutex<HashMap<String, Worker>>>,
 ) {
+    let address = config.workers.listen_address.clone() + ":"
+        + &config.workers.port_difficulty.port.to_string();
+    let difficulty = config.workers.port_difficulty.difficulty;
     let listener = TcpListener::bind(address).expect("Failed to bind to listen address");
     let banned: HashMap<SocketAddr, Instant> = HashMap::new();
     let mut rng = rand::thread_rng();
@@ -51,22 +61,19 @@ fn accept_workers(
                             continue;
                         }
                         warn!(
-                            LOGGER,
                             "Worker Listener - New connection from ip: {}",
                             worker_addr
                         );
                         stream
                             .set_nonblocking(true)
                             .expect("set_nonblocking call failed");
-                        let mut worker = Worker::new(0, BufStream::new(stream));
+                        let mut worker = Worker::new(config.clone(), BufStream::new(stream));
                         worker.set_difficulty(difficulty);
-                        let initial_id = rng.gen::<u32>();
-                        workers.lock().unwrap().insert(initial_id.to_string(), worker);
+                        workers.lock().unwrap().insert(worker.uuid(), worker);
                         // The new worker is now added to the workers list
                     }
                     Err(e) => {
                         warn!(
-                            LOGGER,
                             "{} - Worker Listener - Error getting wokers ip address: {:?}", stratum_id, e
                         );
                     }
@@ -74,7 +81,6 @@ fn accept_workers(
             }
             Err(e) => {
                 warn!(
-                    LOGGER,
                     "{} - Worker Listener - Error accepting connection: {:?}", stratum_id, e
                 );
             }
@@ -82,6 +88,34 @@ fn accept_workers(
     }
     // close the socket server
     drop(listener);
+}
+
+fn block_header(pre_pow: String,
+                edge_bits: u8,
+                nonce: u64,
+                mut proof: Vec<u64>
+        ) -> Result<BlockHeader, Error> {
+    let mut header_bytes = from_hex(pre_pow)?;
+    let mut nonce_bytes = ser_vec(&nonce)?;
+    header_bytes.append(&mut nonce_bytes);
+    let mut proof = Proof::new(proof);
+    proof.edge_bits = edge_bits;
+    let mut proof_bytes = ser_vec(&proof)?;
+    header_bytes.append(&mut proof_bytes);
+
+    let header: BlockHeader = deserialize(&mut &header_bytes[..])?;
+    Ok(header)
+}
+
+// Define ChainType for each pool
+fn pool_to_chaintype(pool: String) -> ChainTypes {
+    warn!("Pool Configured as: {}", pool);
+    match pool.as_str() {
+        "mwgrinpool" => { return ChainTypes::Mainnet; },
+        "mwfloopool" => { return ChainTypes::Floonet; },
+        "bitgrin" => { return ChainTypes::Mainnet; },
+        _ => { return ChainTypes::Mainnet; },
+    }
 }
 
 // ----------------------------------------
@@ -92,8 +126,11 @@ pub struct Pool {
     job: JobTemplate,
     config: Config,
     server: Server,
+    difficulty: u64,
     workers: Arc<Mutex<HashMap<String, Worker>>>,
     duplicates: HashMap<Vec<u64>, usize>, // pow vector, worker id who first submitted it
+    job_versions: HashMap<u64, String>,   // pre_pow string, job_id version
+    chain_type: ChainTypes,
 }
 
 impl Pool {
@@ -104,24 +141,30 @@ impl Pool {
             job: JobTemplate::new(),
             config: config.clone(),
             server: Server::new(config.clone()),
+            difficulty: 1,
             workers: Arc::new(Mutex::new(HashMap::new())),
             duplicates: HashMap::new(),
+            job_versions: HashMap::new(),
+            chain_type: pool_to_chaintype(config.grin_pool.pool.clone()),
         }
     }
 
     /// Run the Pool
     pub fn run(&mut self) {
-        // Start a thread for each listen port to accept new worker connections
-        for port_difficulty in &self.config.workers.port_difficulty {
-            let mut workers_th = self.workers.clone();
-            let id_th = self.id.clone();
-            let address_th = self.config.workers.listen_address.clone() + ":"
-                + &port_difficulty.port.to_string();
-            let difficulty_th = port_difficulty.difficulty;
-            let _listener_th = thread::spawn(move || {
-                accept_workers(id_th, address_th, difficulty_th, &mut workers_th);
-            });
-        }
+        // Start a thread to listen on port and accept new worker connections
+        let mut workers_th = self.workers.clone();
+        let id_th = self.id.clone();
+        let config_th = self.config.clone();
+        let _listener_th = thread::spawn(move || {
+            accept_workers(id_th, config_th, &mut workers_th);
+        });
+
+        // Set default pool difficulty
+        self.difficulty = self.config.workers.port_difficulty.difficulty;
+
+        // Set the Chain Type
+        error!("set_mining_mode: {:?}", self.chain_type.clone());
+        set_mining_mode(self.chain_type.clone());
 
         // ------------
         // Main loop
@@ -133,7 +176,6 @@ impl Pool {
                 Ok(_) => { } // server.connect method also logs in and requests a job
                 Err(e) => {
                     error!(
-                        LOGGER,
                         "{} - Unable to connect to upstream server: {}", self.id, e
                     );
                     thread::sleep(time::Duration::from_secs(1));
@@ -154,14 +196,12 @@ impl Pool {
             let _ = self.process_shares();
 
             // Send jobs to needy workers
-//            if self.server.job.height > 0 {
             let _ = self.send_jobs();
-//            }
 
             // Delete workers in error state
             let _num_active_workers = self.clean_workers();
 
-            thread::sleep(time::Duration::from_millis(10));
+            thread::sleep(time::Duration::from_millis(1));
         }
     }
 
@@ -179,7 +219,6 @@ impl Pool {
             Err(e) => {
                 // Log an error
                 error!(
-                    LOGGER,
                     "{} - Error processing upstream message: {:?}", self.id, e
                 );
                 // There are also special case(s) where we want to do something for a specific
@@ -195,12 +234,13 @@ impl Pool {
     fn process_worker_messages(&mut self) {
         let mut id_changed: Vec<String> = vec![];
         let mut w_m = self.workers.lock().unwrap();
-        for (worker_id, worker) in w_m.iter_mut() {
+        for (worker_uuid, worker) in w_m.iter_mut() {
             let res = worker.process_messages();
-            if worker_id != &*worker.full_id() {
+            if worker_uuid != &*worker.uuid() {
                 // User id changed - probably because they logged in
-                id_changed.push(worker_id.clone());
-                error!( LOGGER, "id changed:  full_id {} - {:?}", worker.full_id().clone(), res );
+                id_changed.push(worker_uuid.clone());
+                debug!("id changed:  uuid {} - {:?}", worker.uuid().clone(), res );
+                worker.reset_worker_shares(self.job.height, self.difficulty);
             }
         }
         // Rehash the worker using updated id
@@ -209,7 +249,7 @@ impl Pool {
             match worker_o {
                 None => {},
                 Some(worker) => {
-                    w_m.insert(worker.full_id(), worker);
+                    w_m.insert(worker.uuid(), worker);
                 }
             }
         }
@@ -217,14 +257,18 @@ impl Pool {
 
     fn send_jobs(&mut self) {
         let mut w_m = self.workers.lock().unwrap();
-        for (worker_id, worker) in w_m.iter_mut() {
+        for (worker_uuid, worker) in w_m.iter_mut() {
             if worker.needs_job && worker.authenticated {
-                warn!( LOGGER, "job to: {} - needs_job: {}, requested_job: {}, authenticated: {}", worker_id, worker.needs_job, worker.requested_job, worker.authenticated );
+                warn!("job to: {} - needs_job: {}, requested_job: {}, authenticated: {}", worker_uuid, worker.needs_job, worker.requested_job, worker.authenticated );
                 // Randomize the nonce
-                // XXX TODO (Need to know block header format and deserialize it
-                worker.set_difficulty(1); // XXX TODO: this get from config?
+                // XXX TODO (We do have the deserialized block header code so we can do this now)
+                worker.set_difficulty(self.difficulty);
                 worker.set_height(self.job.height);
-                worker.send_job(&mut self.server.job.clone());
+                // Print this workers worker_shares (previous block) for logstash to send to rmq
+                error!("{:?}", worker.worker_shares);
+                // Reset the workers current block stats
+                worker.reset_worker_shares(self.job.height, self.difficulty);
+                worker.send_job(&mut self.job.clone());
             }
         }
     }
@@ -232,100 +276,167 @@ impl Pool {
     fn accept_new_job(&mut self) {
         // Use the new job
         if self.job.pre_pow != self.server.job.pre_pow {
-            debug!(LOGGER, "accept_new_job: {} vs {}", self.job.pre_pow.clone(), self.server.job.pre_pow.clone());
-            self.job = self.server.job.clone();
-            debug!(LOGGER, "accept_new_job broadcasting: {}", self.job.pre_pow.clone());
+            trace!("accept_new_job for height {}, job_id {}", self.server.job.height, self.server.job.job_id);
+            let new_height: bool = self.job.height != self.server.job.height;
+            let mut new_job = self.server.job.clone();
+            // Update the new jobs job_id (bminer wants this)
+            new_job.job_id = new_job.height * 1000 + new_job.job_id;
+            self.job = new_job;
+            // debug!("accept_new_job broadcasting: {}", self.job.pre_pow.clone());
             // broadcast it to the workers
             let _ = self.broadcast_job();
-            // clear last block duplicates map
-            self.duplicates = HashMap::new()
+            if new_height {
+                // clear last block duplicates map
+                self.duplicates.clear();
+                // clear the versions of the previous heights job
+                self.job_versions.clear();
+            }
+            self.job_versions.insert(self.job.job_id, self.job.pre_pow.clone());
         }
     }
+
 
     //
     // Process shares returned by each workers
     fn process_shares(&mut self) {
         let mut w_m = self.workers.lock().unwrap();
-        for (worker_id, worker) in w_m.iter_mut() {
+        for (worker_uuid, worker) in w_m.iter_mut() {
             match worker.get_shares().unwrap() {
                 None => {}
                 Some(shares) => {
-                    for share in shares {
+                    for mut share in shares {
                         //  Check for duplicate or add to duplicate map
                         if self.duplicates.contains_key(&share.pow) {
                             debug!(
-                                LOGGER,
                                 "{} - Rejected duplicate share from worker {} with login {}",
                                 self.id,
-                                worker.id(),
+                                worker.uuid(),
                                 worker.login(),
                             );
                             worker.status.rejected += 1;
-                            worker.block_status.rejected += 1;
+                            worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
+                            worker.send_err("submit".to_string(), "Failed to validate solution".to_string(), -32502);
                             continue; // Dont process this share anymore
                         } else {
-                            self.duplicates.insert(share.pow.clone(), worker.id());
+                            self.duplicates.insert(share.pow.clone(), worker.user_id());
                         }
-                        // XXX TODO:
-                        // Verify the timestamp matches what we sent so we know
-                        //   this share comes from the job we sent
-                        // XXX TO DO This I need to deserialize the block header
-                        //			if share.pre_pow != self.current_block {
-                        //			    debug!(
-                        //                                LOGGER,
-                        //                                "{} - Rejected corrupt share from worker {} with login {}",
-                        //                                self.id,
-                        //                                worker.id(),
-                        //                                worker.login(),
-                        //                            );
-                        //                            worker.status.rejected += 1;
-                        //                            worker.block_status.rejected += 1;
-                        //                            continue; // Dont process this share anymore
-                        //                        }
+                        // Check that its a valid pow size
+                        if share.edge_bits < 29 || share.edge_bits == 30 {
+                            // Invalid Size
+                            worker.status.rejected += 1;
+                            // worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
+                            worker.send_err("submit".to_string(), "Invalid POW size".to_string(), -32502);
+                            continue; // Dont process this share anymore
+                        }
+                        // Check solution length (proofsize check in pow verify (#2805))
+                        if share.pow.len() != PROOF_SIZE {
+                            warn!("Share has invalid PROOF_SIZE");
+                            worker.status.rejected += 1;
+                            worker.send_err("submit".to_string(), "Invalid PROOF_SIZE".to_string(), -32502);
+                            continue; // Dont process this share anymore
+                        }
                         // Check the height to see if its stale
                         if share.height != self.job.height {
                             // Its stale
-                            warn!(LOGGER, "Share is stale {} vs {}", share.height, self.job.height);
+                            warn!("Share is stale {} vs {}", share.height, self.job.height);
                             worker.status.stale += 1;
-                            worker.block_status.stale += 1;
+                            worker.add_shares(share.edge_bits, 0, 0, 1); // Accepted, Rejected, Stale
                             worker.send_err("submit".to_string(), "Solution submitted too late".to_string(), -32503);
                             continue; // Dont process this share anymore
                         }
+                        // Check if the pre-pow matches the job we sent - avoid "constructed solutions"
+                        // A) Construct a BlockHeader from the correct version of the pre-pow and the share pow
+                        match self.job_versions.get(&share.job_id) {
+                            None => {
+                                worker.status.rejected += 1;
+                                worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
+                                continue // Dont process this share anymore
+                            },
+                            Some(pre_pow) => {
+                                // We need:
+                                //   a) The pre_pow as a vector
+                                //   b) the nonce
+                                //   c) the pow
+                                let bh = match block_header(pre_pow.to_string(), share.edge_bits as u8, share.nonce, share.pow.clone()) {
+                                    Ok(r) => { r },
+                                    Err(e) => { 
+                                        worker.status.rejected += 1;
+                                        worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
+    debug!(
+        "{} - Rejected mismatched block header: {}",
+        self.id,
+        e
+    );
+                                        worker.send_err("submit".to_string(), "Failed to validate solution".to_string(), -32502);
+                                        continue; // Dont process this share anymore
+
+                                    },
+                                };
+                        // B) Call into grin_core::pow::verify_size()
+                                let verify_result = grin_core::pow::verify_size(&bh);
+                                if ! verify_result.is_ok() {
+                                        worker.status.rejected += 1;
+                                        worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
+    debug!(
+        "{} - Rejected due to failed grin_core::pow::verify_size()",
+        self.id,
+    );
+                                        worker.send_err("submit".to_string(), "Failed to validate solution".to_string(), -32502);
+                                        continue; // Dont process this share anymore
+                                }
+                                // For debugging - remove
+                                // error!(
+                                //     "Verify Result: {}",
+                                //     verify_result.is_ok(),
+                                // );
+                            }
+                        }
                         // We check the difficulty here
-                        let proof = Proof {
+                        let proof = MinerProof {
                             edge_bits: share.edge_bits as u8,
                             nonces: share.pow.clone().to_vec(),
                         };
                         let difficulty = proof.to_difficulty_unscaled().to_num();
-                        warn!(LOGGER, "Difficulty: {}", difficulty);
+                        // warn!("Difficulty: {}", difficulty);
                         // Check if this meets worker difficulty
                         if difficulty < 1 {
                             worker.status.rejected += 1;
-                            worker.block_status.rejected += 1;
+                            worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
                             worker.send_err("submit".to_string(), "Rejected low difficulty solution".to_string(), -32502);
                             continue; // Dont process this share anymore
                         }
                         if difficulty < worker.status.difficulty {
                             worker.status.rejected += 1;
-                            worker.block_status.rejected += 1;
+                            worker.add_shares(share.edge_bits, 0, 1, 0); // Accepted, Rejected, Stale
                             worker.send_err("submit".to_string(), "Failed to validate solution".to_string(), -32502);
                             continue; // Dont process this share anymore
                         }
                         if difficulty >= worker.status.difficulty {
                             worker.status.accepted += 1;
-                            worker.block_status.accepted += 1;
+                            worker.add_shares(share.edge_bits, 1, 0, 0); // Accepted, Rejected, Stale
                             worker.send_ok("submit".to_string());
                         }
                         // This is a good share, send it to grin server to be submitted
-                        // XXX TODO: Only send high power shares
-                        let message_id: String = format!("{}-{}", worker.id(), worker.rig_id());
-                        self.server.submit_share(&share.clone(), message_id.clone());
-                        warn!(LOGGER, "{} - Got share at height {} with nonce {} with difficulty {} from worker {}",
+                        // Only send high power shares - minimum difficulty is set by the upstream
+                        // grin stratum server
+                        if difficulty >= self.job.difficulty { // XXX TODO <---- this compares scaled to unscaled difficulty values - no good XXX TODO
+                            // remove the block height prefix from the job_id
+                            share.job_id = share.job_id % share.height;
+                            self.server.submit_share(&share.clone(), worker.uuid());
+                            warn!("{} - Submitted share at height {} with nonce {} with difficulty {} from worker {}",
                                 self.id,
                                 share.height,
                                 share.nonce,
                                 worker.status.difficulty,
-                                message_id,
+                                worker.uuid(),
+                            );
+                        }
+                        warn!("{} - Got share at height {} with nonce {} with difficulty {} from worker {}",
+                                self.id,
+                                share.height,
+                                share.nonce,
+                                worker.status.difficulty,
+                                worker.uuid(),
                         );
                     }
                 }
@@ -336,7 +447,6 @@ impl Pool {
     fn broadcast_job(&mut self) -> Result<(), String> {
         let mut w_m = self.workers.lock().unwrap();
         debug!(
-            LOGGER,
             "{} - broadcasting a job to {} workers",
             self.id,
             w_m.len(),
@@ -344,11 +454,14 @@ impl Pool {
         // XXX TODO: To do this I need to deserialize the block header
         // XXX TODO: need to randomize the nonce (just in case a miner forgets)
         // XXX TODO: need to set a unique timestamp and record it in the worker struct
-        for (worker_id, worker) in w_m.iter_mut() {
+        for (worker_uuid, worker) in w_m.iter_mut() {
             if worker.authenticated {
-                worker.set_difficulty(1); // XXX TODO: this get from config?
+                worker.set_difficulty(self.config.workers.port_difficulty.difficulty);
                 worker.set_height(self.job.height);
+                // Print this workers block_status for logstash to send to rmq
+                error!("{:?}", worker.worker_shares);
                 worker.send_job(&mut self.job.clone());
+                worker.reset_worker_shares(self.job.height, self.difficulty);
             }
         }
         return Ok(());
@@ -358,21 +471,19 @@ impl Pool {
     fn clean_workers(&mut self) -> usize {
         let mut dead_workers: Vec<String> = vec![];
         let mut w_m = self.workers.lock().unwrap();
-        for (worker_id, worker) in w_m.iter_mut() {
+        for (worker_uuid, worker) in w_m.iter_mut() {
             if worker.error() == true {
                 warn!(
-                    LOGGER,
-                    "{} - Dropping worker: {}-{}",
+                    "{} - Dropping worker: {}",
                     self.id,
-                    worker.id(),
-                    worker.rig_id(),
+                    worker.uuid(),
                 );
-                dead_workers.push(worker_id.clone());
+                dead_workers.push(worker_uuid.clone());
             }
         }
         // Remove the dead workers
-        for worker_id in dead_workers {
-            let _ = w_m.remove(&worker_id);
+        for worker_uuid in dead_workers {
+            let _ = w_m.remove(&worker_uuid);
         }
         return w_m.len();
     }

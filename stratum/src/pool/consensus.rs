@@ -23,7 +23,7 @@ use pool::util;
 // constants from grin
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
 const SECOND_POW_EDGE_BITS: u8 = 29;
-const PROOF_SIZE: usize = 42;
+pub const PROOF_SIZE: usize = 42;
 const BLOCK_TIME_SEC: u64 = 60;
 
 const HOUR_HEIGHT: u64 = 3600 / BLOCK_TIME_SEC;
