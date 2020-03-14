@@ -5,7 +5,7 @@
 * Install: git, Docker,  and docker-compose
 * Static public IP address
 * Open ports inbound: 80, 443, 2222, 3333
-* Configure a Domain Name (set DNS A record for your domain)
+* Configure a Domain Name: Set DNS A records for .domain, api.domain, and stratum.domain
 
 ## Get the grin-pool software
 * git checkout git@github.com:grin-pool/grin-pool.git
