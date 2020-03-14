@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: stratum-hd
+  labels:
+    run: stratum-hd
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 34.76.93.175
+  ports:
+  - port: 3333
+    name: stratum-hd
+    protocol: TCP
+  selector:
+    run: stratum-hd
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: stratum-hd
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        run: stratum-hd
+    spec:
+      containers:
+      - name: stratum-hd
+        image: bitgrinmining/stratum:latest
+        command: ["/run.sh"]
+        env:
+        - name: DIFFICULTY
+          value: "512"
+        - name: GRIN_ADDRESS
+          value: "grin"
+        - name: POOL
+          valueFrom:
+            configMapKeyRef:
+              name: environment
+              key: pool
+        ports:
+        - containerPort: 3333
+        volumeMounts:
+        - name: logdir
+          mountPath: /stratum
+        resources:
+          requests:
+            cpu: 10m
+      - name: sharewatcher
+        image: bitgrinmining/logstash:latest
+        command: ["/run.sh", "sharefilter.conf"]
+        env:
+        - name: RMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt
+        volumeMounts:
+        - name: logdir
+          mountPath: /stratum
+        resources:
+          requests:
+            cpu: 10m
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+      - name: logdir
+        emptyDir: {}
+

@@ -1,0 +1,8 @@
+{
+	// Comments are supported
+    "uid": "grinpool",
+    "append": true,
+    "watch": false,
+    "script": "./dist/app.js",
+    "sourceDir": "./"
+}

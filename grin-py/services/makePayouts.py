@@ -67,7 +67,7 @@ def main():
             if utxo.method in ["http", "https", "keybase"]:
                 try:
                                         #user_id,      address,      logger, database, wallet_auth, method,     invoked_by
-                    payments.atomic_send(utxo.user_id, utxo.address, LOGGER, database, walletauth, utxo.method, "schedule")
+                    payments.atomic_send(utxo.user_id, utxo.address, LOGGER, database, utxo.method, "schedule")
                 except payments.PaymentError as e:
                     LOGGER.error("Failed to make http payment: {}".format(e))
             else:

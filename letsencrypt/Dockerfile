@@ -17,6 +17,9 @@ RUN set -ex && \
       htop \
       vim
 
+# Vim Settings
+RUN echo "set mouse=v" >> /root/.vimrc
+
 # For Ruby route53 hook to parse a string
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
@@ -25,10 +28,12 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
 # LetsEncrypt CertBot
-RUN add-apt-repository ppa:certbot/certbot && \
+RUN echo "deb http://deb.debian.org/debian stretch-backports main" >> /etc/apt/sources.list && \
+    # add-apt-repository ppa:certbot/certbot && \
     set -ex && \
-    apt-get -q --no-install-recommends --yes install \
-      python-certbot-nginx
+    apt-get update && \
+    apt-get -q --no-install-recommends --yes install -t stretch-backports \
+      certbot python-certbot-nginx
 
 # dehydrated 
 WORKDIR /etc/letsencrypt

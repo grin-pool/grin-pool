@@ -1,0 +1,6 @@
+export const colorTheme = 'theme-dark'
+export const C29_COLOR = '#fbf730'
+export const C31_COLOR = '#ff4861'
+export const CANCELED_PAYMENT_COLOR = '#C0392B'
+export const EXPIRED_PAYMENT_COLOR = '#D4AC0D'
+export const POOL_NAME = 'GrinPool'

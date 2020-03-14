@@ -35,8 +35,8 @@ PORT = 32050
 STRATUM_HOST = "stratum"
 STRATUM_PORT = 3333
 STRATUM_RECONNECT_INTERVAL = 10 # Attempt full reconnect every Nth test
-GRIN_API_URL = "http://grin:13413"
-GRINPOOL_API_URL = "http://api.mwgrinpool.com:13423"
+GRIN_API_URL = "http://grin:3413"
+GRINPOOL_API_URL = "http://api.mwfloopool.com:3423"
 GRINMINT_API_URL = "http://api.grinmint.com"
 GRIN_HEIGHT_THRESHOLD = 5 # Number of blocks allowed to be behind
 

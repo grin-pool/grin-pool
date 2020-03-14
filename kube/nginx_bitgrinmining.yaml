@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    run: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://api.pool.bitgrin.dev"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 104.199.10.245
+  externalTrafficPolicy: Local
+  ports:
+  - port: 80
+    protocol: TCP
+    name: nginx
+  - port: 443
+    protocol: TCP
+    name: nginxssl
+  - port: 3333
+    name: stratumld
+  - port: 3344
+    name: stratummd
+  - port: 4444
+    name: stratumhdssl
+  selector:
+    run: nginx
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: bitgrinmining/bgnginx:latest
+        #command: ["sleep", "9999999"]
+        command: ["/entrypoint"]
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        - containerPort: 3333
+        - containerPort: 3344
+        - containerPort: 4444
+        - containerPort: 13416
+        - containerPort: 23416
+        env:
+        - name: MYDOMAIN
+          value: "pool.bitgrin.dev"
+        volumeMounts:
+        - name: nginx
+          mountPath: /etc/certs
+      volumes:
+      - name: nginx
+        persistentVolumeClaim:
+          claimName: nginx

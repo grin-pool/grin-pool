@@ -16,26 +16,24 @@
 
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 extern crate bufstream;
 #[macro_use]
-extern crate slog;
-extern crate slog_async;
-extern crate slog_term;
+extern crate log;
 extern crate time;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
+extern crate log4rs;
 extern crate toml;
 extern crate reqwest;
 extern crate redis;
 extern crate blake2_rfc as blake2;
 extern crate byteorder;
 extern crate rand;
+extern crate queues;
+extern crate grin_core;
+extern crate grin_util;
+extern crate failure;
+extern crate backtrace;
 
-use bufstream::BufStream;
-use std::error::Error;
 use std::io::BufRead;
 use std::io::{ErrorKind, Write};
 use std::net::{TcpListener, TcpStream};
@@ -46,11 +44,14 @@ use std::time::SystemTime;
 
 mod pool;
 use pool::config;
-use pool::logger::LOGGER;
 use pool::pool::Pool;
+use pool::logger::init_logger;
 
 fn main() {
-    warn!(LOGGER, "Startng Grin-Pool");
+
+    init_logger();
+
+    warn!("Startng Grin-Pool");
 
     let config = config::read_config();
 

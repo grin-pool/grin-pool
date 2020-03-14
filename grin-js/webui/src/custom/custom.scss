@@ -1,0 +1,116 @@
+.login-form button {
+  width: 180px;
+}
+
+.theme-dark {
+  span, label, p, li, td, body, th, legend {
+    color: #dddddd;
+  }
+
+  .recharts-tooltip-wrapper p {
+    color: #212529;
+  }
+  .recharts-tooltip-wrapper span {
+    color: #212529;
+  }
+}
+
+.topbar__logo span {
+  padding-left: 40px;
+  font-size: 22px;
+}
+
+.topbar .topbar__logo  {
+  width: 160px;
+}
+
+@keyframes fader1 {
+  0% {
+    color: #fbf730;
+  }
+  100% {
+    color: C29_COLOR;
+  }
+}
+
+@keyframes fader2 {
+  0% {
+    color: #fbf730;
+  }
+  100% {
+    color: C29_COLOR;
+  }
+}
+
+#blockHeight1 {
+   animation: fader1 8s 1;
+}
+
+#blockHeight2 {
+  animation: fader2 9s 1
+}
+
+
+@keyframes balanceFader1 {
+  0% {
+    color: #3edc12;
+  }
+  100% {
+    color: C29_COLOR;
+  }
+}
+
+@keyframes balanceFader2 {
+  0% {
+    color: #3edc13;
+  }
+  100% {
+    color: C29_COLOR;
+  }
+}
+
+#balance1 {
+   animation: balanceFader1 9s 1;
+}
+
+#balance2 {
+  animation: balanceFader2 8s 1
+}
+
+.custom-network-data-tooltip {
+  padding: 10px;
+  background-color: #cccccc;
+}
+
+.instructions {
+  p {
+    font-size: 16px;
+  }
+
+  h2 {
+    margin-bottom: 14px;
+  }
+}
+
+#minerConfigPage .card .card-body  p {
+  font-family: monospace;
+}
+
+#minerConfigPage .card, #minerConfigPage .card-body {
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+
+.miningGraphContainer {
+  min-height: 349px;
+}
+
+.userRewardsTable {
+  th, td {
+    text-align: center;
+  }
+}
+
+.betaEstimates {
+  // display: none;
+}

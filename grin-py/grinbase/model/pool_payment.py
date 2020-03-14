@@ -1,6 +1,6 @@
-import datetime
 import sys
 import json
+from datetime import datetime
 
 from sqlalchemy import Column, Integer, BigInteger, String, DateTime, func, and_, ForeignKey, Text
 from sqlalchemy.orm import relationship
@@ -27,7 +27,7 @@ class Pool_payment(Base):
     
 
     def __repr__(self):
-        return self.to_json()
+        return json.dumps(self.to_json())
 
     def __init__(self, user_id, timestamp, height, address, amount, method, fee, tx_data, failure_count=0, state="new", invoked_by="schedule"):
         self.timestamp = timestamp
@@ -82,6 +82,12 @@ class Pool_payment(Base):
     def get_by_state(cls, state):
         return list(database.db.getSession().query(Pool_payment).filter(Pool_payment.state==state).all())
 
+    # Get by state with age limit
+    @classmethod
+    def get_by_state_and_agelimit(cls, state, time_delta):
+        ts_end = datetime.utcnow() - time_delta
+        return list(database.db.getSession().query(Pool_payment).filter(and_(Pool_payment.state==state, Pool_payment.timestamp <= ts_end)).all())
+
     # Get by address
     @classmethod
     def get_by_address(cls, address):
@@ -127,3 +133,9 @@ class Pool_payment(Base):
             return database.db.getSession().query(Pool_payment).filter(Pool_payment.user_id==user_id).order_by(Pool_payment.height.desc()).first()
         else:
             return list(database.db.getSession().query(Pool_payment).filter(Pool_payment.user_id==user_id).order_by(Pool_payment.height.desc()).limit(range).all())
+
+
+    # Get by pool payment id
+    @classmethod
+    def get_by_id(cls, id):
+        return database.db.getSession().query(Pool_payment).filter(Pool_payment.id==id).one_or_none()

@@ -2,8 +2,8 @@
   "rabbit_version": "3.7.8",
   "users": [
     {
-      "name": "mwgrinpool",
-      "password_hash": "xxx",
+      "name": "admin",
+      "password_hash": "",
       "hashing_algorithm": "rabbit_password_hashing_sha256",
       "tags": "administrator"
     }
@@ -15,7 +15,7 @@
   ],
   "permissions": [
     {
-      "user": "mwgrinpool",
+      "user": "admin",
       "vhost": "/",
       "configure": ".*",
       "write": ".*",
@@ -27,20 +27,20 @@
   "global_parameters": [
     {
       "name": "cluster_name",
-      "value": "rabbit@ba95c3ed4087"
+      "value": "rabbit@rmq-7654b8f4b-q79nb"
     }
   ],
   "policies": [],
   "queues": [
     {
-      "name": "grinshares",
+      "name": "shares",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     },
     {
-      "name": "poolshares",
+      "name": "poolblocks",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -71,17 +71,17 @@
     {
       "source": "shares",
       "vhost": "/",
-      "destination": "grinshares",
+      "destination": "shares",
       "destination_type": "queue",
-      "routing_key": "grinshares",
+      "routing_key": "shares",
       "arguments": {}
     },
     {
       "source": "shares",
       "vhost": "/",
-      "destination": "poolshares",
+      "destination": "poolblocks",
       "destination_type": "queue",
-      "routing_key": "poolshares",
+      "routing_key": "poolblocks",
       "arguments": {}
     }
   ]

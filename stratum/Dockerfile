@@ -1,7 +1,7 @@
 # Multistage docker build, requires docker 17.05
 
 # builder stage
-FROM rust:latest as builder
+FROM rust:1.40 as builder
 
 RUN set -ex && \
     apt-get update && \
@@ -19,6 +19,8 @@ RUN set -ex && \
         net-tools \
         procps
         
+# Vim Settings
+RUN echo "set mouse=v" >> /root/.vimrc
 
 WORKDIR /stratum
 
@@ -27,7 +29,7 @@ COPY src/. /stratum/src/
 COPY grin-pool.toml Cargo.toml /stratum/
 
 # Building grin-pool
-RUN cargo build
+RUN cargo build --release
 
 # runtime stage
 FROM debian:9.4
@@ -36,7 +38,11 @@ RUN set -ex && \
     apt-get update && \
     apt-get --no-install-recommends --yes install \
         libssl-dev \
-        libssl1.1
+        libssl1.1 \
+        procps \
+        htop \
+        net-tools \
+        vim
 
 WORKDIR /stratum
 COPY --from=builder /stratum/target/*/grin-pool /usr/local/bin/

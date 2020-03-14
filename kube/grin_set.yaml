@@ -1,0 +1,90 @@
+---
+# P2p port is public
+apiVersion: v1
+kind: Service
+metadata:
+  name: grin-p2p
+  labels:
+    app: grin
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.205.149.77
+  ports:
+  - name: ptop
+    port: 8514
+    targetPort: 8514
+    protocol: TCP
+  selector:
+    app: grin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grin
+  labels:
+    app: grin
+spec:
+  ports:
+  - port: 13413
+    protocol: TCP
+    name: grinapi
+  - port: 13416
+    protocol: TCP
+    name: grinstratum
+  selector:
+    app: grin
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: grin
+spec:
+  selector:
+    matchLabels:
+      app: grin
+  serviceName: grin
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: grin
+    spec:
+      containers:
+      - name: grin
+        image: bitgrinmining/bitgrin:latest
+        #command: ["sleep", "9999999"]
+        command: ["/run.sh"]
+        ports:
+        - containerPort: 13413
+        - containerPort: 8514
+          hostPort: 8514
+        - containerPort: 13416
+        volumeMounts:
+        - name: grinblockchain
+          mountPath: /server
+      - name: sharewatcher
+        image: bitgrinmining/logstash:latest
+        command: ["/run.sh", "poolblockfilter.conf"]
+#        command: ["sleep", "9999999"]
+        env:
+        - name: RMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt
+        volumeMounts: # directory inside container
+        - name: grinblockchain
+          mountPath: /server
+  volumeClaimTemplates:
+  - metadata:
+      name: grinblockchain
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 50Gi

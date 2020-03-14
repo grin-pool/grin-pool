@@ -37,15 +37,13 @@ from grinbase.model.worker_shares import Worker_shares
 from grinbase.model.gps import Gps
 
 
-# XXX TODO: Move to config
-POOL_MIN_DIFF = 29
-
 def estimate_gps_for_all_sizes(window):
+    print("estimate_gps_for_all_sizes across all workers")
+    sys.stdout.flush()
     if len(window) < 2:
         return []
     first_height = window[0].height
     last_height = window[-1].height
-    print("estimate_gps_for_all_sizes across all workers")
     first_grin_block = Blocks.get_by_height(first_height)
     last_grin_block = Blocks.get_by_height(last_height)
     assert first_grin_block is not None, "Missing grin block at height: {}".format(first_height)
@@ -58,10 +56,9 @@ def estimate_gps_for_all_sizes(window):
             valid_cnt[shares.edge_bits] += shares.valid
     print("Valid Share Counts entire window:")
     pp.pprint(valid_cnt)
-    all_worker_shares_this_block = [ws for ws in window if ws.height == last_height]
     all_gps = []
     for sz, cnt in valid_cnt.items():
-        gps = lib.calculate_graph_rate(window[0].timestamp, window[-1].timestamp, cnt)
+        gps = lib.calculate_graph_rate(window[0].timestamp, window[-1].timestamp, cnt, sz, last_height)
         all_gps.append((sz, gps, ))
     sys.stdout.flush()
     return all_gps
@@ -77,15 +74,25 @@ def calculate(height, window_size):
     grin_block = Blocks.get_by_height(height)
     assert grin_block is not None, "Missing grin block: {}".format(height)
     window = Worker_shares.get_by_height(height, window_size)
-    assert window[-1].height - window[0].height >= window_size, "Failed to get proper window size"
-    print("Sanity: window size:  {} vs  {}".format(window[-1].height - window[0].height, window_size))
+#    assert window[-1].height - window[0].height >= window_size, "Failed to get proper window size"
+#    print("Sanity: window size:  {} vs  {}".format(window[-1].height - window[0].height, window_size))
     # Calculate the stats data
     timestamp = grin_block.timestamp
     active_miners = len(list(set([s.user_id for s in window])))
     print("active_miners = {}".format(active_miners))
     # Keep track of share totals - sum counts of all share sizes submitted for this block
-    shares_processed = Worker_shares.get_by_height(height)
-    num_shares_processed = sum([shares.num_shares() for shares in shares_processed])
+    num_shares_processed = 0
+    share_counts = {}
+    for ws in Worker_shares.get_by_height(height):
+        num_shares_processed += ws.num_shares()
+        for size in ws.sizes():
+            size_str = "{}{}".format("C", size)
+            if size_str not in share_counts:
+                share_counts[size_str] = {"valid": 0, "invalid": 0, "stale": 0}
+            share_counts[size_str] = { "valid": share_counts[size_str]["valid"] + ws.num_valid(size),
+                                       "invalid": share_counts[size_str]["invalid"] + ws.num_invalid(size),
+                                       "stale": share_counts[size_str]["stale"] + ws.num_stale(size)
+                                     }
     print("num_shares_processed this block= {}".format(num_shares_processed))
     total_shares_processed = previous_stats_record.total_shares_processed + num_shares_processed
     total_blocks_found = previous_stats_record.total_blocks_found
@@ -97,6 +104,7 @@ def calculate(height, window_size):
             height = height,
             timestamp = timestamp,
             active_miners = active_miners,
+            share_counts = share_counts,
             shares_processed = num_shares_processed,
             total_blocks_found = total_blocks_found,
             total_shares_processed = total_shares_processed,
@@ -125,7 +133,8 @@ def calculate(height, window_size):
 def recalculate(start_height, window_size):
     database = lib.get_db()
     height = start_height
-    while height < grin.blocking_get_current_height():
+    worker_shares_height = Worker_shares.get_latest_height() - 1
+    while worker_shares_height > height:
         old_stats = Pool_stats.get_by_height(height)
         new_stats = calculate(height, window_size)
         if old_stats is None:
@@ -133,6 +142,7 @@ def recalculate(start_height, window_size):
         else:
             old_stats.timestamp = new_stats.timestamp
             old_stats.active_miners = new_stats.active_miners
+            old_stats.share_counts = new_stats.share_counts
             old_stats.shares_processed = new_stats.shares_processed
             old_stats.total_blocks_found = new_stats.total_blocks_found
             old_stats.total_shares_processed = new_stats.total_shares_processed
@@ -153,12 +163,13 @@ def initialize(window_size, logger):
         block_zero = Blocks.get_earliest()
     print("block_zero={}".format(block_zero))
     
-    stat_height = max(0, block_zero.height - window_size)
+    stat_height = max(0, block_zero.height + window_size)
     seed_stat = Pool_stats(
             height=stat_height,
             timestamp=datetime.utcnow(),
             active_miners=0,
             shares_processed=0,
+            share_counts=None,
             total_blocks_found=0,
             total_shares_processed=0,
             dirty = False,

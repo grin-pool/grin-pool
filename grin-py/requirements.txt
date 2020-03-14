@@ -10,7 +10,6 @@ flask-restful
 flask-login
 flask_httpauth
 flask_limiter
-flask-caching
 wtforms
 wtforms_components
 pytz
@@ -19,5 +18,6 @@ cairosvg
 flask-cors
 pika
 passlib
+flask-caching
 gunicorn
 redis

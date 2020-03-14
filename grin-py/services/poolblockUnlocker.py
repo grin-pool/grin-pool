@@ -16,6 +16,7 @@
 # Checks blocks found by the pool to see if they are ready to be unlocked and made available for payout.
 #
 
+import os
 import sys
 import requests
 import json
@@ -23,11 +24,16 @@ import time
 
 from grinlib import lib
 from grinlib import grin
+from grinlib import wallet
 from grinbase.model.pool_blocks import Pool_blocks
 
 PROCESS = "poolblockUnlocker"
 LOGGER = None
 CONFIG = None
+
+# Get K8s secret from container environment
+wallet_api_user = os.environ['WALLET_OWNER_API_USER']
+wallet_api_key = os.environ["WALLET_OWNER_API_PASSWORD"]
 
 def main():
     CONFIG = lib.get_config()
@@ -49,6 +55,13 @@ def main():
     latest = grin.blocking_get_current_height()
     LOGGER.warn("Latest: {}".format(latest))
 
+    # Get outputs form the wallet
+    wallet_outputs = wallet.retrieve_outputs(refresh=True)
+    wallet_outputs_map = wallet.outputs_to_map_by_height(wallet_outputs)
+    wallet_output_heights = list(wallet_outputs_map.keys())
+    wallet_output_heights.sort()
+    #print("wallet_output_heights = {}".format(wallet_output_heights))
+
     new_poolblocks = Pool_blocks.get_all_new()
     for pb in new_poolblocks:
         if pb.height < (latest - block_expiretime):
@@ -57,14 +70,22 @@ def main():
             pb.state = "expired"
             continue
         response = grin.get_block_by_height(pb.height)
+        # Check for unknown block
         if response == None:
             # Unknown.  Leave as "new" for now and attempt to validate next run
             LOGGER.error("Failed to get block {}".format(pb.height))
             continue
+        # Check for orphans
         if int(response["header"]["nonce"]) != int(pb.nonce):
             LOGGER.warn("Processed orphan pool block at height: {}".format(pb.height))
             pb.state = "orphan"
             continue
+#        # Check that we have a coinbase output in the wallet for this block
+#        if pb.height not in wallet_output_heights:
+#            LOGGER.warn("Wallet has no output for pool block at height: {}".format(pb.height))
+#            pb.state = "no_wallet_output"
+#            continue
+        # Check if its old enough to be mature
         if pb.height < (latest - block_locktime):
             # This block seems valid, and old enough to unlock
             LOGGER.warn("Unlocking pool block at height: {}".format(pb.height))

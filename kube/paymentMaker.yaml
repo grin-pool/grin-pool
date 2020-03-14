@@ -1,0 +1,34 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: paymentmaker
+spec:
+  schedule: "10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: paymentmaker
+            image: bitgrinmining/services:latest
+            command: ["/usr/local/bin/paymentMaker.py"]
+            #command: ["sleep", "9999"]
+            env:
+            - name: PPLNG_WINDOW_SIZE
+              value: "60"
+            - name: BLOCK_REWARD
+              value: "4.5"
+            - name: GRIN_POOL_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grinpool-admin
+                  key: username.txt
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 24
+  failedJobsHistoryLimit: 1

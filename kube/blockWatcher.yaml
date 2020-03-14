@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: blockwatcher
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: blockWatcher
+    spec:
+      containers:
+      - name: grin-pool
+        image: bitgrinmining/services:latest
+        # DONT set command - it overrides docker entrypoint
+        args: ["/usr/local/bin/blockWatcher.py"]
+        env:
+        - name: DEBUG_HOLD
+          value:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password

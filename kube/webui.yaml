@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webui
+  labels:
+    run: webui
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 35.195.241.47
+  ports:
+  - port: 13424
+#    targetPort: 3005
+    targetPort: 5000
+    protocol: TCP
+    name: webui
+  selector:
+    run: webui
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: webui
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: webui
+    spec:
+      containers:
+      - name: webui
+        image: bitgrinmining/webui-js:latest
+#        command: ["sleep", "9999999"]
+#        command: ["yarn", "start"]
+        command: ["/entrypoint.sh"]
+        ports:
+        - containerPort: 13524
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: POOL
+          valueFrom:
+            configMapKeyRef:
+              name: environment
+              key: pool

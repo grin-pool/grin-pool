@@ -1,0 +1,23 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: grinstats
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: grinstats
+    spec:
+      containers:
+      - name: grin-pool
+        image: bitgrinmining/services:latest
+        args: ["/usr/local/bin/grinStats.py"]
+        env:
+        - name: DEBUG_HOLD
+          value: 
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password

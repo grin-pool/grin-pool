@@ -1,0 +1,28 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dbinit
+spec:
+  containers:
+  - name: dbinit
+    image: bitgrinmining/services:latest
+    #    command: ["sleep", "99999999"]
+    command: ["/usr/local/bin/dbInit.py"]
+    env:
+    - name: GRIN_POOL_ADMIN_USER
+      valueFrom:
+        secretKeyRef:
+          name: grinpool-admin
+          key: username.txt
+    - name: GRIN_POOL_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: grinpool-admin
+          key: password.txt
+    - name: MYSQL_ROOT_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: mysql-pass
+          key: password
+  restartPolicy: Never

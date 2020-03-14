@@ -1,0 +1,71 @@
+@import 'settings/variable';  //themes' colors
+
+//base...
+@import 'generic/normalize.scss';
+@import 'generic/box-sizing.scss';
+@import './base/scaffolding';         // styles of base elements
+@import './base/typography';          // base styles of h1-h6, p, span
+
+//components...
+@import 'component/btn';
+@import './component/card';
+@import './component/check-box';
+@import './component/sidebar';
+@import './component/topbar';
+@import './component/modal';
+@import './component/load';
+@import './component/form';
+@import './component/material-form';
+
+//pages...
+@import 'containers/account';
+
+//objects...
+@import 'objects/layout.scss';
+
+.account__head {
+  margin-bottom: 30px;
+  padding-left: 10px;
+  border-left: 4px solid #70bbfd;
+}
+
+.dashboard .login-form button {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.article-tutorial-thumbnail, .video-tutorial-thumbnail {
+  border: 2px white solid;
+
+  &:hover {
+    opacity: 0.8
+  }
+}
+
+.login-form .red {
+  color: #ff4861;
+}
+
+.customTheme {
+  color: #333333 !important;
+  background-color: #cccccc !important;
+  opacity: 0.7;
+  max-width: 330px;
+}
+
+.theme-dark {
+  .primary table thead tr th, .primary table tbody tr td {
+    color: #004085;
+
+  }
+}
+
+.table-sm td, .table-sm th {
+  padding: .0rem;
+}
+
+line.recharts-reference-line-line {
+  opacity: 0.3;
+}
+
+@import '../custom/custom.scss';

@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: splunkui
+  labels:
+    run: splunk
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 34.76.12.76
+  loadBalancerSourceRanges:
+  - 68.101.220.143/32
+  - 68.107.96.202/32
+  - 108.196.200.233/32
+  ports:
+  - port: 8000
+    protocol: TCP
+    name: splunkweb
+  selector:
+    run: splunk
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: splunk
+  labels:
+    run: splunk
+spec:
+  ports:
+  - port: 9997
+    protocol: TCP
+    name: splunk
+  selector:
+    run: splunk
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: splunk
+spec:
+  selector:
+    matchLabels:
+      run: splunk
+  serviceName: splunk
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: splunk
+    spec:
+      containers:
+      - name: splunk
+        image: bitgrinmining/splunk:latest
+        #command: ["sleep", "9999999"]
+        command: ["/sbin/entrypoint.sh", "start"]
+#        command: ["/run.sh"]
+        ports:
+        - containerPort: 8000
+        - containerPort: 9997
+        env:
+        - name: SPLUNK_HOME
+          value: "/opt/splunk"
+        - name: SPLUNK_START_ARGS
+          value: "--accept-license"
+        - name: SPLUNK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: splunk
+              key: password
+        volumeMounts:
+        - name: splunk
+          mountPath: /opt/splunk/var
+      imagePullSecrets:
+      - name: regsecret
+  volumeClaimTemplates:
+  - metadata:
+      name: splunk
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 250Gi
+

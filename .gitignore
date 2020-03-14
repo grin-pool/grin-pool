@@ -38,3 +38,10 @@ ansible/prereqs
 
 # Google Cloud Creds and Config
 **/gcloud/
+
+# secrets
+**/secrets/
+
+# Top-secret payment code
+#grin-py/api/payment_api.py
+#grin-py/grinlib/payments.py

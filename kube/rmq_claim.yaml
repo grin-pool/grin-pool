@@ -1,0 +1,13 @@
+---
+# RMQ
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rmqdata
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+

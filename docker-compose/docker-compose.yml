@@ -1,0 +1,485 @@
+version: '3'
+
+
+networks:
+  pool:
+    driver: bridge
+
+volumes:
+  mysql:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/mysql
+      o: bind
+  grin:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/grin
+      o: bind
+  wallet:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/wallet
+      o: bind
+  services: 
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/services
+      o: bind
+  letsencrypt: 
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/letsencrypt
+      o: bind
+  rmq:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/rmq
+      o: bind
+  redis-master:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/redis-master
+      o: bind
+  stratum1:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/stratum1
+      o: bind
+  stratum2:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${POOL_DATA_DIR}/stratum2
+      o: bind
+
+services:
+   mysql:
+     image: mysql:5.7
+     networks:
+       - pool
+     volumes:
+       - mysql:/var/lib/mysql
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+       MYSQL_DATABASE: grinpool
+       MYSQL_USER: grinpool
+       MYSQL_PASSWORD: mysqlpass
+     restart: always
+
+   grin:
+     image: grin:latest
+     build: ../grin
+     networks:
+       - pool
+     ports:
+       - 3414:3414
+     expose:
+       - 3416
+       - 3413
+     volumes:
+       - grin:/server
+     environment:
+       NET_FLAG: ${NET_FLAG}
+       WALLETPORT: ${WALLETPORT_PUBLIC}
+       NODE_API_SECRET: ${NODE_API_SECRET}
+     command: /run.sh
+     restart: always
+
+   logstash-poolblocks:
+     image: logstash:latest
+     build: ../logstash
+     depends_on:
+       - grin
+     networks:
+       - pool
+     volumes:
+       - grin:/server
+     environment:
+       RMQ_USER: ${RABBITMQ_USER}
+       RMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+     command: /run.sh poolblockfilter.conf
+     restart: always
+
+   wallet:
+     image: grin:latest
+     build: ../grin
+     depends_on:
+       - grin
+     networks:
+       - pool
+     expose:
+       - ${WALLETPORT_PUBLIC}
+     volumes:
+       - wallet:/wallet
+     environment:
+       NET_FLAG: ${NET_FLAG}
+       WALLET_PASSWORD: ${WALLET_PASSWORD}
+       WALLET_OWNER_API_PASSWORD: ${WALLET_OWNER_API_PASSWORD}
+       NODE_API_SECRET: ${NODE_API_SECRET}
+     command: /run-wallet.sh public
+     restart: always
+
+   wallet_private:
+     image: grin:latest
+     build: ../grin
+     depends_on:
+       - grin
+     networks:
+       - pool
+     expose:
+       - ${WALLETPORT_PRIVATE}
+     volumes:
+       - wallet:/wallet
+     environment:
+       NET_FLAG: ${NET_FLAG}
+       WALLET_PASSWORD: ${WALLET_PASSWORD}
+       WALLET_OWNER_API_PASSWORD: ${WALLET_OWNER_API_PASSWORD}
+       NODE_API_SECRET: ${NODE_API_SECRET}
+     command: /run-wallet.sh private
+     restart: always
+
+   payment_api:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - wallet_private
+     networks:
+       - pool
+     expose:
+       - ${PAYMENT_API_PORT}
+     volumes:
+       - services:/services
+     environment:
+       PAYMENT_API_PORT: ${PAYMENT_API_PORT}
+       WALLET_OWNER_API_USER: ${WALLET_OWNER_API_USER}
+       WALLET_OWNER_API_PASSWORD: ${WALLET_OWNER_API_PASSWORD}
+       GRIN_POOL_ADMIN_USER: ${GRIN_POOL_ADMIN_USER}
+       GRIN_POOL_ADMIN_PASSWORD: ${GRIN_POOL_ADMIN_PASSWORD}
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/api/payment_api.py
+     restart: always
+
+   blockwatcher:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - grin
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/blockWatcher.py
+     restart: always
+
+   grinstats:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/grinStats.py
+     restart: always
+
+   poolstats:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/poolStats.py
+     restart: always
+
+   workerstats:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/workerStats.py
+     restart: always
+
+   shareaggr:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - rmq
+       - redis-master
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       RMQ: ${RMQ_SERVERS}
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+       RABBITMQ_USER: ${RABBITMQ_USER}
+       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+     command: /usr/local/bin/shareAggr.py
+     restart: always
+
+   paymentestimator:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - redis-master
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       PPLNG_WINDOW_SIZE: ${PPLNG_WINDOW_SIZE}
+       BLOCK_REWARD: ${BLOCK_REWARD}
+       GRIN_POOL_ADMIN_USER: ${GRIN_POOL_ADMIN_USER}
+       GRIN_POOL_ADMIN_PASSWORD: ${GRIN_POOL_ADMIN_PASSWORD}
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/paymentEstimator.py
+     restart: always
+
+   auditor:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - wallet_private
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+       WALLET_OWNER_API_USER: ${WALLET_OWNER_API_USER}
+       WALLET_OWNER_API_PASSWORD: ${WALLET_OWNER_API_PASSWORD}
+     command: /usr/local/bin/auditor.py
+     restart: always
+
+   blockwatcher:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - mysql
+       - grin
+     networks:
+       - pool
+     volumes:
+       - services:/services
+     environment:
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /usr/local/bin/blockWatcher.py
+     restart: always
+
+   stratum1:
+     image: stratum:latest
+     build: ../stratum
+     depends_on:
+       - redis-master
+       - rmq
+     networks:
+       - pool
+     expose:
+       - ${STRATUM_INTERNAL_PORT}
+     volumes:
+       - stratum1:/stratum
+     environment:
+       DIFFICULTY: ${STRATUM1_DIFFICULTY}
+       GRIN_ADDRESS: grin
+       POOL: ${POOL_NAME}
+     command: /run.sh
+     restart: always
+
+   logstash-stratum1:
+     image: logstash:latest
+     build: ../logstash
+     depends_on:
+       - stratum1
+       - rmq
+     networks:
+       - pool
+     volumes:
+       - stratum1:/stratum
+     environment:
+       RMQ_USER: ${RABBITMQ_USER}
+       RMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+     command: /run.sh sharefilter.conf
+     restart: always
+
+   stratum2:
+     image: stratum:latest
+     build: ../stratum
+     depends_on:
+       - redis-master
+       - rmq
+     networks:
+       - pool
+     expose:
+       - ${STRATUM_INTERNAL_PORT}
+     volumes:
+       - stratum2:/stratum
+     environment:
+       DIFFICULTY: ${STRATUM2_DIFFICULTY}
+       GRIN_ADDRESS: grin
+       POOL: ${POOL_NAME}
+     command: /run.sh
+     restart: always
+
+   logstash-stratum2:
+     image: logstash:latest
+     build: ../logstash
+     depends_on:
+       - stratum2
+       - rmq
+     networks:
+       - pool
+     volumes:
+       - stratum2:/stratum
+     environment:
+       RMQ_USER: ${RABBITMQ_USER}
+       RMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+     command: /run.sh sharefilter.conf
+     restart: always
+
+   apiv1:
+     image: services:latest
+     build: ../grin-py
+     depends_on:
+       - redis-master
+       - mysql
+     networks:
+       - pool
+     expose:
+       - ${APIV1_PORT}
+     volumes:
+       - services:/services
+     environment:
+       PPLNG_WINDOW_SIZE: ${PPLNG_WINDOW_SIZE}
+       BLOCK_REWARD: ${BLOCK_REWARD}
+       GRIN_POOL_ADMIN_USER: ${GRIN_POOL_ADMIN_USER}
+       GRIN_POOL_ADMIN_PASSWORD: ${GRIN_POOL_ADMIN_PASSWORD}
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: gunicorn -w 8 --timeout 999 -b 0.0.0.0:13423 api.api:app
+     restart: always
+
+   apiv2:
+     image: apiv2:latest
+     build: ../grin-js/api
+     depends_on:
+       - redis-master
+       - mysql
+     networks:
+       - pool
+     expose:
+       - ${APIV2_PORT}
+     environment:
+       GRIN_POOL_ADMIN_USER: ${GRIN_POOL_ADMIN_USER}
+       GRIN_POOL_ADMIN_PASSWORD: ${GRIN_POOL_ADMIN_PASSWORD}
+       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+     command: /entrypoint.sh
+     restart: always
+
+   webui:
+     image: webui-js:latest
+     build: ../grin-js/webui
+     depends_on:
+       - apiv1
+       - apiv2
+     networks:
+       - pool
+     ports:
+       - ${WEBUI_PORT}:${WEBUI_PORT}
+     expose:
+       - ${WEBUI_PORT}
+     environment:
+       NODE_ENV: production
+       pool: ${POOL_NAME}
+     command: /entrypoint.sh
+     restart: always
+
+   nginx:
+     image: grinnginx:latest
+     build: ../nginx
+     depends_on:
+       - webui
+       - apiv1
+       - apiv2
+       - stratum1
+       - stratum2
+     networks:
+       - pool
+     ports:
+       - 443:443
+       - 80:80
+       - ${STRATUM1_PORT}:${STRATUM1_PORT}
+       - ${STRATUM1_SSL_PORT}:${STRATUM1_SSL_PORT}
+       - ${STRATUM2_PORT}:${STRATUM2_PORT}
+       - ${STRATUM2_SSL_PORT}:${STRATUM2_SSL_PORT}
+       - ${STRATUM_PRIVATE_PORT}:${STRATUM_PRIVATE_PORT}
+     volumes:
+       - letsencrypt:/etc/letsencrypt
+     environment:
+       MYDOMAIN: ${POOL_DOMAIN}
+     command: /entrypoint.sh
+     restart: always
+
+   rmq:
+     image: rmq:latest
+     build: ../rmq
+     networks:
+       - pool
+     expose:
+       - 5672
+     volumes:
+       - rmq:/var/lib/rabbitmq
+     environment:
+       RABBITMQ_USER: ${RABBITMQ_USER}
+       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+     command: /entrypoint.sh
+     restart: always
+
+
+   redis-master:
+     image: redis:latest
+     networks:
+       - pool
+     expose:
+       - 6379
+     volumes:
+       - redis-master:/data
+     restart: always
+
+
+# Jobs
+# blockvalidator
+# dbbackup
+# paymentmaker
+# poolblockunlocker
+# tidywallet
+
+

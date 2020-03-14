@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: letsencrypt
+  labels:
+    app: letsencrypt
+data:
+  domains.txt: |
+    mwfloopool.com api.mwfloopool.com www.mwfloopool.com stratum.mwfloopool.com

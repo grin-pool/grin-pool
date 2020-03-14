@@ -21,7 +21,10 @@ import sys
 import requests
 import json
 import time
+import atexit
 import traceback
+from datetime import datetime
+
 
 from grinlib import lib
 from grinlib import grin
@@ -41,10 +44,11 @@ def main():
     
     # Connect to DB
     database = lib.get_db()
+    atexit.register(lib.teardown_db)
 
     validation_depth = int(CONFIG[PROCESS]["validation_depth"])
 
-    latest = grin.get_current_height()
+    latest = grin.get_current_height() - 10  # stop 10 blocks from current to avoid overrunning the blockWatcher
     last_block_record = Blocks.get_latest()
     if last_block_record == None:
         last_block_record_height = 0;
@@ -64,6 +68,7 @@ def main():
         assert(int(response["header"]["height"]) == i)
         #print("{}: {}".format(response["header"]["height"], response["header"]["hash"]))
         try:
+            database.db.initializeSession()
             rec = Blocks.get_by_height(i)   # Get existing entry from the DB (if any)
             if rec is not None:
                 # Test if we have an orphan thats not already marked
@@ -79,14 +84,14 @@ def main():
                                    version = response["header"]["version"],
                                    height = response["header"]["height"],
                                    previous = response["header"]["previous"],
-                                   timestamp = response["header"]["timestamp"][:-1],
+                                   timestamp = datetime.strptime(response["header"]["timestamp"][:-1], "%Y-%m-%dT%H:%M:%S+00:0"),
                                    output_root = response["header"]["output_root"],
                                    range_proof_root = response["header"]["range_proof_root"],
                                    kernel_root = response["header"]["kernel_root"],
                                    nonce = response["header"]["nonce"],
                                    edge_bits = response["header"]["edge_bits"],
                                    total_difficulty = response["header"]["total_difficulty"],
-                                   scaling_difficulty = response["header"]["scaling_difficulty"],
+                                   secondary_scaling = response["header"]["secondary_scaling"],
                                    num_inputs = len(response["inputs"]),
                                    num_outputs = len(response["outputs"]),
                                    num_kernels = len(response["kernels"]),
@@ -97,9 +102,10 @@ def main():
                 database.db.createDataObj(missing_block)
         except Exception as e:
             LOGGER.error("Something went wrong: {} - {}".format(e, traceback.print_stack()))
+            database.db.getSession().rollback()
+        database.db.destroySession()
         sys.stdout.flush()
-    # db.set_last_run(PROCESS, str(time.time()))
-    database.db.getSession().commit()
+        time.sleep(0.1) # dont be too aggressive
     LOGGER.warn("=== Completed {}".format(PROCESS))
 
 

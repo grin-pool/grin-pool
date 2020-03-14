@@ -16,20 +16,25 @@ class database_details:
         self.session = {}
         self.engine = None
 
-#        self.mysql_engine_string = "mysql+pymysql://{user}:{passwd}@{host}".format(
-#            user=MYSQL_CONSTANTS.mysql_user if user is None else user,
-#            passwd=MYSQL_CONSTANTS.mysql_passwd,
-#            host=MYSQL_CONSTANTS.mysql_host)
-#
-#        # Create db if needed
-#        tmp_engine = create_engine(self.mysql_engine_string)
-#        conn = tmp_engine.connect()
-#        conn.execute("commit")
-#        conn.execute("CREATE DATABASE IF NOT EXISTS {};".format(MYSQL_CONSTANTS.mysql_db))
-#        conn.close()
+        self.mysql_engine_string = "mysql+pymysql://{user}:{passwd}@{host}".format(
+            user=MYSQL_CONSTANTS.mysql_user if user is None else user,
+            passwd=MYSQL_CONSTANTS.mysql_passwd,
+            host=MYSQL_CONSTANTS.mysql_host)
 
-        # The DB and schema is created by "dbInit" job
- 
+        # Create db if needed
+        tmp_engine = create_engine(self.mysql_engine_string)
+        
+        # Query for existing databases
+        existing_databases = tmp_engine.execute("SHOW DATABASES;")
+        # Results are a list of single item tuples, so unpack each tuple
+        existing_databases = [d[0] for d in existing_databases]
+        
+        # Create database if not exists
+        if MYSQL_CONSTANTS.mysql_db not in existing_databases:
+            tmp_engine.execute("CREATE DATABASE {0}".format(MYSQL_CONSTANTS.mysql_db))
+            print("Created database {0}".format(MYSQL_CONSTANTS.mysql_db))
+
+        # Connect to the DB
         self.mysql_string = "mysql+pymysql://{user}:{passwd}@{host}/{db_name}".format(
             user=MYSQL_CONSTANTS.mysql_user if user is None else user,
             passwd=MYSQL_CONSTANTS.mysql_passwd,

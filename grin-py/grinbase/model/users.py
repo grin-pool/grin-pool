@@ -122,7 +122,8 @@ class Users(Base):
         #return self.password_hash == hashlib.sha256(password.encode('utf-8')).hexdigest()
         return pwd_context.verify(password, self.password_hash)
 
-    def generate_auth_token(self, key, expiration = 600):
+    # expires_in 7 days = 10080 minutes
+    def generate_auth_token(self, key, expiration = 10080):
         s = Serializer(key, expires_in = expiration)
         return s.dumps({ 'id': self.id })
 

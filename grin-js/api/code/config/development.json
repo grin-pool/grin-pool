@@ -1,0 +1,15 @@
+{
+    "dbHost": "localhost",
+    "dbPassword": "root",
+    "redisDomain": "localhost",
+    "jwtSecretKey": "xxxxyyyyyzzzzz",
+    "redisCacheDuration": 60,
+    "redisCacheExpire": {
+      "200": 0,
+      "4xx": 0,
+      "403": 0,
+      "5xx": 0,
+      "xxx": 1
+    },
+    "maxBlockRange": 1440
+  }

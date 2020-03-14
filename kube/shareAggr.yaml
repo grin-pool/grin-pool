@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: shareaggr
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: shareaggr
+    spec:
+      containers:
+      - name: shareaggr
+        image: bitgrinmining/services:latest
+        args: ["/usr/local/bin/shareAggr.py"]
+        env:
+        - name: DEBUG_HOLD
+          value: 
+        - name: RMQ
+          valueFrom:
+            configMapKeyRef:
+              name: environment
+              key: rmq
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: username.txt
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rmq
+              key: password.txt

@@ -1,7 +1,11 @@
 FROM splunk/splunk:latest
 
-ENV SPLUNK_START_ARGS=--accept-license
+USER root
 
-COPY run.sh /
+ENV SPLUNK_START_ARGS="--accept-license --no-prompt"
+ENV SPLUNK_USER=root
+ENV SPLUNK_GROUP=root
+ENV SPLUNK_HOME=/opt/splunk
 
 EXPOSE 8000
+EXPOSE 9997

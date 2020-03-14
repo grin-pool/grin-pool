@@ -1,0 +1,81 @@
+#########################################
+### WALLET CONFIGURATION              ###
+#########################################
+[wallet]
+chain_type = "Mainnet"
+
+#host IP for wallet listener, change to "0.0.0.0" to receive grins
+api_listen_interface = "0.0.0.0"
+
+#path of TLS certificate file, self-signed certificates are not supported
+#tls_certificate_file = ""
+#private key for the TLS certificate
+#tls_certificate_key = ""
+
+#port for wallet listener
+api_listen_port = 3415
+
+#port for wallet owner api
+owner_api_listen_port = 3420
+
+#path of the secret token used by the API to authenticate the calls
+#comment it to disable basic auth
+api_secret_path = "/root/.grin/.api_secret"
+
+#location of the node api secret for basic auth on the Grin API
+node_api_secret_path = "/root/.grin/.api_secret"
+
+#where the wallet should find a running node
+check_node_api_http_addr = "http://grin:3413"
+
+#include the foreign API endpoints on the same port as the owner
+#API. Useful for networking environments like AWS ECS that make
+#it difficult to access multiple ports on a single service.
+owner_api_include_foreign = false
+
+#where to find wallet files (seed, data, etc)
+data_file_dir = "/wallet/wallet_data"
+
+#If true, don't store calculated commits in the database
+#better privacy, but at a performance cost of having to
+#re-calculate commits every time they're used
+no_commit_cache = false
+
+#Whether to use the black background color scheme for command line
+dark_background_color_scheme = true
+
+#The exploding lifetime for keybase notification on coins received.
+#Unit: Minute. Default value 1440 minutes for one day.
+#Refer to https://keybase.io/blog/keybase-exploding-messages for detail.
+#To disable this notification, set it as 0.
+keybase_notify_ttl = 1440
+
+
+#########################################
+### LOGGING CONFIGURATION             ###
+#########################################
+[logging]
+
+#whether to log to stdout
+log_to_stdout = true
+
+#log level for stdout: Error, Warning, Info, Debug, Trace
+stdout_log_level = "Trace"
+
+#whether to log to a file
+log_to_file = true
+
+#log level for file: Error, Warning, Info, Debug, Trace
+file_log_level = "Trace"
+
+#log file path
+log_file_path = "/wallet/grin-wallet.log"
+
+#whether to append to the log file (true), or replace it on every run (false)
+log_file_append = true
+
+#maximum log file size in bytes before performing log rotation
+#comment it to disable log rotation
+log_max_size = 16777216
+log_max_files = 32
+

@@ -1,0 +1,35 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: paymentestimator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: paymentestimator
+    spec:
+      containers:
+      - name: grin-pool
+        image: bitgrinmining/services:latest
+        args: ["/usr/local/bin/paymentEstimator.py"]
+        env:
+        - name: PPLNG_WINDOW_SIZE
+          value: "60"
+        - name: BLOCK_REWARD
+          value: "4.5"
+        - name: GRIN_POOL_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: username.txt
+        - name: DEBUG_HOLD
+          value: 
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+      imagePullSecrets:
+      - name: regsecret
+

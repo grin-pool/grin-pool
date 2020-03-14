@@ -24,10 +24,12 @@ use reqwest;
 use std::collections::HashMap;
 use redis::{Client, Commands, Connection, RedisResult};
 use std::iter;
+use std::{thread, time};
 use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
+use queues::*;
 
-use pool::logger::LOGGER;
+use pool::config::{Config, NodeConfig, PoolConfig, WorkerConfig};
 use pool::proto::{RpcRequest, RpcError};
 use pool::proto::{JobTemplate, LoginParams, StratumProtocol, SubmitParams, WorkerStatus};
 
@@ -35,53 +37,96 @@ use pool::proto::{JobTemplate, LoginParams, StratumProtocol, SubmitParams, Worke
 // Worker Object - a connected stratum client - a miner
 //
 
-//#derive(Serialize, Deserialize, Debug)]
-//pub struct AuthForm {
-//    pub username: String,
-//    pub password: String,
-//}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Shares {
+    pub edge_bits: u32,
+    pub accepted: u64,
+    pub rejected: u64,
+    pub stale: u64,
+}
 
-#[derive(Debug)]
-pub struct WorkerConfig {}
+impl Shares {
+    pub fn new(edge_bits: u32) -> Shares {
+        Shares {
+            edge_bits: edge_bits,
+            accepted: 0,
+            rejected: 0,
+            stale: 0,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct WorkerShares {
+    pub id: String,  // Full id (UUID)
+    pub rigid: String,  // User assigned or "default"
+    pub workerid: String, // User assigned or "0"
+    pub agent: String,  // Miner identifier
+    pub height: u64,
+    pub difficulty: u64,
+    pub shares: HashMap<u32, Shares>,
+}
+
+impl WorkerShares {
+    pub fn new(id: String) -> WorkerShares {
+        WorkerShares {
+            id: id,
+            rigid: "default".to_string(),
+            workerid: "0".to_string(),
+            agent: "unknown".to_string(),
+            height: 0,
+            difficulty: 0,
+            shares: HashMap::new(),
+        }
+    }
+}
+
 
 pub struct Worker {
-    pub id: usize,
-    pub rig_id: String,
-    login: Option<LoginParams>,
-    stream: BufStream<TcpStream>,
-    protocol: StratumProtocol,
-    error: bool,
-    pub authenticated: bool,
-    pub status: WorkerStatus,       // Runing totals
-    pub block_status: WorkerStatus, // Totals for current block
-    shares: Vec<SubmitParams>,
-    pub needs_job: bool,
-    pub requested_job: bool,
-    redis: Option<redis::Connection>
+    pub user_id: usize,   // the pool user_id or 0 if we dont know yet
+    pub connection_id: String,  // The random per-connection id used to match proxied stratum messages
+    login: Option<LoginParams>,  // The stratum login parameters sent by the miner
+    stream: BufStream<TcpStream>,  // Connection with the mier process
+    config: Config, // Values from the config.toml file
+    protocol: StratumProtocol,  // Structures, codes, methods for stratum protocol
+    error: bool, // Is this worker connection in error state?
+    pub authenticated: bool, // Has the miner already successfully logged in?
+    pub status: WorkerStatus,        // Runing totals - reported with stratum status message
+    pub worker_shares: WorkerShares, // Share Counts for current block
+    shares: Vec<SubmitParams>, // shares submitted by the miner that need to be processed by the pool
+    request_ids: Queue<String>,     // Queue of request message ID's
+    pub needs_job: bool, // Does this miner need a job for any reason
+    pub requested_job: bool, // The miner sent a job request
+    redis: Option<redis::Connection>, // Login/UserID are cached here
+    pub buffer: String, // Read-Buffer for stream
 }
 
 impl Worker {
     /// Creates a new Stratum Worker.
-    pub fn new(id: usize, stream: BufStream<TcpStream>) -> Worker {
+    pub fn new(config: Config, stream: BufStream<TcpStream>) -> Worker {
         let mut rng = thread_rng();
-        let rig_id: String = iter::repeat(())
+        let connection_id: String = iter::repeat(())
             .map(|()| rng.sample(Alphanumeric))
             .take(16)
             .collect();
+        let uuid = format!("{}-{}", 0, connection_id.clone());
         Worker {
-            id: id,
-            rig_id: rig_id,
+            user_id: 0, // We dont know until the user logs in
+            connection_id: connection_id,
             login: None,
+            config: config.clone(),
             stream: stream,
             protocol: StratumProtocol::new(),
             error: false,
             authenticated: false,
-            status: WorkerStatus::new(id.to_string()),
-            block_status: WorkerStatus::new(id.to_string()),
+            status: WorkerStatus::new(uuid.clone()),
+            worker_shares: WorkerShares::new(uuid.clone()),
             shares: Vec::new(),
+            request_ids: queue![],
             needs_job: false,
             requested_job: false,
             redis: None,
+            buffer: String::with_capacity(4096),
         }
     }
 
@@ -90,20 +135,15 @@ impl Worker {
         return self.error;
     }
 
-    /// get the id
-    pub fn id(&self) -> usize {
-        return self.id;
+    /// get the workers pool user_id
+    pub fn user_id(&self) -> usize {
+        return self.user_id;
     }
 
-    /// get the rig_id
-    pub fn rig_id(&self) -> String {
-        return self.rig_id.clone();
-    }
-
-    /// get the full_id
-    pub fn full_id(&self) -> String {
-        let full_id: String = format!("{}-{}", self.id, self.rig_id.clone());
-        return full_id;
+    /// get the full uuid:  user_id + connection_id
+    pub fn uuid(&self) -> String {
+        let uuid: String = format!("{}-{}", self.user_id, self.connection_id.clone());
+        return uuid
     }
 
     /// Get worker login
@@ -127,76 +167,155 @@ impl Worker {
         self.status.height = new_height;
     }
 
+    /// Reset worker_shares for a new block
+    pub fn reset_worker_shares(&mut self, height: u64, difficulty: u64) {
+        self.worker_shares.id = self.uuid();
+        self.worker_shares.height = height;
+        self.worker_shares.difficulty = difficulty;
+        self.worker_shares.shares = HashMap::new();
+    }
+    
+    /// Add a share to the worker_shares
+    pub fn add_shares(&mut self, size: u32, accepted: u64, rejected: u64, stale: u64) {
+        if self.worker_shares.shares.contains_key(&size) {
+            match self.worker_shares.shares.get_mut(&size) {
+                Some(mut shares) => {
+                    shares.accepted += accepted;
+                    shares.rejected += rejected;
+                    shares.stale += stale;
+                },
+                None => {
+                    // This cant happen
+                }
+            }
+        } else {
+            let mut shares: Shares = Shares::new(size);
+            shares.accepted = accepted;
+            shares.rejected = rejected;
+            shares.stale = stale;
+            self.worker_shares.shares.insert(size, shares);
+        }
+    }
+    
+    /// Send a response
+    pub fn send_response(&mut self,
+                         method: String,
+                         result: Value,
+                 ) -> Result<(), String> {
+        // Get the rpc request_id for this response
+        // XXX TODO: Better matching of method?
+        let req_id = match self.request_ids.remove() {
+            Ok(id) => id,
+            Err(e) => {
+                error!("EMPTY request_ids ERROR");
+                "0".to_string()
+            },
+        };
+        trace!(
+            "XXX SENDING RESPONSE: method: {}, result: {}, rpc_id: {}",
+            method.clone(),
+            result.clone(),
+            req_id.clone(),
+        );
+        return self.protocol.send_response(
+                &mut self.stream,
+                method,
+                result,
+                Some(req_id),
+            );
+    }
+
+    /// Send an ERROR response
+    pub fn send_error_response(&mut self,
+                         method: String,
+                         e: RpcError,
+                 ) -> Result<(), String> {
+        // Get the rpc request_id for this response
+        // XXX TODO: Better matching of method?
+        let req_id = match self.request_ids.remove() {
+            Ok(id) => id,
+            Err(e) => {
+                error!("EMPTY request_ids ERROR");
+                "0".to_string()
+            },
+        };
+        trace!(
+            "XXX SENDING ERROR RESPONSE: method: {}, error: {:?}, rpc_id: {}",
+            method.clone(),
+            e.clone(),
+            req_id.clone(),
+        );
+        return self.protocol.send_error_response(
+            &mut self.stream,
+            method,
+            e,
+            Some(req_id),
+        );
+    }
+
+
+
     // This handles both a get_job_template response, and a job request
     /// Send a job to the worker
     pub fn send_job(&mut self, job: &mut JobTemplate) -> Result<(), String> {
-        error!(LOGGER, "Worker {} - Sending a job downstream: requested = {}", self.full_id(), self.requested_job);
+        trace!("Worker {} - Sending a job downstream: requested = {}", self.uuid(), self.requested_job);
         // Set the difficulty
         job.difficulty = self.status.difficulty;
         let requested = self.requested_job;
         self.needs_job = false;
         self.requested_job = false;
-        let job_value = serde_json::to_value(job).unwrap();
-        let full_id = self.full_id();
+        let job_value = serde_json::to_value(job.clone()).unwrap();
+        let result;
         if requested {
-            return self.protocol.send_response(
-                &mut self.stream,
+            result = self.send_response(
                 "getjobtemplate".to_string(),
                 job_value,
-                Some(full_id),
             );
         } else {
-            // XXX UGLY - We should just be able to send the "getjobtemplate" response but grin-miner is
-            // broken so we need to also send a "job" request at the same time
-            let _ = self.protocol.send_request(
+            result = self.protocol.send_request(
                 &mut self.stream,
                 "job".to_string(),
                 Some(job_value.clone()),
-                Some(full_id.clone()),
+                Some("Stratum".to_string()),    // XXX UGLY
             );
-            return self.protocol.send_response(
-                &mut self.stream,
-                "getjobtemplate".to_string(),
-                job_value,
-                Some(full_id),
-            );
+        }
+        match result {
+            Ok(r) => { return Ok(r); }
+            Err(e) => {
+                self.error = true;
+                error!("{} - Failed to send job: {}", self.uuid(), e);
+                return Err(format!("{}", e));
+            }
         }
     }
 
     /// Send worker mining status
     pub fn send_status(&mut self, status: WorkerStatus) -> Result<(), String> {
-        trace!(LOGGER, "Worker {} - Sending worker status", self.id);
+        trace!("Worker {} - Sending worker status", self.uuid());
         let status_value = serde_json::to_value(status).unwrap();
-        let full_id = self.full_id();
-        return self.protocol.send_response(
-            &mut self.stream,
+        return self.send_response(
             "status".to_string(),
             status_value,
-            Some(full_id),
         );
     }
 
     /// Send OK Response
     pub fn send_ok(&mut self, method: String) -> Result<(), String> {
-        trace!(LOGGER, "Worker {} - sending OK Response", self.id);
-        let full_id = self.full_id();
-        return self.protocol.send_response(
-            &mut self.stream,
+        trace!("Worker {} - sending OK Response", self.uuid());
+        return self.send_response(
             method.to_string(),
             serde_json::to_value("ok".to_string()).unwrap(),
-            Some(full_id),
         );
     }
 
     /// Send Err Response
     pub fn send_err(&mut self, method: String, message: String, code: i32) -> Result<(), String> {
-        trace!(LOGGER, "Worker {} - sending Err Response", self.id);
+        trace!("Worker {} - sending Err Response", self.uuid());
         let e = RpcError {
             code: code,
             message: message.to_string(),
         };
-        return self.protocol.send_error_response(
-            &mut self.stream,
+        return self.send_error_response(
             method.to_string(),
             e,
         );
@@ -206,9 +325,8 @@ impl Worker {
     pub fn get_shares(&mut self) -> Result<Option<Vec<SubmitParams>>, String> {
         if self.shares.len() > 0 {
             trace!(
-                LOGGER,
                 "Worker {} - Getting {} shares",
-                self.id,
+                self.uuid(),
                 self.shares.len()
             );
             let current_shares = self.shares.clone();
@@ -220,19 +338,24 @@ impl Worker {
 
     /// Worker Login
     pub fn do_login(&mut self, login_params: LoginParams) -> Result<(), String> {
-        // Get the user id
+        // Save the entire login + password 
         self.login = Some(login_params.clone());
-        // Try to get this user id from the redis cache
-        // Connect
+
+        // Connect to REDIS
+        let redis_url = format!("redis://{}:{}/", self.config.redis.address, self.config.redis.port);
+        trace!("Connecting to REDIS at: {}", redis_url);
         match self.redis {
             None => {
-                match redis::Client::open("redis://redis-master/") {
-                    Err(e) => {},
+                match redis::Client::open(redis_url.clone().as_str()) {
+                    Err(e) => {
+                        error!("Failed to get REDIS client: {:?}", e);
+                    },
                     Ok(client) => {
-                        // create connection from client and assing to
-                        // self.redis if success
+                        // create connection from client and assign to self.redis
                         match client.get_connection() {
-                            Err(e) => {},
+                            Err(e) => {
+                                error!("Failed to get REDIS connection: {:?}", e);
+                            },
                             Ok(con) => {
                                 self.redis = Some(con);
                             },
@@ -240,11 +363,63 @@ impl Worker {
                     },
                 };
             },
-            Some(_) => {},
+            Some(_) => {
+                warn!("Already connected to REDIS");
+            },
         };
 
+        // TEMPORARY - Lookup from REDIS *as provided*
+        let mut username = login_params.login.clone().to_lowercase();
+        debug!("TEMPORARY: Looking up username: {}", username.clone());
+        let mut temp_userid_key = format!("userid.{}", username.clone());
+        let mut temp_id = 0;
+        match self.redis {
+            Some(ref mut redis) => {
+                let response: usize = match redis.get(temp_userid_key.clone()) {
+                    Ok(id) => id,
+                    Err(e) => 0,
+                };
+                if response != 0 {
+                    temp_id = response as usize;
+                    debug!("TEMPORARY: Got user LEGACY login from redis: {}", temp_id.clone());
+                };
+            },
+            None => {
+                warn!("TEMPORARY: Failed to find username {} in REDIS", username.clone());
+            }
+        }
+        // END TEMPORARY
 
-        let mut userid_key = format!("userid.{}", login_params.login);
+        // Separate the username/RigID/WorkerID if provided
+        let mut username_split: Vec<&str> = login_params.login.split('.').collect();
+        if username_split.len() > 3 {
+            // TEMPORARY
+            if temp_id != 0 {
+                self.user_id = temp_id;
+                trace!("User LEGACY login found in cache: {}", self.user_id.clone());
+                // We accepted the login
+                return Ok(());
+            }
+            // END TEMPORARY
+            self.error = true;
+            debug!("Worker {} failed to log in - Invalid username format: {}", self.user_id, login_params.login.clone());
+            return Err("Invalid Username Format".to_string());
+        }
+        username = username_split[0].to_string().to_lowercase();
+        if username_split.len() >= 2 {
+            self.worker_shares.rigid = username_split[1].to_string();
+        } 
+        if username_split.len() >= 3 {
+            self.worker_shares.workerid = username_split[2].to_string();
+        }
+        debug!("DEBUG: have username={}, rigid={}, workerid={}", username.clone(), self.worker_shares.rigid.clone(), self.worker_shares.workerid.clone());
+
+        // Set the agent string in WorkerShares
+        self.worker_shares.agent = login_params.agent.clone();
+
+        // Try to get this users pool id from the redis cache
+        debug!("Looking up username: {}", username.clone());
+        let mut userid_key = format!("userid.{}", username);
         match self.redis {
             Some(ref mut redis) => {
                 let response: usize = match redis.get(userid_key.clone()) {
@@ -252,146 +427,47 @@ impl Worker {
                     Err(e) => 0,
                 };
                 if response != 0 {
-                    self.id = response as usize;
-                    debug!(LOGGER, "Got user login from redis: {}", self.id.clone());
+                    self.user_id = response as usize;
+                    debug!("Got user login from redis: {}", self.user_id.clone());
                 };
             },
             None => {}
         }
-        if self.id != 0 {
-            debug!(LOGGER, "User login found in cache: {}", self.id.clone());
+        if self.user_id != 0 {
+            trace!("User login found in cache: {}", self.user_id.clone());
             // We accepted the login
             return Ok(());
         }
-        // Didnt find user in the redis, try the database
-        debug!(LOGGER, "Calling pool api to get userid");
-        // Call the pool API server to Try to get the users ID based on login
-        let client = reqwest::Client::new(); // api request client
-        let mut response = client
-            .get(format!("http://poolapi:13423/pool/userid/{}", login_params.login.clone()).as_str())
-            .send(); // This could be Err
-        let mut result = match response {
-            Ok(r) => r,
-            Err(e) => {
-                self.error = true;
-                debug!(LOGGER, "Worker {} - Failed to contact API server", self.id);
-                return self.send_err(
-                    "login".to_string(),
-                    "Failed to contatct API server for user lookup".to_string(),
-                    -32500,
-                );
-            }
-        };
-        if result.status().is_success() {
-            let userid_json: Value = result.json().unwrap();
-            debug!(LOGGER, "Got ID from database: {}", userid_json.clone());
-            self.id = userid_json["id"].as_u64().unwrap() as usize;
-            // We still need to validate the password if one is provided
-            debug!(LOGGER, "Password length: {}", login_params.pass.chars().count());
-            if login_params.pass.chars().count() > 0 {
-                let mut response = client
-                    .get("http://poolapi:13423/pool/users/id")
-                    .basic_auth(login_params.login.clone(), Some(login_params.pass.clone()))
-                    .send(); // This could be Err
-                let mut result = match response {
-                    Ok(r) => r,
-                    Err(e) => {
-                        self.error = true;
-                        debug!(LOGGER, "Worker {} - Failed to contact API server", self.id);
-                        return self.send_err(
-                            "login".to_string(),
-                            "Failed to contatct API server for user lookup".to_string(),
-                            -32500,
-                        );
-                        //return Err("Login Failed to contatct API server for user lookup".to_string());
-                    }
-                };
-                if ! result.status().is_success() {
-                    self.error = true;
-                    debug!(LOGGER, "Worker {} - Failed to log in", self.id);
-                    return self.send_err(
-                        "login".to_string(),
-                        "Failed to log in".to_string(),
-                        -32500,
-                    );
-                }
-            }
-            // Cache the user id in redis
-            debug!(LOGGER, "Attempting to cache userid A: {} {}", userid_key.clone(), self.id.clone());
-            match self.redis {
-                Some(ref mut redis) => {
-                    let _ : () = redis.set(userid_key.clone(), self.id.clone()).unwrap();
-                },
-                None => {
-                    debug!(LOGGER, "Worker {} - No redis connection, cant cache id", self.id);
-                },
-            }
-        } else {
-            //
-            // No account exists.
-            debug!(LOGGER, "Could not find user in the database: {}", result.status());
-            // If we have been given a password, create an account now
-            if ! login_params.pass.is_empty() {
-                let mut auth_data = HashMap::new();
-                auth_data.insert("username", login_params.login.clone());
-                auth_data.insert("password", login_params.pass.clone());
-                let mut response = client
-                    .post("http://poolapi:13423/pool/users")
-                    .form(&auth_data)
-                    .send(); // This could be Err
-                let mut result = match response {
-                    Ok(r) => r,
-                    Err(e) => {
-                        self.error = true;
-                        debug!(LOGGER, "Worker {} - Failed contatct API server for user lookup", self.id);
-                        return self.send_err(
-                            "login".to_string(),
-                            "Failed contatct API server for user lookup".to_string(),
-                            -32500,
-                        );
-                    }
-                };
-                if result.status().is_success() {
-                    // The response contains the id
-                    let worker_json: Value = result.json().unwrap();
-                    debug!(LOGGER, "Created ID in database: {}", worker_json);
-                    self.id = worker_json["id"].as_u64().unwrap() as usize
-                } else {
-                    debug!(LOGGER, "Failed to create user: {}", result.status());
-                    self.error = true;
-                    return self.send_err(
-                        "login".to_string(),
-                        "Failed to create user or Login".to_string(),
-                        -32500,
-                    );
-                }
-            } else {
-                // We could not find the user in the database, and we dont
-                // have a password to create the user, so we cant continue
-                self.error = true;
-                debug!(LOGGER, "Worker {} - Failed find user account", self.id);
-                return self.send_err(
-                    "login".to_string(),
-                    "Login Failed to get your ID, please visit https://MWGrinPool.com and create an account".to_string(),
-                    -32500,
-                );
-            }
+
+        // TEMPORARY
+        // Didnt find new-format userid in redis, accept LEGACY format if that was found
+        if temp_id != 0 {
+            self.user_id = temp_id;
+            trace!("User LEGACY login found in cache: {}", self.user_id.clone());
+            // We accepted the login
+            return Ok(());
         }
-        return Ok(());
+        // END TEMPORARY
+        
+        // XXX TODO: DATABASE LOOKUP THROUGH THE API IS TOO SLOW - DONT DO IT
+        error!("Failed to find username {}", login_params.login.clone());
+        self.error = true;
+        return Err("Login Failed to get your ID, please visit https://GrinPool.com and create an account".to_string());
     }
 
     /// Worker Stats - NOT USED CURRENTLY
     pub fn get_worker_stats(&mut self, login_params: LoginParams) -> Result<(), String> {
         //
         // Get the workers stats
+        // XXX DO WE NEED NBMINER workaround still ????
         let client = reqwest::Client::new();
         let mut response = client
-            .get(format!("http://poolapi:13423/worker/stats/{}/0,1", self.id).as_str())
+            .get(format!("http://poolapi:{}/worker/stats/{}/0,1", self.config.grin_node.api_port, self.user_id).as_str())
             .basic_auth(login_params.login.clone(), Some(login_params.pass.clone()))
             .send(); // This could be Err
         match response {
             Err(e) => {
-                debug!(LOGGER, "Worker {} - Unable to fetch worker stats data", self.id);
+                debug!("Worker {} - Unable to fetch worker stats data", self.user_id);
                 // Failed to get stats, but this is not fatal
             },
             Ok(mut result) => {
@@ -399,10 +475,10 @@ impl Worker {
                     // Fill in worker stats with this data
                     // XXX TODO
                     let stats_json: Value = result.json().unwrap();
-                    debug!(LOGGER, "Worker stats: {:?}", stats_json);
+                    debug!("Worker stats: {:?}", stats_json);
                     //self.status.accepted =  stats_json["total_shares_processed"].as_u64().unwrap();
                 } else {
-                    warn!(LOGGER, "Failed to get user stats: {}", result.status());
+                    warn!("Failed to get user stats: {}", result.status());
                 }
             }
         }
@@ -416,33 +492,35 @@ impl Worker {
         // XXX TODO: With some reasonable rate limiting (like N message per pass)
         // Read some messages from the upstream
         // Handle each request
-        match self.protocol.get_message(&mut self.stream) {
+        match self.protocol.get_message(&mut self.stream, &mut self.buffer) {
             Ok(rpc_msg) => {
                 match rpc_msg {
                     Some(message) => {
-                        trace!(LOGGER, "Worker {} - Got Message: {:?}", self.id, message);
+                        trace!("Worker {} - Got Message: {:?}", self.uuid(), message);
                         // let v: Value = serde_json::from_str(&message).unwrap();
                         let req: RpcRequest = match serde_json::from_str(&message) {
                             Ok(r) => r,
                             Err(e) => {
+                                // Do we want to diconnect the user for invalid RPC message ???
                                 self.error = true;
-                                debug!(LOGGER, "Worker {} - Got Invalid Message", self.id);
+                                debug!("Worker {} - Got Invalid Message", self.uuid());
                                 // XXX TODO: Invalid request
                                 return Err(e.to_string());
                             }
                         };
                         trace!(
-                            LOGGER,
                             "Worker {} - Received request type: {}",
-                            self.id,
+                            self.uuid(),
                             req.method
                         );
+                        // Add this request id to the queue
+                        self.request_ids.add(req.id.clone());
                         match req.method.as_str() {
                             "login" => {
-                                debug!(LOGGER, "Worker {} - Accepting Login request", self.id);
-                                if self.id != 0 {
+                                debug!("Worker {} - Accepting Login request", self.uuid());
+                                if self.user_id != 0 {
                                     // dont log in again, just say ok
-                                    debug!(LOGGER, "User already logged in: {}", self.id.clone());
+                                    debug!("User already logged in: {}", self.user_id.clone());
                                     self.send_ok(req.method);
                                     return Ok(());
                                 }
@@ -450,7 +528,7 @@ impl Worker {
                                     Some(p) => p,
                                     None => {
                                         self.error = true;
-                                        debug!(LOGGER, "Worker {} - Missing Login request parameters", self.id);
+                                        debug!("Worker {} - Missing Login request parameters", self.uuid());
                                         return self.send_err(
                                             "login".to_string(),
                                             "Missing Login request parameters".to_string(),
@@ -460,12 +538,11 @@ impl Worker {
                                         //return Err("Invalid Login request".to_string());
                                     }
                                 };
-                                let login_params: LoginParams = match serde_json::from_value(params)
-                                {
+                                let login_params: LoginParams = match serde_json::from_value(params) {
                                     Ok(p) => p,
                                     Err(e) => {
                                         self.error = true;
-                                        debug!(LOGGER, "Worker {} - Invalid Login request parameters", self.id);
+                                        debug!("Worker {} - Invalid Login request parameters", self.uuid());
                                         return self.send_err(
                                             "login".to_string(),
                                             "Invalid Login request parameters".to_string(),
@@ -481,42 +558,45 @@ impl Worker {
                                         // We accepted the login, send ok result
 					                    self.authenticated = true;
                                         self.needs_job = false; // not until requested
+                                        self.status = WorkerStatus::new(self.uuid());
                                         self.send_ok(req.method);
                                     },
                                     Err(e) => {
-                                        return Err(e);
+                                        return self.send_err(
+                                            "login".to_string(),
+                                            e,
+                                            -32500,
+                                        );
                                     }
                                 }
                             }
                             "getjobtemplate" => {
-                                debug!(LOGGER, "Worker {} - Accepting request for job", self.full_id());
+                                trace!("Worker {} - Accepting request for job", self.uuid());
                                 self.needs_job = true;
                                 self.requested_job = true;
                             }
                             "submit" => {
-                                debug!(LOGGER, "Worker {} - Accepting share", self.id);
+                                trace!("Worker {} - Accepting share", self.uuid());
                                 match serde_json::from_value(req.params.unwrap()) {
-				  	Result::Ok(share) => {
-                           			self.shares.push(share);
-					},
-					Result::Err(err) => { }
-				};
-					
+                                    Result::Ok(share) => {
+                           			    self.shares.push(share);
+                                    },
+                                    Result::Err(err) => { }
+                                };
                             }
                             "status" => {
-                                trace!(LOGGER, "Worker {} - Accepting status request", self.id);
+                                trace!("Worker {} - Accepting status request", self.uuid());
                                 let status = self.status.clone();
                                 self.send_status(status);
                             }
                             "keepalive" => {
-                                trace!(LOGGER, "Worker {} - Accepting keepalive request", self.id);
+                                trace!("Worker {} - Accepting keepalive request", self.uuid());
                                 self.send_ok(req.method);
                             }
                             _ => {
                                 warn!(
-                                    LOGGER,
                                     "Worker {} - Unknown request: {}",
-                                    self.id,
+                                    self.uuid(),
                                     req.method.as_str()
                                 );
                                 self.error = true;
@@ -528,6 +608,11 @@ impl Worker {
                 }
             }
             Err(e) => {
+                error!(
+                    "Worker {} - Error reading message: {}",
+                    self.uuid(),
+                    e.to_string()
+                );
                 self.error = true;
                 return Err(e.to_string());
             }

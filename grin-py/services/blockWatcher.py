@@ -38,7 +38,6 @@ PROCESS = "blockWatcher"
 LOGGER = None
 CONFIG = None
 
-# XXX TODO: MOVE TO CONFIG
 BATCHSZ = 100
 
 def main():
@@ -54,25 +53,32 @@ def main():
     # Get Config
     check_interval = float(CONFIG[PROCESS]["check_interval"])
 
-    # Find the height of the latest block record
-    last_height = -1 # grin.blocking_get_current_height() - 1400
+    # Find the height of the latest block
+    current_height = grin.blocking_get_current_height()
+    while current_height <= 0:
+        LOGGER.warn("Waiting for first block height")
+        sleep(10)
+        current_height = grin.blocking_get_current_height()
+    LOGGER.warn("current_height = {}".format(current_height))
+
     latest_block = Blocks.get_latest()
-    if latest_block is not None:
-        last_height = latest_block.height
+    if latest_block is None:
+        last_height = current_height - 1500
+    else:
+        last_height = latest_block.height 
+    LOGGER.warn("last_height = {}".format(last_height))
     height = last_height + 1
-    height = max(0, height)
+    height = max(current_height-1500, height)
     LOGGER.warn("Starting at block height: {}".format(height))
 
     while True:
         try:
             latest = grin.blocking_get_current_height()
+            LOGGER.warn("latest: {}, height: {}".format(latest, height))
             while latest >= height:
                 response = grin.blocking_get_block_by_height(height)
                 LOGGER.warn("New Block: {} at {}".format(response["header"]["hash"],
                                                          response["header"]["height"]))
-                #print("sleeping 60....")
-                #sleep(60)
-                #print(".....GO")
                 try:
                     new_block = Blocks(hash = response["header"]["hash"],
                                    version = response["header"]["version"],
@@ -107,7 +113,7 @@ def main():
             sys.stdout.flush()
             sleep(check_interval)
         except Exception as e:
-            LOGGER.error("Something went wrong: {}\n{}".format(e, traceback.format_exc().splitlines()))
+            LOGGER.exception("Something went wrong: {}".format(repr(e)))
             database.db.getSession().rollback()
             sys.stdout.flush()
             sleep(check_interval)

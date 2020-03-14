@@ -1,0 +1,53 @@
+# Headless service for stable DNS entries of StatefulSet members.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  ports:
+  - name: mysql
+    port: 3306
+  clusterIP: None
+  selector:
+    app: mysql
+---
+# Client service for connecting to any MySQL instance for reads.
+# For writes, you must instead connect to the master: mysql-0.mysql.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-read
+  labels:
+    app: mysql
+spec:
+#  type: LoadBalancer
+  ports:
+  - name: mysql
+    port: 3306
+#    nodePort: 32336
+  - name: xtrabackup
+    port: 3307
+#    nodePort: 32337
+  selector:
+    app: mysql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-read-kylan
+  labels:
+    app: mysql
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 34.76.50.243
+  loadBalancerSourceRanges:
+  - 68.101.220.143/32
+  - 68.107.96.202/32
+  - 108.196.200.233/32
+  ports:
+  - name: mysql
+    port: 3306
+  selector:
+    app: mysql

@@ -2,10 +2,17 @@ FROM splunk/universalforwarder:latest
 
 USER root
 
-ENV SPLUNK_START_ARGS=--accept-license
+ENV SPLUNK_START_ARGS="--accept-license --no-prompt"
+ENV SPLUNK_USER=root
+ENV SPLUNK_GROUP=root
+ENV SPLUNK_HOME=/opt/splunkforwarder
 
 EXPOSE 9997
 
-COPY run.sh /
+RUN mkdir /configmap
+COPY uf-inputs.conf /configmap/inputs.conf
+COPY uf-outputs.conf /configmap/outputs.conf
 
-ENTRYPOINT ["/run.sh"]
+COPY run-uf.sh /run.sh
+
+#ENTRYPOINT ["/run.sh"]

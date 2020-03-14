@@ -65,7 +65,8 @@ def main():
         latest = Blocks.get_latest()
         while latest is None:
             LOGGER.warn("Waiting for the first block...")
-            sleep(5)
+            sleep(10)
+            latest = Blocks.get_latest()
         last_height = latest.height
     height = last_height + 1
 
@@ -75,12 +76,14 @@ def main():
     while True:
         # latest = grin.blocking_get_current_height()
         latest = Blocks.get_latest().height
-        LOGGER.warn("Latest Block Height = {}".format(latest))
-        while latest > Worker_shares.get_latest_height():
-            LOGGER.warn("Waiting for shares records to catch up: {} vs {}".format(latest, Worker_shares.get_latest_height()))
-            sleep(3)
-        #LOGGER.warn("Latest Network Block Height = {}".format(latest))
-        while latest >= height:
+        share_height = Worker_shares.get_latest_height()
+        while share_height is None:
+            LOGGER.warn("waiting for the first worker shares")
+            sleep(10)
+            share_height = Worker_shares.get_latest_height()
+        stats_height = height-1
+        LOGGER.warn("Running: chain height: {}, share height: {} vs stats height: {}".format(latest, share_height, stats_height))
+        while share_height > height:
             try:
                 new_stats = workerstats.calculate(height, avg_over_range)
                 LOGGER.warn("{} new stats for height {}".format(len(new_stats), height))
@@ -98,8 +101,7 @@ def main():
                     database.db.getSession().commit()
                 height = height + 1
             except Exception as e:
-                LOGGER.error("Something went wrong: {}".format(e))
-                LOGGER.error("Traceback: {}".format(traceback.format_exc().splitlines()))
+                LOGGER.exception("Something went wrong: {}".format(e))
                 database.db.getSession().rollback()
                 sleep(check_interval)
         sys.stdout.flush()

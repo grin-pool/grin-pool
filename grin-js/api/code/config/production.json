@@ -1,0 +1,15 @@
+{
+    "dbHost": "mysql",
+    "dbPassword": "password",
+    "jwtSecretKey": "xxxxyyyyyzzzzz",
+    "redisDomain": "redis-master",
+    "redisCacheDuration": 30,
+    "redisCacheExpire": {
+      "200": 30,
+      "4xx": 0,
+      "403": 0,
+      "5xx": 0,
+      "xxx": 1
+    },
+    "maxBlockRange": 1440
+  }

@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import Column, Integer, String, DateTime, func, BigInteger, Boolean, asc, and_
+from sqlalchemy import Column, Integer, String, DateTime, JSON, func, BigInteger, Boolean, asc, and_
 from sqlalchemy.orm import relationship
 
 from grinbase.dbaccess import database
@@ -15,6 +15,7 @@ class Pool_stats(Base):
     height = Column(BigInteger, primary_key=True, index=True, autoincrement=False)
     timestamp = Column(DateTime, nullable=False, index=True)
     active_miners = Column(BigInteger)
+    share_counts = Column(JSON) # Counts of each share size
     shares_processed = Column(Integer) # this block only
     total_blocks_found = Column(Integer) 
     total_shares_processed = Column(BigInteger) 
@@ -24,10 +25,11 @@ class Pool_stats(Base):
     def __repr__(self):
         return str(self.to_json())
 
-    def __init__(self, timestamp, height, active_miners, shares_processed, total_shares_processed, total_blocks_found, dirty=False):
+    def __init__(self, timestamp, height, active_miners, share_counts, shares_processed, total_shares_processed, total_blocks_found, dirty=False):
         self.timestamp = timestamp
         self.height = height
         self.active_miners = active_miners
+        self.share_counts = share_counts
         self.shares_processed = shares_processed
         self.total_shares_processed = total_shares_processed
         self.total_blocks_found = total_blocks_found
@@ -41,6 +43,7 @@ class Pool_stats(Base):
                 'timestamp': self.timestamp.timestamp(),
                 'height': self.height,
                 'active_miners': self.active_miners,
+                'share_counts': self.share_counts,
                 'shares_processed': self.shares_processed,
                 'total_shares_processed': self.total_shares_processed,
                 'total_blocks_found': self.total_blocks_found,
@@ -105,6 +108,5 @@ class Pool_stats(Base):
         if rec is None:
             return False
         rec.dirty = True
-        database.db.getSession().commit()
         return True
 

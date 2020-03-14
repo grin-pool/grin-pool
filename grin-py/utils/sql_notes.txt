@@ -1,0 +1,9 @@
+select worker_shares.height, worker_shares.user_id, shares.edge_bits, shares.valid, shares.invalid, shares.stale from worker_shares inner join shares on shares.parent_id=worker_shares.id where worker_shares.height=86455;
+
+
+select worker_shares.height, worker_shares.user_id, shares.edge_bits, shares.valid, shares.invalid, shares.stale from worker_shares inner join shares on shares.parent_id=worker_shares.id where worker_shares.user_id=5;
+
+
+
+select worker_stats.height, worker_stats.user_id, gps.edge_bits, gps.gps from worker_stats inner join gps on gps.worker_stats_id=worker_stats.id where worker_stats.user_id=4854;
+

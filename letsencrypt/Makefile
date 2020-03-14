@@ -1,12 +1,12 @@
 CONTAINER := letsencrypt
-REGISTRY := docker.mwgrinpool.com:5001
+REGISTRY := xxx
 
 push: build
 
 build:
 	docker build $(DOCKER_BUILD_FLAGS) -t $(CONTAINER) .
-	docker tag $(CONTAINER):latest $(REGISTRY)/$(CONTAINER):latest
 
 push:
+	docker tag $(CONTAINER):latest $(REGISTRY)/$(CONTAINER):latest
 	docker push $(REGISTRY)/$(CONTAINER):latest
 

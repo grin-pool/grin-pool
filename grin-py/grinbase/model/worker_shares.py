@@ -16,9 +16,9 @@ from grinbase.model.shares import Shares
 class Worker_shares(Base):
     __tablename__ = 'worker_shares'
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    height = Column(BigInteger, primary_key=True, )
+    height = Column(BigInteger, primary_key=True, index=True)
     timestamp = Column(DateTime, index=True)
-    shares = relationship("Shares")
+    shares = relationship("Shares", lazy="joined")
     user_id = Column(Integer, ForeignKey('users.id'))
 
     def __repr__(self):
@@ -54,11 +54,17 @@ class Worker_shares(Base):
         else:
             return sum([s.valid for s in self.shares if s.edge_bits == edge_bits])
 
-    def num_invalid(self):
-        return sum([s.invalid for s in self.shares])
+    def num_invalid(self, edge_bits=None):
+        if edge_bits is None:
+            return sum([s.invalid for s in self.shares])
+        else:
+            return sum([s.invalid for s in self.shares if s.edge_bits == edge_bits])
 
-    def num_stale(self):
-        return sum([s.stale for s in self.shares])
+    def num_stale(self, edge_bits=None):
+        if edge_bits is None:
+            return sum([s.stale for s in self.shares])
+        else:
+            return sum([s.stale for s in self.shares if s.edge_bits == edge_bits])
 
     def sizes(self):
         return list(set([s.edge_bits for s in self.shares]))
@@ -68,22 +74,21 @@ class Worker_shares(Base):
 
     def add_shares(self, edge_bits, difficulty, valid, invalid, stale):
         # First search existing shares to add to, else create new
-        share_records = {}
         for rec in self.shares:
-            share_records[rec.edge_bits] = rec
-        if edge_bits not in share_records:
-            rec = Shares(
-                edge_bits = edge_bits,
-                difficulty = difficulty,
-                valid = valid,
-                invalid = invalid,
-                stale = stale,
-            )
-            self.shares.append(rec)
-            return
-        share_records[edge_bits].valid += valid
-        share_records[edge_bits].invalid += invalid
-        share_records[edge_bits].stale += stale
+            if int(rec.edge_bits) == int(edge_bits):
+                rec.valid += valid
+                rec.invalid += invalid
+                rec.stale += stale
+                return
+        rec = Shares(
+            edge_bits = edge_bits,
+            difficulty = difficulty,
+            valid = valid,
+            invalid = invalid,
+            stale = stale,
+        )
+        self.shares.append(rec)
+        return
         
         
 
@@ -119,7 +124,7 @@ class Worker_shares(Base):
     def get_by_height_and_id(cls, height, id, range=None):
         print("height={}, id={}, range={}".format(height, id, range))
         if range is None:
-            return list(database.db.getSession().query(Worker_shares).filter(and_(Worker_shares.height == height, Worker_shares.user_id == id))) #.one()
+            return database.db.getSession().query(Worker_shares).filter(and_(Worker_shares.height == height, Worker_shares.user_id == id)).one_or_none()
         else:
             h_start = height-(range-1)
             h_end = height

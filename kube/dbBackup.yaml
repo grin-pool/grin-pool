@@ -1,0 +1,35 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: dbbackup
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dbbackup
+            image: bitgrinmining/services:latest
+            #command: ["sleep", "999"]
+            command: ["/usr/local/bin/dbBackup.sh"]
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+            volumeMounts: # directory inside container
+            - mountPath: /backup
+              name: dbbackup
+          restartPolicy: Never
+          imagePullSecrets:
+          - name: regsecret
+          volumes:
+          - name: dbbackup
+            persistentVolumeClaim:
+              claimName: dbbackup
+
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1

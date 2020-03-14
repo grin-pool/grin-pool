@@ -1,0 +1,25 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: blockvalidator
+spec:
+  schedule: "3 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: blockvalidator
+            image: bitgrinmining/services:latest
+#            image: grinpool/services:latest
+            command: ["/usr/local/bin/blockValidator.py"]
+            env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+          restartPolicy: Never
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 0
+  failedJobsHistoryLimit: 1

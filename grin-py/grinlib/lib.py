@@ -22,6 +22,7 @@ import sys
 import time
 import configparser
 import logging
+import logging.handlers
 import redis
 import threading
 import subprocess
@@ -37,6 +38,8 @@ from grinbase.model.blocks import Blocks
 
 # XXX TODO: Get from config
 REDIS_HOST = "redis-master"
+MINIMUM_DIFFICULTY = 1
+HF0_HEIGHT = 0
 
 LOGGER = None
 CONFIG = None
@@ -48,6 +51,10 @@ def get_config():
     rlock = threading.RLock()
     with rlock:
         if CONFIG == None:
+            print("Init new CONFIG")
+            if not os.path.isfile('config.ini'):
+                from shutil import copyfile
+                copyfile('/usr/local/bin/config.ini', "config.ini")
             c = configparser.ConfigParser()
             c.read('config.ini')
             CONFIG = c
@@ -70,7 +77,9 @@ def get_logger(program):
             logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
             l = logging.getLogger()
 
-            fileHandler = logging.FileHandler("{0}/{1}.log".format(log_dir, program))
+            logfilename = "{0}/{1}.log".format(log_dir, program)
+
+            fileHandler = logging.FileHandler(logfilename)
             fileHandler.setFormatter(logFormatter)
             fileHandler.setLevel(log_level)
             l.addHandler(fileHandler)
@@ -79,9 +88,24 @@ def get_logger(program):
             consoleHandler.setFormatter(logFormatter)
             consoleHandler.setLevel(log_level)
             l.addHandler(consoleHandler)
+
+            rotationHandler = logging.handlers.RotatingFileHandler(
+                    filename = logfilename,
+                    mode = "a",
+                    maxBytes = 100000000,
+                    backupCount = 3,
+                )
+            l.addHandler(rotationHandler)
+
             LOGGER = l
         return LOGGER
 
+def get_debug():
+    try:
+        debug = os.environ["DEBUG"]
+        return True
+    except:
+        return False
 
 def get_db_constraints():
     config = get_config()
@@ -105,6 +129,23 @@ def get_db():
             mysqlcontsraints = get_db_constraints()
             database.db = database_details(MYSQL_CONSTANTS=mysqlcontsraints)
             database.db.initialize()
+            try:
+                GRIN_POOL_ADMIN_USER = os.environ['GRIN_POOL_ADMIN_USER']
+                GRIN_POOL_ADMIN_PASSWORD = os.environ['GRIN_POOL_ADMIN_PASSWORD']
+                from grinbase.model.users import Users
+                try:
+                    user = Users.get_by_id(1)
+                    if user is None:
+                        user = Users(
+                                id = 1,
+                                username = GRIN_POOL_ADMIN_USER,
+                                password = GRIN_POOL_ADMIN_PASSWORD,
+                            )
+                        database.db.createDataObj(user)
+                except:
+                    pass
+            except KeyError:
+                pass
             DATABASE = database
     DATABASE.db.initializeSession()
     return DATABASE
@@ -114,11 +155,18 @@ def teardown_db():
     database.db.destroySession()
 
 def get_redis_db():
-    print("INIT REDIS")
-    r = redis.Redis(
-            host='redis-master',
-    )
-    return r
+    global REDIS
+    rlock = threading.RLock()
+    with rlock:
+        if REDIS == None:
+            print("Init new REDIS")
+            r = redis.Redis(
+                    host='redis-master',
+                    socket_timeout=10.0,
+                    socket_connect_timeout=10.0,
+            )
+            REDIS = r
+        return REDIS
 
 def get_grin_api_url():
     config = get_config()
@@ -137,14 +185,25 @@ def get_current_height():
     return latest
 
 # Worker graph rate
-def calculate_graph_rate(ts1, ts2, n):
+# Calculate GPS from N shares submitted over time range
+def calculate_graph_rate(ts1, ts2, n, sz, height):
     timedelta = (ts2 - ts1).total_seconds()
-    print("Calculate gps: timedelta: {}, num_shares {}".format(timedelta, n))
+    print("Calculate gps: timedelta: {}, num_shares: {}, size: {}".format(timedelta, n, sz))
     if n == 0 or timedelta == 0:
       return 0
-    gps = (42.0 * float(n)) / float(timedelta)
+    factor = 42
+    if sz == 29 and height > HF0_HEIGHT:
+        factor = 21
+    gps = (float(factor) * float(MINIMUM_DIFFICULTY) * float(n)) / float(timedelta)
     return gps
 
+# Workers shares rate
+# Calcualte Shares per Second from GPS
+def calculate_shares_from_gps(gps, sz, height):
+    factor = 42
+    if sz == 29 and height > HF0_HEIGHT:
+        factor = 21
+    return gps/float(factor)
 
 # API 'fields' string to python list
 def fields_to_list(fields):

@@ -12,12 +12,14 @@
   * [user accounts](#poolusers)
     * [create account](#createaccount)
     * [get api token](#getapitoken)
+  * [estimates](#poolestimates)
 * [worker](#worker)
   * [stats](#workerstats)
   * [shares](#workershares)
   * [blocks](#workerblocks)
   * [payments](#workerpayments)
   * [settings](#workersettings)
+  * [estimates](#workerestimates)
 * [payment request](#paymentrequest)
   * [offline](#offlinepayment)
   * [online](#onlinepayment)
@@ -225,6 +227,23 @@
 
     Get an API token (that expires) for user
     GET method
+
+<a name="poolestimates"/></a>
+#### Get daily earnings estimate:
+
+```/pool/estimate/dailyearning```
+
+    Get the expected daily earning estimate for all current POW sizes for 1 GPS at latest network height
+
+```/pool/estimate/dailyearning/<int:height>```
+
+    Get the expected daily earning estimate for all current POW sizes for 1 GPS at specified network height.
+    Specify height=0 for latest network height.
+
+```/pool/estimate/dailyearning/<int:height>/<int:gps>```
+
+    Get the expected daily earning estimate for all current POW sizes for specified GPS at specified network height.
+    Specify height=0 for the latest network height.
 
 
 
@@ -456,6 +475,26 @@
     Get the range of most recent payment records for a worker
     Filter all but specified fields
 
+
+<a name="workerestimates"/></a>
+#### Get user earnings estimates:
+#### Requires ```basicauth```
+
+```/worker/estimate/payment/<int:id>```
+
+    Get the current immature balance estimate for worker with specified id.
+
+```/worker/estimate/payment/<int:id>/<int:height>```
+
+    Get the block reward estimate for worker with specified id, for block at specified height
+
+```/worker/estimate/payment/<int:id>/<int:height>,range```
+
+    Get the block reward estimates for worker with specified id, for a range of blocks at specified height
+
+```/worker/estimate/payment/<int:id>/next```
+
+    Get the block reward estimate for worker with specified id, for the next block found by the pool
 
 
 

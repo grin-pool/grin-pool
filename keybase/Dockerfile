@@ -1,4 +1,4 @@
-FROM docker.mwgrinpool.com:5001/mwnginx-dockerbase
+FROM xxx/mwnginx-dockerbase
 
 WORKDIR /keybase
 RUN chown 1000:1000 /keybase

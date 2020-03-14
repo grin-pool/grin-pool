@@ -1,0 +1,37 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: tidywallet
+spec:
+  schedule: "15 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: tidywallet
+            image: bitgrinmining/services:latest
+            #command: ["sleep", "999"]
+            command: ["/usr/local/bin/tidyWallet.py"]
+            env:
+            - name: WALLET_OWNER_API_USER
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-owner-api
+                  key: username.txt
+            - name: WALLET_OWNER_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallet-owner-api
+                  key: password.txt
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
+          restartPolicy: Never
+          imagePullSecrets:
+          - name: regsecret
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 12
+  failedJobsHistoryLimit: 2

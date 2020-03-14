@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-read-kylan
+  labels:
+    app: mysql
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 34.76.50.243
+  loadBalancerSourceRanges:
+  - 68.101.220.143/32
+  - 68.107.96.202/32
+  - 108.196.200.233/32
+  - 35.203.155.51/32
+  - 104.198.0.91/32
+  - 35.247.29.132/32
+  ports:
+  - name: mysql
+    port: 3306
+  selector:
+    app: mysql

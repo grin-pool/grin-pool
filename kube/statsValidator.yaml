@@ -1,0 +1,25 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: statsvalidator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: statsvalidator
+    spec:
+      containers:
+      - name: grin-pool
+        image: grin-pool/services:latest
+        command: ["/usr/local/bin/statsValidator.py"]
+        #        command: ["sleep", "999999"]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+      imagePullSecrets:
+      - name: regsecret
+

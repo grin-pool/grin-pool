@@ -1,11 +1,11 @@
 CONTAINER := rmq
-REGISTRY := docker.lsd25.net:5000
+#REGISTRY := xxx
 
 push: build
 
 build:
 	docker build  --network=host $(DOCKER_BUILD_FLAGS) -t $(CONTAINER) .
-	docker tag $(CONTAINER):latest $(REGISTRY)/$(CONTAINER):latest
 
 push:
+	docker tag $(CONTAINER):latest $(REGISTRY)/$(CONTAINER):latest
 	docker push $(REGISTRY)/$(CONTAINER):latest

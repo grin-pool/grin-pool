@@ -32,20 +32,32 @@ from grinbase.model.gps import Gps
 
 # MOVE TO CONFIG - Tromps magic numbers
 SECONDARY_SIZE = 29
-NUM_BLOCKS_WEEK = 10080
-BASE_EDGE_BITS = 24
 DIFFICULTY_ADJUST_WINDOW = 60
 
+HF0_HEIGHT = 0
 
-# secondary pow ratio at a specific height
-def secondary_pow_ratio(height):
-    # I have no idea, Tromp likes secrets and/or hates documentation,
-    #   and im too slow to understand it
-    return max(0, 90 - int(height / NUM_BLOCKS_WEEK))
+# Calculate average network GPS at height over range
+def avg_network_gps(height=0, range=60):
+    if height == 0:
+        height = Blocks.get_latest().height
+    if range <= 0:
+        range = 1
+    grinstats = Grin_stats.get_by_height(height, range)
+    gpslists = [stat.gps for stat in grinstats]
+    gpslists_len = len(gpslists)
+    if gpslists_len == 0:
+        return 0
+    gpstotals = {}
+    for gpslist in gpslists:
+        for gps in gpslist:
+            if gps.edge_bits not in gpstotals:
+                gpstotals[gps.edge_bits] = 0
+            gpstotals[gps.edge_bits] += gps.gps
+    gpsavgs = {}
+    for sz, gpstotal in gpstotals.items():
+        gpsavgs[sz] = gpstotal / gpslists_len
+    return gpsavgs
 
-# I have no idea
-def graph_weight(edge_bits):
-    return (2 << (edge_bits - BASE_EDGE_BITS)) * edge_bits
 
 # Calculate GPS for window[-1] for all graph sizes and return it as a list of tuples [(edge_bits, gps_estimate ,), ...]
 def estimate_all_gps(window):
@@ -56,6 +68,8 @@ def estimate_all_gps(window):
     height = window[-1].height
     # Get the difficulty of the most recent block
     difficulty = window[-1].total_difficulty - window[-2].total_difficulty
+    # Time Delta (as float, in minutes) for this window
+    time_delta = float((window[-1].timestamp - window[0].timestamp).total_seconds())
     # Get secondary_scaling value for the most recent block
     secondary_scaling = window[-1].secondary_scaling
     if secondary_scaling == 0:
@@ -72,23 +86,23 @@ def estimate_all_gps(window):
     count_secondary = counts[SECONDARY_SIZE]
     count_primary = sum(counts.values()) - count_secondary
     # ratios
-    q = secondary_pow_ratio(height)/100
-    r = 1 - q
-    print("ZZZZZZZZZ: difficulty={}, q={}, r={}, secondary_scaling={}".format(difficulty, q, r, secondary_scaling))
-#    if q < 1:
-#        q = 1
+    srr = grin.secondary_pow_ratio(height)/100.0
+    prr = 1.0 - srr
     # Calculate the GPS
     all_gps = []
-    for edge_bits in counts:
-        gps = 0
+    for edge_bits in counts.keys():
+        bps = float(counts[edge_bits]) / float(time_delta)
+        factor = 42
+        if edge_bits == SECONDARY_SIZE and height > HF0_HEIGHT:
+            factor = 21
         if edge_bits == SECONDARY_SIZE:
-            gps = 42 * difficulty * q / secondary_scaling / 60
+            weight = secondary_scaling
         else:
-            count_ratio = counts[edge_bits] / count_primary
-            print("count_ratio={}".format(count_ratio))
-            print("gps = 42 * {} * {} * {} / {} / 60".format(difficulty, r, count_ratio, graph_weight(edge_bits)))
-            gps = 42 * difficulty * r * count_ratio / graph_weight(edge_bits) / 60
+            weight = grin.graph_weight(edge_bits)
+        # Caclulate GPS
+        gps = (bps/(weight/difficulty))*factor
         all_gps.append((edge_bits, gps, ))
+        print("All GPS: {}".format(all_gps))
     return all_gps
 
 

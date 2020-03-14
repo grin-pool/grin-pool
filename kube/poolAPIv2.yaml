@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poolapiv2
+  labels:
+    run: poolapiv2
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 3009
+    protocol: TCP
+    name: poolapiv2
+  selector:
+    run: poolapiv2
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: poolapiv2
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: poolapiv2
+    spec:
+      containers:
+      - name: poolapiv2
+        image: bitgrinmining/apiv2:latest
+        #command: ["sleep", "9999"]
+        command: ["/entrypoint.sh"]
+        ports:
+        - containerPort: 3009
+        env:
+        - name: GRIN_POOL_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: username.txt
+        - name: GRIN_POOL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: password.txt
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+      imagePullSecrets:
+      - name: regsecret

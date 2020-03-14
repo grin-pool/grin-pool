@@ -1,9 +1,9 @@
 # GRIN
 CONTAINER := grin
-REGISTRY := docker.mwgrinpool.com:5001
+REGISTRY := xxx
 TAG := latest
 
-default: build push
+default: build
 
 build:
 	docker build $(DOCKER_BUILD_FLAGS) -t $(CONTAINER):${TAG} .

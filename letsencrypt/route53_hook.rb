@@ -18,7 +18,7 @@ Aws.config.update({
 def setup_dns(domain, txt_challenge)
   route53 = Aws::Route53::Client.new()
   # Extract just the tld
-  tld = PublicSuffix.parse(domain)
+  tld = PublicSuffix.parse(domain).domain
   hosted_zone = route53.list_hosted_zones_by_name(
       {dns_name: "#{tld}."}).hosted_zones[0]
   changes = []
@@ -45,7 +45,7 @@ end
 
 def delete_dns(domain, txt_challenge)
   route53 = Aws::Route53::Client.new()
-  tld = PublicSuffix.parse(domain)
+  tld = PublicSuffix.parse(domain).domain
   hosted_zone = route53.list_hosted_zones_by_name(
       {dns_name: "#{tld}."}).hosted_zones[0]
   changes = []

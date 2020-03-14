@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grinwallet
+  labels:
+    run: grinwallet
+spec:
+  type: NodePort
+  ports:
+  - port: 13415
+    nodePort: 30415
+    protocol: TCP
+    name: public
+  - port: 13420
+    protocol: TCP
+    name: private
+  - port: 13425
+    protocol: TCP
+    name: api
+  selector:
+    run: grinwallet
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: grinwallet
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: grinwallet
+    spec:
+      hostname: "grinwallet"
+      containers:
+      - name: public
+        image: bitgrinmining/bitgrin:latest
+        args: ["/run-wallet.sh", "public"]
+        #args: ["sleep", "9999999"]
+        env:
+        - name: DEBUG_HOLD
+          value:
+        - name: WALLET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinwallet
+              key: password.txt
+        ports:
+        - containerPort: 13415
+        volumeMounts: # directory inside container
+        - mountPath: /wallet
+          name: grinwallet
+      - name: private
+        image: bitgrinmining/bitgrin:latest
+        #command: ["sleep", "9999999999"]
+        command: ["/run-wallet.sh", "private"]
+        env:
+        - name: KEYBASE_ALLOW_ROOT
+          value: "1"
+        - name: WALLET_OWNER_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: password.txt
+        - name: WALLET_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinwallet
+              key: password.txt
+        ports:
+        - containerPort: 13420
+        volumeMounts: # directory inside container
+        - mountPath: /wallet
+          name: grinwallet
+        - mountPath: /keybase
+          name: keybase
+      - name: api
+        image: bitgrinmining/services:latest
+        #command: ["sleep", "9999999999"]
+        command: ["/usr/local/bin/api/payment_api.py"]
+        env:
+        - name: WALLET_OWNER_API_USER
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: username.txt
+        - name: WALLET_OWNER_API_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wallet-owner-api
+              key: password.txt
+        - name: GRIN_POOL_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: username.txt
+        - name: GRIN_POOL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grinpool-admin
+              key: password.txt
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 13425
+#      - name: keybase
+#        image: bitgrinmining/keybase:latest
+#        #command: ["/entrypoint.sh"]
+#        command: ["sleep", "9909999"]
+#        env:
+#        - name: MYDOMAIN
+#          value: "bitgrinmining.com"
+#        - name: AUTH_SA
+#          valueFrom:
+#            secretKeyRef:
+#              name: storage-update
+#              key: grinpool-serviceaccount-storage-update.json
+#        ports:
+#        - containerPort: 13415
+#        volumeMounts: # directory inside container
+#        - mountPath: /keybase
+#          name: keybase
+      volumes:
+      - name: grinwallet
+        persistentVolumeClaim:
+          claimName: grinwallet
+      - name: keybase
+        emptyDir: {}

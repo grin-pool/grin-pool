@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: splunk-forwarder-daemonset
+spec:
+  template:
+    metadata:
+      labels:
+         app: splunk-forwarder
+    spec:
+      containers:
+      - name: splunkuf
+        image: bitgrinmining/universalforwarder
+        command: ["/run.sh"]
+        #command: ["sleep", "9999"]
+        env:
+        - name: SPLUNK_START_ARGS
+          value: "--accept-license --answer-yes"
+        - name: SPLUNK_USER
+          value: root
+        - name: SPLUNK_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: splunk
+              key: password
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          readOnly: true
+          name: docker-socket
+        - mountPath: /var/log/containers
+          readOnly: true
+          name: container-logs
+        - mountPath: /var/lib/docker/containers
+          readOnly: true
+          name: docker-container-logs
+        - mountPath: /var/log/pods
+          readOnly: true
+          name: pod-logs
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+        - name: docker-container-logs
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: container-logs
+          hostPath:
+            path: /var/log/containers
+        - name: pod-logs
+          hostPath:
+            path: /var/log/pods
+      imagePullSecrets:
+        - name: regsecret
+

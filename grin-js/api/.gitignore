@@ -1,0 +1,12 @@
+code/node_modules
+code/package-lock.json
+code/yarn-error.log
+code/output.txt
+code/error.txt
+code/log.txt
+code/dump.rdb
+code/yarn-error.log
+code/dump.rdb
+code/dist
+code/env.js
+code/env.ts

@@ -5,7 +5,7 @@ echo "${AUTH_SA}" > /serviceaccount.json
 gcloud auth activate-service-account --key-file=/serviceaccount.json
 
 # Fetch the keybase profile from Network Storage
-gsutil cp gs://${MYDOMAIN}/keybase/mwgrinpool_keybase_profile.tgz /mwgrinpool_keybase_profile.tgz
+gsutil cp gs://${MYDOMAIN}/keybase/mwfloopool_keybase_profile.tgz /mwfloopool_keybase_profile.tgz
 
 while /bin/true
 do
@@ -15,7 +15,7 @@ do
 
     # Extract a fresh copy of the keybase profile
     cd /
-    tar xzf /mwgrinpool_keybase_profile.tgz
+    tar xzf /mwfloopool_keybase_profile.tgz
 
     # Go Home
     cd /keybase

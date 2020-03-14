@@ -1,0 +1,24 @@
+---
+# Wallet
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grinwallet
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+---
+# Keybase Account
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keybase
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

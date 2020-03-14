@@ -54,6 +54,9 @@ from grinlib import pool
 
 PROCESS = "poolapi"
 
+# Check if debug message printing is requested
+debug = lib.get_debug()
+
 # From K8s secret
 admin_user = os.environ["GRIN_POOL_ADMIN_USER"]
 admin_pass = os.environ["GRIN_POOL_ADMIN_PASSWORD"]
@@ -100,10 +103,10 @@ api = Api(app)
 database = lib.get_db()
 LOGGER = lib.get_logger(PROCESS)
 
-
 r = redis.Redis(
     host='redis-master',
     port=6379)
+
 
 @app.before_request
 def pre_request():
@@ -115,9 +118,7 @@ def pre_request():
 def after_request(response):
     global LOGGER
     timediff = time.time() - g.start
-    LOGGER.warn("Exec time: {}".format(str(timediff)))
-#    if (response.response):
-#        response.response[0] = response.response[0].replace('__EXECUTION_TIME__'.encode(), str(timediff).encode())
+    debug and LOGGER.warn("Exec time: {}".format(str(timediff)))
     return response
 
 @app.teardown_request
@@ -155,7 +156,7 @@ def verify_password(username_or_token, password=None):
     global database
     #database = lib.get_db()
     LOGGER = lib.get_logger(PROCESS)
-    print("Will Verify User: {}, {}", username_or_token, password)
+    debug and LOGGER.warn("Will Verify User: {}, {}".format(username_or_token, password))
     # First try to verify via token
     user_rec = Users.verify_auth_token(app.config['SECRET_KEY'], username_or_token)
     if user_rec is None:
@@ -166,6 +167,8 @@ def verify_password(username_or_token, password=None):
     g.user = user_rec
     # Cache username<->user_id in redis for our stratum server
     redis_key = redis_userid_key + user_rec.username
+    r.set(redis_key, user_rec.id)
+    redis_key = redis_userid_key + user_rec.username.lower()
     r.set(redis_key, user_rec.id)
     return True
 
@@ -184,27 +187,35 @@ class PoolAPI_users(Resource):
         username = None
         password = None
         try:
-            print("json request = {}".format(request.form))
+            debug and print("json request = {}".format(request.form))
             username = request.form.get('username')
             password = request.form.get('password')
-            LOGGER.warn("PoolAPI_users POST: user:{} password:{}".format(username, password))
+            debug and LOGGER.warn("PoolAPI_users POST: user:{} password:{}".format(username, password))
         except AttributeError as e:
             LOGGER.warn("Missing username or password - {}".format(str(e)))
         if username is None or password is None:
             response = jsonify({ 'message': 'Missing arguments: username and pasword required' })
             response.status_code = 400
             return response
+        if username == "" or password == "":
+            response = jsonify({ 'message': 'Missing arguments: username and pasword required' })
+            response.status_code = 400
+            return response
+        if "." in username:
+            response = jsonify({ 'message': 'Invalid Username: May not contain "."' })
+            response.status_code = 400
+            return response
         # Check if the username is taken
         exists = Users.check_username_exists(username)
         if exists:
-            print("Failed to add - conflict with existing user = {}".format(username))
+            debug and print("Failed to add - conflict with existing user = {}".format(username))
             response = jsonify({ 'message': 'Conflict with existing account' })
             response.status_code = 409
             return response
         # Create the users record
         user_rec = Users.create(username, password)
         if user_rec is None:
-            print("Failed to add - unable to create a new user record")
+            debug and print("Failed to add - unable to create a new user record")
             response = jsonify({ 'message': 'System Error: Failed to create account' })
             response.status_code = 500
             return response
@@ -214,7 +225,10 @@ class PoolAPI_users(Resource):
             height = Blocks.get_latest().height
             initial_stat = Worker_stats(datetime.utcnow(), height, user_rec.id)
             database.db.createDataObj(initial_stat)
-        print("Added user = {}".format(user_rec))
+        # Cache username<->user_id in redis for our stratum server
+        redis_key = redis_userid_key + user_rec.username
+        r.set(redis_key, user_rec.id)
+        debug and print("Added user = {}".format(user_rec))
         response = jsonify({ 'username': user_rec.username, 'id': user_rec.id })
         response.status_code = 201
         return response
@@ -274,7 +288,7 @@ class GrinAPI_stats(Resource):
     @cache.cached(timeout=10)
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("GrinAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
+        debug and LOGGER.warn("GrinAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, grin_stats_range_limit)
@@ -311,7 +325,7 @@ class GrinAPI_blocks(Resource):
     @cache.cached(timeout=10)
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("GrinAPI_blocks get height:{} range:{} fields:{}".format(height, range, fields))
+        debug and LOGGER.warn("GrinAPI_blocks get height:{} range:{} fields:{}".format(height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, grin_blocks_range_limit)
@@ -349,6 +363,8 @@ class PoolAPI_blocks(Resource):
     #decorators = [limiter.limit("50/minute")]
     @cache.cached(timeout=10)
     def get(self, height=None, range=None, fields=None):
+        LOGGER = lib.get_logger(PROCESS)
+        debug and LOGGER.warn("PoolAPI_blocks get height:{}, range:{}, fields:{}".format(height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, pool_blocks_range_limit)
@@ -364,7 +380,7 @@ class PoolAPI_blocks(Resource):
         else:
             bl = []
             for block in blocks:
-                bl.append(block.to_json(fields))
+                bl = [block.to_json(fields)] + bl
             return bl
 
 api.add_resource(PoolAPI_blocks,
@@ -381,7 +397,7 @@ class PoolAPI_blocksCount(Resource):
     @cache.cached(timeout=10)
     def get(self, height=None):
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("PoolAPI_blocksCount get height:{}".format(height))
+        debug and LOGGER.warn("PoolAPI_blocksCount get height:{}".format(height))
         count = Pool_blocks.count(height)
         return count
 
@@ -398,7 +414,7 @@ class PoolAPI_stats(Resource):
     @cache.cached(timeout=10)
     def get(self, height=None, range=None, fields=None):
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("PoolAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
+        debug and LOGGER.warn("PoolAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, pool_stats_range_limit)
@@ -435,7 +451,7 @@ class PoolAPI_shareCount(Resource):
         global database
         #database = lib.get_db()
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("PoolAPI_shareCount get height:{} range:{}".format(height, range))
+        debug and LOGGER.warn("PoolAPI_shareCount get height:{} range:{}".format(height, range))
         # Totals across all workers are stored in the Pool_stats record
         if range is None:
             if height is None:
@@ -484,7 +500,7 @@ class WorkersAPI_stats(Resource):
         global database
         #database = lib.get_db()
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("WorkersAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
+        debug and LOGGER.warn("WorkersAPI_stats get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         stats = []
         if height == 0:
@@ -521,7 +537,7 @@ class WorkerAPI_stats(Resource):
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("WorkerAPI_stats get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
+        debug and LOGGER.warn("WorkerAPI_stats get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, worker_stats_range_limit)
@@ -569,7 +585,7 @@ class WorkersAPI_shares(Resource):
         global database
         #database = lib.get_db()
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("WorkersAPI_shares get height:{} range:{} fields:{}".format(height, range, fields))
+        debug and LOGGER.warn("WorkersAPI_shares get height:{} range:{} fields:{}".format(height, range, fields))
         fields = lib.fields_to_list(fields)
         shares_records = []
         if height == 0:
@@ -605,7 +621,7 @@ class WorkerAPI_shares(Resource):
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("WorkerAPI_shares get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
+        debug and LOGGER.warn("WorkerAPI_shares get id:{} height:{} range:{} fields:{}".format(id, height, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, worker_shares_range_limit)
@@ -698,7 +714,7 @@ class WorkerAPI_utxo(Resource):
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("WorkerAPI_utxo get id:{} fields:{}".format(id, fields))
+        debug and LOGGER.warn("WorkerAPI_utxo get id:{} fields:{}".format(id, fields))
         fields = lib.fields_to_list(fields)
         utxo = Pool_utxo.get_by_userid(id)
         if utxo is None:
@@ -716,16 +732,20 @@ class WorkerAPI_utxo(Resource):
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("WorkerAPI_utxo post id:{} field:{} value:{}".format(id, field, value))
+        debug and LOGGER.warn("WorkerAPI_utxo post id:{} field:{} value:{}".format(id, field, value))
         allowed_fields = ["address", "method"]
         if field not in allowed_fields:
             response = jsonify({ 'message': 'Invalid field for update' })
             response.status_code = 403
             return response
-        st = Pool_utxo.update_field(id, field, value)
+        st = False
+        if field == "address":
+            st = Pool_utxo.update_address(id, value)
+        elif field == "method":
+            st = Pool_utxo.update_method(id, value)
         if st == False:
-            response = jsonify({ 'message': 'Invalid field for update' })
-            response.status_code = 403
+            response = jsonify({ 'message': 'Failed to update {}'.format(field) })
+            response.status_code = 500
             return response
         else:
             response = jsonify({ field: value })
@@ -751,7 +771,7 @@ class WorkerAPI_payments(Resource):
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("WorkerAPI_payments get id:{} range:{} fields:{}".format(id, range, fields))
+        debug and LOGGER.warn("WorkerAPI_payments get id:{} range:{} fields:{}".format(id, range, fields))
         # Enforce range limit
         if range is not None:
             range = min(range, worker_payment_record_range_limit)
@@ -776,44 +796,115 @@ api.add_resource(WorkerAPI_payments,
 
 ##
 # Estimations
+# height = None: Get immature balance estimate
+# height = "next": Get estimate for "next block found"
+# height = #: Get estimate for pool block at height #
+# range  = #: Get estimate for range of pool blocks around height #
 class EstimateApi_payment(Resource):
-    @auth.login_required
-    def get(self, id, height=0):
+    decorators = [auth.login_required, cache.cached(timeout=300)]
+    #@auth.login_required
+    def get(self, id, height=None, range=None):
         LOGGER = lib.get_logger(PROCESS)
         if id != g.user.id:
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        LOGGER.warn("EstimateApi_payment get id:{} height:{}".format(id, height))
-        if height != 0:
-            # Request is for a single block reward
+        debug and LOGGER.warn("EstimateApi_payment get id:{} height:{}".format(id, height))
+        id_str = str(id)
+        if height is None:
+            # Immature Balance Estimate
+            LOGGER.warn("Immature Balance Estimate")
+            # Get a list of all new and unlocked blocks
+            unlocked_blocks = Pool_blocks.get_all_unlocked()
+            unlocked_blocks_h = [blk.height for blk in unlocked_blocks]
+            #LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
+            new_blocks = Pool_blocks.get_all_new()
+            new_blocks_h = [blk.height for blk in new_blocks]
+            #LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
+            total = 0
+            for height in unlocked_blocks_h + new_blocks_h:
+                debug and print("Estimate block at height: {}".format(height))
+                payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
+                if payout_map is not None and id_str in payout_map:
+                    total = total + payout_map[id_str]
+            return {"immature": total}
+        if type(height) == str:
+            if height == "next":
+                # Next block estimate
+                debug and LOGGER.warn("Next block estimate")
+                estimate = 0
+                payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
+                if payout_map is None:
+                    estimate = "TBD"
+                elif id_str in payout_map:
+                    estimate = payout_map[id_str]
+                else:
+                    estimate = 0
+                return {"next": estimate}
+            else:
+                response = jsonify({ 'message': 'Invalid Request' })
+                response.status_code = 400
+                return response
+        # Block Reward estimate
+        if range is None:
+            # One specific block estimate
+            debug and LOGGER.warn("One specific block estimate")
+            estimate = 0
+            payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
+            if payout_map is not None:
+                if id_str in payout_map.keys():
+                   estimate = payout_map[id_str]
+                else:
+                   estimate = 0
+            else:
+                # Maybe this is a pool block but we didnt estimate it yet
+                pb = Pool_blocks.get_by_height(height)
+                if pb is not None:
+                    estimate = "TBD"
+            str_height = str(height)
+            return {str_height: estimate}
+        # Range of pool block reward estimates
+        debug and LOGGER.warn("Range of blocks estimate")
+        # Enforce range limit
+        range = min(range, pool_blocks_range_limit)
+        # Get the list of pool block(s) heights
+        if height == 0:
+            blocks = Pool_blocks.get_latest(range)
+        else:
+            blocks = Pool_blocks.get_by_height(height, range)
+        block_heights = [pb.height for pb in blocks]
+        # Get estimates for each of the blocks
+        estimates = {}
+        for height in block_heights:
+            estimate = 0
             payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
             if payout_map is None:
-                return 0
-            #print("payout map: {}".format(payout_map))
-            #sys.stdout.flush()
-            if id in payout_map:
-                return payout_map[id]
+                estimate = "TBD"
+            elif id_str in payout_map:
+                estimate = payout_map[id_str]
             else:
-                return 0
-        # Get a list of all new and unlocked blocks
-        unlocked_blocks = Pool_blocks.get_all_unlocked()
-        unlocked_blocks_h = [blk.height for blk in unlocked_blocks]
-        #LOGGER.warn("EstimateApi_payment unlocked blocks: {}".format(unlocked_blocks))
-        new_blocks = Pool_blocks.get_all_new()
-        new_blocks_h = [blk.height for blk in new_blocks]
-        #LOGGER.warn("EstimateApi_payment new blocks: {}".format(new_blocks))
-        total = 0
-        for height in unlocked_blocks_h + new_blocks_h:
-            print("Estimate block at height: {}".format(height))
-            payout_map = pool.get_block_payout_map_estimate(height, LOGGER)
-            if payout_map is not None and id in payout_map:
-                total = total + payout_map[id]
-        return total
+                estimate = 0
+            str_height = str(height)
+            estimates[str_height] = estimate
+        return estimates
 
 api.add_resource(EstimateApi_payment,
         '/worker/estimate/payment/<int:id>', 
         '/worker/estimate/payment/<int:id>/<int:height>', 
+        '/worker/estimate/payment/<int:id>/<int:height>,<int:range>', 
+        '/worker/estimate/payment/<int:id>/<string:height>', 
+)
+
+class EstimateApi_pooldailyearning(Resource):
+    @cache.cached(timeout=120)
+    def get(self, height=0, gps=1):
+        return pool.estimated_daily_reward(gps, height)
+
+api.add_resource(EstimateApi_pooldailyearning,
+        '/pool/estimate/dailyearning', 
+        '/pool/estimate/dailyearning/<int:height>', 
+        '/pool/estimate/dailyearning/<int:height>/<float:gps>', 
+        '/pool/estimate/dailyearning/<int:height>/<int:gps>', 
 )
 
 ##
@@ -826,26 +917,31 @@ class PoolAPI_paymentrequest(Resource):
     def post(self, id, function, address=None):
         global database
         LOGGER = lib.get_logger(PROCESS)
-        LOGGER.warn("PoolAPI_paymentrequest POST: {} - {}".format(id, function))
+        debug = True
+        debug and LOGGER.warn("PoolAPI_paymentrequest POST: {} - {}".format(id, function))
         # AUTH FILTER
         if id != g.user.id:
             response = jsonify({ 'message': 'Not authorized to access data for other users' })
             response.status_code = 403
             return response
-        # Connect to DB
-#        try:
-#            database = lib.get_db()
-#        except Exception as e:
-#            LOGGER.error("Failed to connect to the db: {}".format(e))
-#            response = jsonify({ 'message': 'Could not get account balance, please try again later' })
-#            response.status_code = 400
-#            return response
-
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        #if id != 573: # foo16 on bitgrin pool for testing
+        #    LOGGER.warn("Payments are disabled")
+        #    response = jsonify({ 'message': 'Payouts are temporarily disabled' })
+        #    response.status_code = 400
+        #    return response
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         # XXX TODO: Get from config
-        payment_req_url = "http://grinwallet:13425"
+        payment_req_url = "http://payment_api:3425"
         # Get the users balance then call the internal payment request api to
         # generate a payment tx slate.  Return that slate to the caller
         if function == "get_tx_slate":
+            # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            #LOGGER.warn("SLATE payment requests are disabled")
+            #response = jsonify({ 'message': 'File-Based payouts are temporarily disabled' })
+            #response.status_code = 400
+            #return response
+            # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
             ##
             # Offline Phase 1) issue_send_tx
             # Generate the send transaction slate
@@ -854,27 +950,27 @@ class PoolAPI_paymentrequest(Resource):
             user_id = str(utxo.user_id)
             # XXX TODO: Check if greater than minimum payout
             get_tx_slate_url = payment_req_url + "/pool/payment/get_tx_slate/"+user_id
-            LOGGER.warn("Requesting Payment slate: {}".format(get_tx_slate_url))
+            debug and LOGGER.warn("Requesting Payment slate: {}".format(get_tx_slate_url))
             r = requests.post(
                     url=get_tx_slate_url,
                     auth=(admin_user, admin_pass)
                 )
-            LOGGER.warn("get_tx_slate call: {} - {}".format(r.status_code, r.reason))
+            debug and LOGGER.warn("get_tx_slate call: {} - {}".format(r.status_code, r.reason))
             if r.status_code != 200:
                 LOGGER.warn("Failed to get a payment slate: {} - {} - {}".format(r.status_code, r.reason, r.json()["message"]))
                 response = jsonify({ 'message': 'Failed to get a payment slate: {}'.format(r.json()["message"])})
-                response.status_code = 400
+                response.status_code = r.status_code
                 return response
             return(json.loads(r.text))
         elif function == "submit_tx_slate":
             ##
             # Offline Phase 2) finalize_tx
             # Submit the signed slate to be finalized
-            LOGGER.warn("submit_slate: {}".format(id))
+            debug and LOGGER.warn("submit_slate: {}".format(id))
             try:
                 requestdata = request.data
                 rdjson = json.loads(requestdata.decode('utf-8'))
-                LOGGER.warn("PoolAPI_paymentrequest POST: requestdata:{}".format(rdjson))
+                debug and LOGGER.warn("PoolAPI_paymentrequest POST: requestdata:{}".format(rdjson))
             except AttributeError as e:
                 LOGGER.warn("Missing tx_slate data - {}".format(request.data))
                 response = jsonify({ 'message': 'Missing signed slate data' })
@@ -885,7 +981,7 @@ class PoolAPI_paymentrequest(Resource):
                 response = jsonify({ 'message': 'Invalid signed slate data was submitted' })
                 response.status_code = 400
                 return response
-            LOGGER.warn("submit_slate: {}".format(requestdata))
+            debug and LOGGER.warn("submit_slate: {}".format(requestdata))
             submit_tx_slate_url = payment_req_url + "/pool/payment/submit_tx_slate/"+str(id)
             r = requests.post(
                     url=submit_tx_slate_url, 
@@ -893,46 +989,55 @@ class PoolAPI_paymentrequest(Resource):
                     auth=(admin_user, admin_pass)
                 )
             if r.status_code != 200:
-                #LOGGER.warn("Failed to submit payment slate: {} - {} - {}".format(r.status_code, r.reason, r.json()["message"]))
-                #response = jsonify({ 'message': 'Failed to submit payment slate: {}'.format(r.json()["message"]) })
-                LOGGER.warn("Failed to submit payment slate: {} - {}".format(r.status_code, r.reason))
-                response = jsonify({ 'message': 'Failed to submit payment slate: {}'.format(r.reason) })
-                response.status_code = 500
+                LOGGER.warn("Failed to submit payment slate: {} - {} - {}".format(r.status_code, r.reason, r.json()["message"]))
+                response = jsonify({ 'message': 'Failed to submit payment slate: {}'.format(r.json()["message"]) })
+                response.status_code = r.status_code
                 return response
-            LOGGER.warn("submit_tx_slate result: {} - {}".format(r.status_code, r.text))
+            debug and LOGGER.warn("submit_tx_slate result: {} - {}".format(r.status_code, r.text))
             return "ok"
         elif function == "http":
+            # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+            #if id != 573: # foo16 on bitgrin pool for testing
+            #    LOGGER.warn("HTTP payment requests are disabled")
+            #    response = jsonify({ 'message': 'HTTP payouts are temporarily disabled' })
+            #    response.status_code = 400
+            #    return response
+            # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
             ##
             # Online Wallet-To-Wallet
-            LOGGER.warn("Send HTTP transaction: {}".format(id))
+            debug and LOGGER.warn("Send HTTP transaction: {}".format(id))
+            LOGGER.warn("request.args: {}".format(request.args))
             if address is None:
                 LOGGER.warn("HTTP payment request missing address")
                 response = jsonify({ 'message': 'Error, must specify a wallet address:port' })
                 response.status_code = 400
                 return response
-            LOGGER.warn("Initiate HTTP payment: {} - {}".format(id, address))
+            debug and LOGGER.warn("Initiate HTTP payment: {} - {}  - {}".format(id, address, request.args))
+            LOGGER.warn("Args in json: {}".format(json.dumps(request.args)))
             http_payment_url = payment_req_url + "/pool/payment/http/{}/{}".format(id, address)
             r = requests.post(
-                    url=http_payment_url, 
+                    url=http_payment_url,
+                    data=json.dumps(request.args),
+                    headers={'content-type': 'application/json'},
                     auth=(admin_user, admin_pass)
                 )
             if r.status_code != 200:
                 LOGGER.warn("Failed to complete HTTP payment: {} - {}".format(r.status_code, r.reason))
                 response = jsonify({ 'message': 'Failed to complete HTTP payment: {}'.format(r.json()["message"]) })
-                response.status_code = 400
+                response.status_code = r.status_code
                 return response
-            LOGGER.warn("http payment result: {} - {}".format(r.status_code, r.text))
+            debug and LOGGER.warn("http payment result: {} - {}".format(r.status_code, r.text))
             return "ok"
         elif function == "keybase":
             ##
             # Online Wallet-To-Keybase-To-Keybase-To-Wallet
-            LOGGER.warn("Send keybase transaction: {}".format(id))
+            debug and LOGGER.warn("Send keybase transaction: {}".format(id))
             if address is None:
                 LOGGER.warn("keybase payment request missing address")
                 response = jsonify({ 'message': 'Error, must specify a keybase username to send to' })
                 response.status_code = 400
                 return response
-            LOGGER.warn("Initiate keybase payment: {} - {}".format(id, address))
+            debug and LOGGER.warn("Initiate keybase payment: {} - {}".format(id, address))
             keybase_payment_url = payment_req_url + "/pool/payment/keybase/{}/{}".format(id, address)
             r = requests.post(
                     url=keybase_payment_url, 
@@ -941,18 +1046,18 @@ class PoolAPI_paymentrequest(Resource):
             if r.status_code != 200:
                 LOGGER.warn("Failed to complete keybase payment: {} - {}".format(r.status_code, r.reason))
                 response = jsonify({ 'message': 'Failed to complete keybase payment: {}'.format(r.json()["message"]) })
-                response.status_code = 400
+                response.status_code = r.status_code
                 return response
-            LOGGER.warn("keybase payment result: {} - {}".format(r.status_code, r.text))
+            debug and LOGGER.warn("keybase payment result: {} - {}".format(r.status_code, r.text))
             return "ok"
         elif function == "payout_script":
             ##
             # Not really a payout request, rather, a request for payout automation script code
-            LOGGER.warn("Get Payout Script: {}".format(id))
-            #file = open("/content/MWGP_payout.py", "r")
+            debug and LOGGER.warn("Get Payout Script: {}".format(id))
+            #file = open("/content/BGP_payout.py", "r")
             #payout_script = file.read() 
             #return payout_script
-            return send_from_directory('/content', 'MWGP_payout.py')
+            return send_from_directory('/content', 'GP_payout.py')
         else:
             LOGGER.warn("Invalid Payment Type requested")
             response = jsonify({ 'message': 'Error, must specify valid payment request method.  Method {} is not valid.'.format(function) })

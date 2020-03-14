@@ -1,0 +1,12 @@
+---
+# Redis Cache
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dbbackup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Gi
